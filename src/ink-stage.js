@@ -40,6 +40,27 @@ export function createInkStage() {
         float rim=(1.-smoothstep(.002,.007,abs(r-edge)))*uImpact;
         float wash=smoothstep(.4,1.3,r)*.13*uFocus;
         vec3 col=mix(paper,team,wash);
+        // Slow screen-print layers stay at the edges, away from hand values.
+        vec2 uv=vUv;
+        float drift=sin(uTime*.13)*.012;
+        float upper=step(.83+uv.x*.19+drift,uv.y);
+        float lower=1.-step(.07+uv.x*.12+drift,uv.y);
+        float diagonal=uv.y-uv.x*.25;
+        float ribbon=step(.68,diagonal)*step(diagonal,.735);
+        float bottomRibbon=step(.015,diagonal)*step(diagonal,.048);
+        vec3 cyan=vec3(.10,.66,.69), vermilion=vec3(.91,.22,.15);
+        col=mix(col,cyan,ribbon*.66);
+        col=mix(col,vermilion,bottomRibbon*.68);
+        col=mix(col,ink,clamp(upper+lower,0.,1.)*.93);
+        vec2 grid=fract((gl_FragCoord.xy+vec2(uTime*.8,0.))/8.)-.5;
+        float halftone=1.-smoothstep(.17,.23,length(grid));
+        float edgePrint=smoothstep(.32,.62,abs(uv.y-.5));
+        col=mix(col,ink,halftone*edgePrint*.25);
+        col=mix(col,paper,halftone*upper*.14);
+        float graphite=1.-smoothstep(.001,.0025,abs(uv.y-(.77+uv.x*.16+sin(uv.x*15.+uTime*.12)*.008)));
+        col=mix(col,ink,graphite*.28);
+        float slip=1.-smoothstep(.002,.005,abs(diagonal-.737));
+        col=mix(col,vermilion,slip*.75);
         col=mix(col,ink,clamp(dots+speed*.8+burst,0.,1.));
         col=mix(col,paper,(1.-smoothstep(.02,.028,r))*step(.08,uImpact));
         col=mix(col,team,rim*.8);
@@ -50,13 +71,7 @@ export function createInkStage() {
         float skillShape=uSkill<1.5?wave:uSkill<2.5?cut:uSkill<3.5?bolt:wave*teeth;
         float skillInk=skillShape*uPulse*step(.001,uPulse);
         col=mix(col,team,skillInk);
-        float drift=sin(uTime*.16)*.016;
-        float panel=step(vUv.x*.36+.69+drift,vUv.y)+step(vUv.y,vUv.x*.3-.15+drift);
-        float screenDots=(1.-smoothstep(.16,.24,length(fract(gl_FragCoord.xy/7.)-.5)));
-        float band=step(.965,fract(vUv.y*2.+vUv.x*.7+uTime*.012));
-        float printMask=clamp(panel*.14+screenDots*panel*.2+band*.055,0.,.35);
-        col=mix(col,ink,printMask);
-        float alpha=max(max(max(dots,uFocus*.96),skillInk*.85),printMask);
+        float alpha=.96;
         gl_FragColor=vec4(col,alpha);
       }`,
   });

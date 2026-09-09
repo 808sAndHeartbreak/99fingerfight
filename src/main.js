@@ -503,7 +503,7 @@ function openDialog(content, cls = "") {
   feedback.pause(paused);
   clearTimeout(aiTimer);
   dialog.dataset.view = "";
-  document.body.classList.toggle("menu-scene",!started || cls.includes("game-menu") || cls==="online-dialog");
+  document.body.classList.toggle("menu-scene",!started || cls.includes("game-menu") || cls==="online-dialog" || cls.startsWith("developer"));
   dialog.className = cls;
   dialog.innerHTML = content;
   if (!dialog.open) dialog.showModal();
@@ -536,6 +536,8 @@ async function showMenu(page = "home") {
   root.classList.remove('menu-entering');buttons.forEach(b=>b.disabled=false);buttons[0]?.focus({preventScroll:true});
 }
 function dismissDialog() {
+  if(dialog.dataset.view==="developer-slide"){showDeveloper();dialog.querySelector("[data-developer-slide]").focus({preventScroll:true});return;}
+  if(dialog.dataset.view==="developer"){showMenu("home");return;}
   if(dialog.dataset.view==="online") {
     if(online?.packet?.queued || online?.packet?.room?.status==="waiting") {
       toast("请先取消匹配或离开房间");return;
@@ -551,6 +553,14 @@ function showNameEditor(seat) {
 }
 function showBattleMenu() {
   openDialog(`<div class="dialog-body battle-menu"><button class="dialog-close" data-close aria-label="继续游戏">×</button><h2>暂停一下。</h2><button data-close>继续游戏 </button><button data-battle-online>房间和玩家信息 </button><button data-menu-settings>设置 </button>${mode==='online'?'':'<button data-menu="home">主菜单 </button>'}<small>${mode==='online'?'联机对局继续计时':''}</small></div>`);
+}
+function showDeveloper(){
+  openDialog(`<article class="developer-story"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><header><span>2023 — 2026</span><h2>开发者<span>说。</span></h2></header><div class="developer-copy"><p>考虑 finger fight 稍作改编就可以贴合本次“99”主题，但之前就做过了，还是不做回锅肉，就新做了个躲避球游戏。本游戏其实是 2023 年首次 minigame 设计推出的（尊重给到 <strong>[UI&amp;特效] 潘朱炜</strong>，<strong>[程序] 王璨、王崴、佘壕镪</strong>），可惜完成度不高，也没有拿到任何奖项。</p><p>今年响应“超级个体”的号召，solo 参赛做了。躲避球晋级后自觉内容量已足够，不太想进一步开发了。于是移植了 finger fight 到网页端，补全了玩法，实现了联网，重做了美术，打磨了交互体验。既然今年躲避球晋级决赛，就私心把这个游戏再塞进来给大家再玩玩了。</p><p>至于这个游戏的灵感来源，可以点击<button class="story-slide-link" data-developer-slide>当时的幻灯片页面</button>查看。我自己还是蛮喜欢玩的。谢谢大家。</p></div><footer>开发者：<strong>谭越天</strong></footer></article>`,"developer-dialog");
+  dialog.dataset.view="developer";
+}
+function showDeveloperSlide(){
+  openDialog(`<div class="developer-slide"><img src="./assets/story/inspiration-slide.png" alt="2023 年 Finger Fight 游戏介绍：灵感来源于宿舍里的手指数字博弈"><button class="dialog-close" data-close aria-label="返回开发者说">×</button></div>`,"developer-slide-dialog");
+  dialog.dataset.view="developer-slide";
 }
 function showTutorialIntro(){
  openDialog(`<div class="dialog-body tutorial-intro"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><h2>指尖上的博弈</h2><p>改变双手数值，形成手势组合，解锁不同能力。</p><div class="tutorial-goals"><b>清空对手 HP</b><span>或</span><b>九九归一</b></div><p>以策略战胜对手。</p><button class="primary" data-tutorial-confirm>开始教学</button></div>`);
@@ -761,7 +771,7 @@ listen(app, "click", (e) => {
   handlers[button.id]?.();
 });
 listen(dialog, "click", (e) => {
-  if(e.target===dialog && dialog.dataset.view==="recipes") {
+  if(e.target===dialog && ["recipes","developer-slide"].includes(dialog.dataset.view)) {
     dismissDialog();return;
   }
   const b = e.target.closest("button");
@@ -769,6 +779,8 @@ listen(dialog, "click", (e) => {
   if (b.dataset.menu) {showMenu(b.dataset.menu);return;}
   if(b.hasAttribute("data-battle-online")){mode==="online"?showOnline():showNameEditor(mode==="local"?state.active:0);return;}
   if(b.hasAttribute("data-resume-pve")){const saved=savedPve();if(saved){started=true;closeDialog();startGame("ai",0,saved);}return;}
+  if(b.hasAttribute("data-developer")){showDeveloper();return;}
+  if(b.hasAttribute("data-developer-slide")){showDeveloperSlide();return;}
   if(b.hasAttribute("data-tutorial")){showTutorialIntro();return;}
   if(b.hasAttribute("data-tutorial-confirm")){started=true;closeDialog();startGame("tutorial");return;}
   if (b.hasAttribute("data-menu-settings")) {showSettings();return;}
