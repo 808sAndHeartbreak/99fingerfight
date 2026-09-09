@@ -1,0 +1,45 @@
+[
+  {
+    "source": "User-provided dodgeball art: story\\arena_manga_paper_v3.png",
+    "output": "assets/manga/paper.webp"
+  },
+  {
+    "source": "User-provided replacement cover (2026-09-09)",
+    "output": "assets/manga/menu-99.webp"
+  },
+  {
+    "source": "User-provided dodgeball art: vfx\\impact_contact_v2.png",
+    "output": "assets/manga/contact.webp"
+  },
+  {
+    "source": "User-provided dodgeball art: ui\\victory_manga_burst_v2.png",
+    "output": "assets/manga/victory.webp"
+  },
+  {
+    "source": "User-provided dodgeball art: fonts\\Teko-Variable.ttf",
+    "output": "assets/manga/Teko-Variable.ttf"
+  },
+  {
+    "source": "User-provided dodgeball art: fonts\\Teko-OFL.txt",
+    "output": "assets/manga/Teko-OFL.txt"
+  },
+  {
+    "source": "User-provided dodgeball art: fonts\\OFL.txt",
+    "output": "assets/manga/OFL.txt"
+  },
+  {
+    "source": "Generated character: blue.png",
+    "output": "assets/manga/blue.webp",
+    "method": "Generated illustration, compressed WebP runtime asset"
+  },
+  {
+    "source": "Generated character: red.png",
+    "output": "assets/manga/red.webp",
+    "method": "Generated illustration, compressed WebP runtime asset"
+  },
+  {
+    "source": "User-provided dodgeball art: fonts\\NotoSansSC-Variable.ttf",
+    "output": "assets/manga/NotoSansSC-subset.woff2",
+    "method": "Subset to game UI characters; SIL OFL license in OFL.txt"
+  }
+]

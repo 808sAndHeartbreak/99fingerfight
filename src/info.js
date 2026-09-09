@@ -1,0 +1,236 @@
+import { supplyIn } from "./engine.js";
+import { playerName, escapeHtml } from "./identity.js";
+import { PROPS, MAX_HP, WEAPONS, weaponById } from "./catalog.js";
+
+const PROP_INFO = {
+  add: "一只手数字 +1，9 变成 0。",
+  sub: "一只手数字 −1，0 变成 9。",
+  lock: "选择任意一方的一只手。被封印的手不能发起计算，也不能成为计算目标；所属玩家回合结束后解除。道具仍可改变它的数字。",
+};
+export function describe(key, state, participants) {
+  const [kind, id, hand] = key.split(":");
+  if(kind === "recipe") {
+    const options=WEAPONS.filter(w=>w.recipe.every(n=>n===Number(id)));
+    if(!options.length)return null;
+    return {title:`${id} + ${id} 技能组合`,tag:"配方选项",stats:[["可选",`${options.length} 种技能`]],body:options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:"仅在合成阶段选择其中一种，双手归 1，随后行动阶段发动；也可放弃合成。"};
+  }
+  if (kind === "weapon") {
+    const w = weaponById(id);
+    if (!w) return null;
+    return {
+      title: w.name,
+      image:w.image,
+      tag: "合成武器",
+      stats: [
+        ["合成", w.recipe.join(" · ")],
+        ["使用", "行动阶段"],
+      ],
+      body: w.detail,
+      note: "只有合成阶段可以选择此武器，确认后双手归 1；随后行动阶段必须发动技能，使用后消耗。可放弃合成并进入计算。",
+    };
+  }
+  if (kind === "prop")
+    return {
+      title: PROPS[id].name,
+      image: PROPS[id].image,
+      tag: "一次性道具",
+      stats: [
+        ["阶段", "规划阶段"],
+        ["目标", ({hand:"任意一方的手",self:"自己",enemy:"对手",all:"双方"})[PROPS[id].target]],
+      ],
+      body: PROP_INFO[id] || PROPS[id].detail,
+      note: ({echo:"本回合下一次计算复制同一个结果；另一只手被封印也会接收复制值。未计算则回合结束失效；重复使用不叠加。",mirror:"与回响同时存在时，两次触碰使用同一个结果，只写入对手目标手。回合结束失效，重复使用不叠加。",silence:"持续到对手下一回合结束；禁止主动使用道具，不影响补给和武器补牌。",balance:"先消耗制衡，再按双方各自剩余道具数量重抽。允许抽到同名道具。",boon:"补到每人 3 个，已满的玩家不会再获得；不会移除已有状态。",greed:"先消耗强欲，最多补至 3 个；跳过本回合合成与行动，回响、镜像等回合状态随之结束。",grace:"以使用时自己的双手数字之和计算，生命最多为 99；满血或数字总和为 0 仍会消耗。",ruin:"以使用时对手双手数字之和计算，忽略护盾且不消耗护盾；生命归零立即结算。"})[id] || "点击道具再选择高亮手势，确认后消耗；数字变化不会立即形成武器。",
+    };
+  if(kind==="status") {
+    const p=state.players[Number(hand)];
+    const data={
+      echo:["回响","本回合","下一次计算复制同一个结果给自己的两只手。重复使用不叠加。"],
+      mirror:["镜像","本回合","下一次计算只写入对手目标手；与回响同时存在也不会改变自己的手。"],
+      silenced:["沉默",Number(hand)===state.active?"本回合":"下个己方回合","不能主动使用道具，补给与技能补牌仍生效。"],
+      skip:["无法行动",`${p.skip} 个后续己方回合`,"跳过整回合操作；补给、持续伤害和状态计数照常。重复效果累计回合。"],
+      seven:["七伤拳",`剩余 ${p.seven} 次`,"每个己方回合开始受到 7 点真实伤害。重复施加剩余次数 +7。"],
+      dark:["玄冥神掌","永久","每个己方回合开始受到 5 点真实伤害；不叠加，可与七伤拳共同生效。"],
+      foam:["泡沫盾墙",`剩余 ${p.foam} 次`,"完全挡住普通伤害，每段消耗一次。真实伤害穿透且不消耗。重复获得次数 +2。"],
+      knuckles:["指虎","永久","每段直接技能伤害 +10，包括真实伤害和双枪每发；不增加道具或持续伤害，不叠加。"],
+      nine:["九标记",`${p.nine} / 2`,"再次发动归一获得第二枚时，九九归一立即获胜。手的数字变化不影响标记。"]
+    }[id];
+    return data?{title:data[0],tag:"持续状态",stats:[["时限 / 数量",data[1]]],body:data[2],note:""}:null;
+  }
+  if(kind==="supply") {
+    const p=state.players[Number(id)];
+    return {title:"回合补给",tag:"每三个己方回合",stats:[["持有",`${p.props.length} / 3`],["下次",p.turns===0?"首次己方回合":`${supplyIn(p)} 个己方回合后`]],body:"每位玩家自己的第 1、4、7…回合开始时随机获得 1 个道具。双方分别计数，强欲结束的回合也计入。",note:"背包已满时当次补给跳过，不积攒；沉默不阻止补给。点击玩家信息区的道具图标查看效果。"};
+  }
+  if (kind === "hand") {
+    const owner = Number(id),
+      h = Number(hand),
+      p = state.players[owner],
+      n = p.hands[h];
+    return {
+      title: `${owner === 0 ? "蓝方" : "红方"} · ${h === 0 ? "左手" : "右手"}`,
+      tag: "手势信息",
+      stats: [
+        ["当前数字", String(n)],
+        ["状态", p.locks[h] ? "已封印" : n === 5 ? "护盾生效" : "可参与计算"],
+      ],
+      body: p.locks[h]
+        ? PROP_INFO.lock
+        : "计算阶段先选择自己的一只手，再选择对方一只手。两手触碰后，通常主动手变为两数之和的个位数。回响会复制给己方双手，镜像会改为写入对手目标手。",
+      note:
+        n === 5
+          ? "单个 5：普通伤害减半并变为 1。双手 55：完全免疫普通伤害且数字不变，数字变化后立即失效。真实伤害不消耗防御。"
+          : "双手同为 0、2、4、5、6、7、8、9 时有技能配方；点击组合图鉴查看全部选项。",
+    };
+  }
+  if (kind === "shield")
+    return {
+      title: "五指护盾",
+      image: "ink-mono/foam.webp",
+      tag: "被动效果",
+      stats: [
+        ["条件", "单手为 5"],
+        ["减伤", "50%"],
+      ],
+      body: "单个 5 使普通伤害减半（向上取整），然后变为 1；双手 55 完全免疫普通伤害，不消耗数字且不限次数，数字变化后立即失效。",
+      note: "防御顺序：55 → 盾墙 → 单个 5。真实伤害穿透且不消耗防御；认真一拳先将所有 5 变为 1 并清除盾墙。零伤害不消耗防御。",
+    };
+  if (kind === "player") {
+    const p = state.players[Number(id)];
+    return {
+      title: playerName(participants, Number(id)),
+      tag: "对战角色",
+      stats: [
+        ["生命", `${p.hp} / ${MAX_HP}`],
+        ["道具", `${p.props.length} / 3`],
+      ],
+      body: "生命先降为 0 的一方失败；获得两枚九标记立即获胜。双方开局 99 生命。悬停或点击状态、道具可查看详细规则。",
+      note: `当前武器：${p.weapon ? weaponById(p.weapon).name : "尚未合成"}。${p.hands.includes(5) ? "五指护盾生效中。" : ""}`,
+    };
+  }
+  if (kind === "phase")
+    return {
+      title: "回合流程",
+      tag: "行动规则",
+      stats: [
+        ["规划 / 合成 / 计算", "30 秒"],
+        ["攻击", "10 秒"],
+      ],
+      body: "开始 → 规划 → 合成（无配方略过）→ 行动。合成后发动技能，未合成则计算，行动完成后交给对手。",
+      note: "超时自动推进、选择合成或执行合法行动。除强欲效果外不能手动跳过；无合法计算时自动结束。本地对局在查看菜单、说明或切到后台时暂停，触碰演出期间不扣操作时间。",
+    };
+  return null;
+}
+
+export function setupInfo(root, getState, asset, getParticipants = () => [], isRemote = () => false) {
+  const listeners = new AbortController();
+  const listen = (element, event, callback) =>
+    element.addEventListener(event, callback, { signal: listeners.signal });
+  const pop = document.querySelector("#info-popover");
+  let anchor,
+    timer,
+    pinned = false;
+  function hide() {
+    clearTimeout(timer);
+    anchor?.removeAttribute("aria-describedby");
+    anchor = null;
+    pinned = false;
+    pop.hidden = true;
+  }
+  function show(button, pin = false) {
+    if (
+      !pin &&
+      button?.matches(
+        ".hand-hotspot.target,.hand-hotspot.selected,.prop-slot.selected .prop-use",
+      )
+    )
+      return;
+    if (
+      !button ||
+      document.querySelector("#dialog").open ||
+      root.querySelector(".is-busy")
+    )
+      return;
+    const data = describe(button.dataset.info, getState(), getParticipants());
+    if (!data) return;
+    if(isRemote() && button.dataset.info === "phase") data.note="服务器统一计时，菜单、图鉴、后台和断线都不会暂停对局。超时自动执行合法操作。";
+    clearTimeout(timer);
+    anchor?.removeAttribute("aria-describedby");
+    anchor = button;
+    pinned = pin;
+    button.setAttribute("aria-describedby", "info-popover");
+    const kind=button.dataset.info.split(':')[0];
+    const stats=data.stats.filter(([label])=>!['阶段','使用'].includes(label));
+    pop.setAttribute('role',pin?'dialog':'tooltip');
+    pop.setAttribute('aria-label',data.title);
+    pop.innerHTML = `${pin?'<button class="info-close" aria-label="关闭详情">×</button>':''}<div class="info-heading">${data.image?`<img src="${asset(data.image)}" alt="">`:''}<div><h3>${escapeHtml(data.title)}</h3><div class="info-tags">${stats.map(([label,value])=>`<span>${kind==='prop'||kind==='weapon'||kind==='status'?'':label+' '}${escapeHtml(value)}</span>`).join('')}</div></div></div><p>${data.body}</p>${pin&&data.note?`<details class="info-rules"><summary>规则细节</summary><p class="info-note">${data.note}</p></details>`:''}`;
+    pop.hidden = false;
+    const r = button.getBoundingClientRect(),
+      box = pop.getBoundingClientRect();
+    const mobile = innerWidth < 650;
+    const x = mobile
+      ? 12
+      : Math.min(
+          innerWidth - box.width - 12,
+          Math.max(12, r.left + r.width / 2 - box.width / 2),
+        );
+    const y = mobile
+      ? Math.max(12, innerHeight - box.height - 16)
+      : r.top > box.height + 18
+        ? r.top - box.height - 12
+        : Math.min(innerHeight - box.height - 12, r.bottom + 12);
+    pop.style.left = `${x}px`;
+    pop.style.top = `${Math.max(12, y)}px`;
+  }
+  listen(root, "pointerover", (e) => {
+    if (e.pointerType === "touch" || pinned) return;
+    const b = e.target.closest("[data-info]");
+    clearTimeout(timer);
+    if (b && b !== anchor) timer = setTimeout(() => show(b), 220);
+  });
+  listen(root, "pointerout", (e) => {
+    if (pinned) return;
+    clearTimeout(timer);
+    if (
+      e.relatedTarget?.closest?.("#info-popover") ||
+      e.relatedTarget?.closest?.("[data-info]") === anchor
+    )
+      return;
+    timer = setTimeout(hide, 150);
+  });
+  listen(root, "focusin", (e) => {
+    const b = e.target.closest("[data-info]");
+    if (
+      b?.matches(
+        '.hand-hotspot.available,.hand-hotspot.target,.prop-use[aria-disabled="false"]',
+      )
+    )
+      return;
+    if (b) show(b);
+  });
+  listen(root, "focusout", (e) => {
+    if (!pinned && !pop.contains(e.relatedTarget))
+      timer = setTimeout(hide, 100);
+  });
+  listen(pop, "pointerenter", () => clearTimeout(timer));
+  listen(pop, "pointerleave", () => {
+    if (!pinned) hide();
+  });
+  listen(pop, "click", (e) => {
+    if (e.target.closest("button")) hide();
+  });
+  listen(document, "keydown", (e) => {
+    if (e.key === "Escape") hide();
+  });
+  listen(document, "pointerdown", (e) => {
+    if (pinned && !pop.contains(e.target) && !anchor?.contains(e.target))
+      hide();
+  });
+  listen(window, "resize", hide);
+  return {
+    show,
+    hide,
+    dispose() {
+      hide();
+      listeners.abort();
+    },
+  };
+}

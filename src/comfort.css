@@ -1,0 +1,175 @@
+/* Release layout: keep choices readable and controls within reach. */
+.game-menu .menu-footnote { font-size:15px!important; line-height:1.8; color:var(--ink); }
+.menu-choice small { font-size:13px; line-height:1.5; opacity:.9; }
+.menu-actions .menu-choice:nth-child(3) { animation-delay:.14s; }
+.menu-choice:active:not(:disabled) { transform:skew(-3deg) translateX(3px) scale(.98); }
+.game-menu .text-button { font-size:15px; min-height:44px; }
+.turn-instruction p { font-size:14px; line-height:1.65; }
+.turn-instruction h1 { font-size:clamp(24px,2.3vw,32px); line-height:1.25; }
+.turn-tag,.inventory-label { font-size:12px; }
+.status-strip { font-size:12px; }
+.player-effects button .prop-label { font-size:12px; }
+.player-effects .loadout-count { font-size:12px; }
+.game-shell[data-phase="planning"] .player.active .prop-label { display:none; }
+.player-effects button { min-height:34px; }
+.turn-track > div > span { font-size:17px; }
+.turn-track small { font-size:12px; }
+.bottom-line { min-height:36px; }
+.battle-log { font-size:12px; }
+.forge-options { overflow:auto; overscroll-behavior:contain; }
+.forge-choices { overflow:visible; flex-shrink:0; }
+.forge-choices button > span { font-size:14px; }
+.forge-choices button { transition:background .16s,box-shadow .16s; }
+.forge-choices button:focus-visible { outline:3px solid var(--blue); outline-offset:-3px; }
+.prop-info,.info-close,.dialog-close { min-width:36px; min-height:36px; }
+#info-popover { max-height:calc(100svh - 32px); overflow:auto; overscroll-behavior:contain; }
+#info-popover p { font-size:14px; line-height:1.75; }
+.cinema-hit { position:absolute; z-index:10; left:7%; bottom:calc(7% + 62px); padding:4px 12px; background:var(--ink); color:var(--paper); font-size:15px; font-weight:800; }
+.cinema-hit:empty { display:none; }
+.cinema-result { line-height:1.45; }
+dialog[open] { animation:dialog-arrive .18s ease-out both; }
+@keyframes dialog-arrive { from { opacity:0; translate:0 8px; } to { opacity:1; translate:0 0; } }
+@media(min-width:901px) and (max-height:850px) {
+  .topbar { height:60px; min-height:60px; }
+  .turn-track { min-height:56px; }
+  .duel,.game-shell[data-phase="synthesis"] .duel { min-height:400px; flex-basis:400px; }
+  .command-inner { min-height:115px; height:auto; padding-block:12px; }
+  .game-menu .menu-keyart { min-height:520px; }
+  .game-menu .menu-body { padding-block:28px; }
+}
+@media(max-width:900px) {
+  .command-deck { position:sticky; bottom:0; z-index:36; }
+  .command-inner { gap:14px; }
+  .status-strip { font-size:11px; }
+  .player-effects button .prop-label { font-size:11px; }
+  .game-menu .menu-body { padding-inline:26px; }
+}
+@media(max-width:650px) {
+  .game-menu .menu-keyart { height:120px; }
+  .game-menu .menu-body { padding:20px; }
+  .game-menu .menu-body h2 { font-size:36px; }
+  .turn-instruction h1 { font-size:22px; }
+  .turn-instruction p { font-size:13px; }
+  .turn-track > div > span { font-size:14px; }
+  .turn-track small { font-size:10px; }
+  .topbar nav button { min-height:36px; }
+  .forge-choices button > span { font-size:13px; }
+  .cinema-hit { font-size:12px; bottom:calc(7% + 76px); }
+}
+@media(prefers-reduced-motion:reduce) {
+  dialog[open],.menu-actions .menu-choice { animation:none; }
+  .menu-choice,.forge-choices button { transition:none; }
+}
+
+/* The battlefield uses position and team color instead of repeated captions. */
+.player-head { gap:12px; align-items:center; }
+.player-identity { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.player-identity>strong { max-width:none; font-size:clamp(22px,2.6vw,34px); line-height:1.2; }
+.player-identity .seat-label { color:inherit; font-size:12px; border:1px solid currentColor; padding:2px 5px; }
+.player-presence { margin:0; }
+.player-presence .status-dot { margin:0; }
+.health-number { margin-left:auto; }
+.health-number>small { opacity:.55; }
+.player-loadout { gap:10px; align-items:center; }
+.player-effects { gap:7px; }
+.player-effects .inventory-icon { width:48px; height:48px; padding:4px; border:1px solid #17203425; background:#faf6eb; box-shadow:2px 2px 0 #17203424; }
+.player-effects .inventory-icon img { width:100%; height:100%; }
+.player-effects .loadout-count { font:700 18px/1 Teko,sans-serif; color:var(--muted); }
+.status-strip { min-height:36px; align-items:center; gap:7px; }
+.status-strip>.status-icon { position:relative; display:grid; place-items:center; width:38px; height:38px; padding:3px; background:#faf6eb; border:1px solid #17203435; }
+.status-icon>img { width:100%; height:100%; object-fit:contain; }
+.status-count { position:absolute; bottom:-3px; right:-4px; padding:1px 4px; background:var(--ink); color:var(--paper); font-size:12px; line-height:1.2; min-width:14px; text-align:center; }
+.status-strip .supply-label { display:flex; align-items:center; gap:7px; font-size:11px; }
+.supply-pips { display:flex; gap:3px; }
+.supply-pips i { width:7px; height:12px; border:1px solid currentColor; transform:skew(-10deg); opacity:.4; }
+.supply-pips .filled { background:currentColor; opacity:1; }
+.weapon-ready { gap:8px; }
+.weapon-ready img { width:48px; height:48px; background:var(--paper); }
+.inventory-label>small { display:none; }
+.prop-slot .prop-use img { width:52px; height:52px; }
+#info-popover { width:280px; max-width:calc(100vw - 24px); padding:13px; border-width:1px; box-shadow:4px 4px 0 #17203425; z-index:100; max-height:min(360px,calc(100svh - 32px)); }
+#info-popover .info-heading { gap:10px; margin-bottom:9px; padding-right:18px; }
+#info-popover .info-heading>img { width:44px; height:44px; }
+#info-popover h3 { font-size:20px; line-height:1.25; margin:0; }
+#info-popover p { margin:8px 0 0; font-size:14px; line-height:1.55; }
+.info-tags { display:flex; flex-wrap:wrap; gap:4px 9px; margin-top:5px; font-size:12px; color:#60636c; }
+.info-rules { border-top:1px solid var(--line); margin-top:10px; padding-top:8px; }
+.info-rules summary { cursor:pointer; font-size:12px; color:#60636c; }
+#info-popover .info-note { font-size:12px; line-height:1.6; }
+.bottom-line { justify-content:flex-end; }
+@media(max-width:650px) {
+ .player-identity>strong { font-size:21px; }
+ .player-effects .inventory-icon { width:40px; height:40px; }
+ .status-strip>.status-icon { display:grid; width:34px; height:34px; }
+ .player-effects { gap:5px; }
+ .prop-slot .prop-use img { width:46px; height:46px; }
+}
+
+/* Readable turn cinematics, quiet phase labels, and an unobstructed skill reveal. */
+.game-menu[open] { inset:0; margin:0; width:100vw; height:100svh; max-width:none; max-height:none; border:0; background:var(--paper); }
+.game-menu::backdrop { background:#171a24; backdrop-filter:none; }
+.game-menu .menu-keyart { height:100%; }
+.phase-time { display:grid; justify-items:center; cursor:default; pointer-events:none; }
+.cancel-action { min-height:44px; padding:10px 22px; border:2px solid currentColor; background:var(--paper); font-size:16px; text-decoration:none; }
+.phase-cut { z-index:130; }
+.phase-cut.phase-text { background:transparent; pointer-events:none; }
+.phase-text .phase-speed { display:none; }
+.phase-text .phase-ribbon { width:auto; min-width:240px; padding:20px 44px; transform:none; background:#171b29e8; color:#fff9eb; border:0; box-shadow:none; }
+.phase-text .phase-type { padding:0; }
+.phase-text .phase-type strong { font-size:clamp(28px,4vw,48px); }
+.forge-reveal { position:fixed; inset:0; z-index:140; background:#f5eedff5; padding:24px; }
+.forge-reveal img { width:clamp(150px,24vw,280px); height:clamp(150px,24vw,280px); }
+.forge-reveal strong { font-size:clamp(36px,6vw,76px); }
+.forge-reveal p { max-width:640px; font-size:18px; line-height:1.7; }
+.combat-cinema.skill { position:fixed; inset:0; z-index:140; }
+.skill .cinema-icon { left:27%; top:18%; width:56%; height:75%; }
+.skill .cinema-impact { inset:12% 15%; }
+.skill .cinema-result { font-size:clamp(22px,3vw,38px); }
+#tutorial-spotlight { position:fixed; inset:0; width:100vw; height:100vh; z-index:110; pointer-events:none; }
+@media(max-width:650px) { .game-menu .menu-keyart { height:20svh; min-height:100px; } .game-menu .menu-body { min-height:75svh; } .forge-reveal p { font-size:15px; } }
+/* Keep the detail button outside the item's activation hit area. */
+.prop-slot:not(.empty) { display:grid; grid-template-columns:minmax(0,1fr) 30px; width:106px; height:80px; }
+.prop-slot .prop-info { position:static; width:30px; min-width:30px; height:100%; border-left:1px solid #f2eddf35; }
+.prop-slot .prop-use { min-width:0; }
+@media(max-width:650px) { .prop-slot:not(.empty) { width:86px; height:76px; grid-template-columns:minmax(0,1fr) 26px; } .prop-slot .prop-info { min-width:26px; width:26px; } .prop-slot .prop-use img { width:40px; height:40px; } }
+.forge-reveal .forge-art { width:clamp(150px,24vw,280px)!important; height:clamp(150px,24vw,280px)!important; }
+.skill .cinema-impact { inset:auto; left:calc(50% - min(28vw,240px)); top:calc(50% - min(28vw,240px)); width:min(56vw,480px); height:min(56vw,480px); }
+.combat-cinema.skill[data-team="0"] { --strike:#3474f2; }
+.combat-cinema.skill.contact[data-family="nine"] .nine-ritual { display:flex; flex-wrap:wrap; justify-content:center; align-content:center; padding:24px; }
+.nine-ritual>b,.nine-ritual>small { flex-basis:100%; }
+
+/* The logical left hand stays index 0; only player one's screen order changes. */
+#hand-0-0 { top:76%; }
+#hand-0-1 { top:28%; }
+.phase-text .phase-ribbon { min-height:0; height:auto; max-height:none; }
+.combat-cinema.ultimate .nine-ritual { background:var(--strike); }
+.combat-cinema .nine-ritual>span { color:var(--strike); }
+.combat-cinema.ultimate .nine-ritual>b { color:var(--paper); text-shadow:4px 4px 0 var(--ink); }
+.combat-cinema.ultimate .nine-ritual>small { color:var(--paper); }
+.game-menu .menu-keyart { position:relative; }
+.game-menu .menu-wordmark { position:absolute; inset:auto 5% 8%; z-index:2; color:#fff8e9; transform:rotate(-6deg); font-family:Teko,Impact,sans-serif; line-height:.8; text-shadow:5px 6px 0 #131a2c; }
+.game-menu .menu-wordmark>span { position:static; display:block; font:800 clamp(56px,9vw,150px)/.8 Teko,Impact,sans-serif; letter-spacing:-.02em; color:inherit; background:none; padding:0; }
+.game-menu .menu-wordmark>strong { display:block; font-size:clamp(90px,15vw,240px); font-weight:800; letter-spacing:-.025em; }
+.menu-wordmark i { color:#f04732; font-style:normal; }
+.game-menu .menu-wordmark>small { display:inline-block; margin-top:22px; padding:7px 12px; background:#131a2c; font:700 12px/1.4 sans-serif; letter-spacing:.08em; text-shadow:none; }
+.game-menu .menu-keyart::after { content:""; position:absolute; inset:40% 0 0; background:linear-gradient(transparent,#121a30b5); pointer-events:none; }
+@media(max-width:650px) {
+ .game-menu .menu-wordmark { inset:auto 6% 14%; transform:rotate(-4deg); }
+ .game-menu .menu-wordmark>span { display:inline; font-size:clamp(32px,11vw,54px); }
+ .game-menu .menu-wordmark>strong { display:inline; font-size:clamp(38px,13vw,64px); margin-left:10px; }
+ .game-menu .menu-wordmark>small { display:none; }
+}
+.phase-text .phase-type { margin:0; width:auto; color:inherit; text-shadow:none; text-align:center; }
+.phase-text .phase-type strong { white-space:nowrap; font-style:normal; letter-spacing:.08em; }
+.turn-track>div.current { box-shadow:none; }
+.turn-track>div.current::before { box-shadow:4px 4px 0 var(--active); }
+/* Preview text can extend outside a hand, but must never steal another hand's input. */
+.hand-hotspot .sum-preview, .hand-hotspot .hand-status { pointer-events:none; }
+
+/* Names may contain 24 Unicode characters without displacing HP or controls. */
+.player-head .player-identity { flex:1; min-width:0; }
+.player-head .player-identity>strong { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.player-head .health-number { flex-shrink:0; }
+.room-players>div { min-width:0; }
+.room-players b { overflow-wrap:anywhere; }
+.phase-type p,.cinema-heading small,.result-content h2 { overflow-wrap:anywhere; }

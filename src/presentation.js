@@ -1,0 +1,38 @@
+import {TOUCH_DURATION_MS} from "./motion.js";
+import {PROPS,weaponById} from './catalog.js';
+import {phaseCue} from './phase-cue.js';
+export const SKILL_MOTION=Object.freeze({
+ serious:['punch','破盾 · 真实伤害'],drunken:['swirl','醉意 · 随机伤害'],seven:['curse','七伤 · 七回合'],scissors:['slash','剪断 · 双手减一'],fan:['fan','花蝶 · 弃置道具'],claw:['slash','爪击 · 真实伤害'],buddha:['palm','神掌 · 三回合禁行动'],dragon:['dragon','降龙 · 重击'],sorrow:['palm','残血 · 反击'],dark:['curse','玄冥 · 永久侵蚀'],frag:['burst','爆破'],foam:['guard','盾墙 · 两次防御'],knuckles:['guard','指虎 · 永久强化'],steal:['steal','窃取 · 复制双手'],dual:['gun','双枪 · 四连击'],sniper:['snipe','狙击 · 真实伤害'],taser:['bolt','电击 · 三回合禁行动'],unify:['nine','归一 · 累积九印']
+});
+export function actionBeats(old,next,command) {
+ const beats=[];
+ for(const e of next.events||[])if(e.type==='damage')beats.push({...e,label:e.blocked&&e.amount===0?e.blocked:`${e.source} · ${e.trueDamage?'真实伤害':'伤害'} HP-${e.amount}`});
+ if(command.type==='attack'){
+  const id=old.players[old.active].weapon,p=next.players[old.active],e=next.players[1-old.active];
+  if(next.winner===null||id==='unify') {
+   const labels={serious:'击碎防御 · 下回合无法行动',seven:`七伤已施加 · 剩余 ${e.seven} 次`,scissors:`对手双手 → ${e.hands.join(' / ')}`,fan:'花蝶扇 · 道具已结算',buddha:'双手归一 · 跳过三回合',dark:'玄冥 · 永久侵蚀',foam:`盾墙 → ${p.foam} 次`,knuckles:old.players[old.active].knuckles?'指虎已存在 · 不叠加':'指虎生效 · 每段技能 +10',steal:`道具已转移 · 双手 → ${p.hands.join(' / ')}`,dual:`道具补充 → ${p.props.length}/3`,taser:'对手跳过三回合',unify:p.nine===2?'九九归一':'九印已得 · 1 / 2'};
+   if(labels[id])beats.push({type:'effect',owner:old.active,label:labels[id]});
+  }
+ }
+ if(command.type==='prop'){
+  const id=old.players[old.active].props[command.slot],p=next.players[command.target];
+  let label=PROPS[id].name+' · 生效';
+  if(command.targetHand!==undefined)label=id==='lock'?'封印至该玩家回合结束':`数字 ${old.players[command.target].hands[command.targetHand]} → ${p.hands[command.targetHand]}`;
+  if(id==='grace')label=`回复 ${p.hp-old.players[command.target].hp} 生命`;
+  if(id==='greed')label='获得道具 · 立即结束回合';
+  if(id==='echo'||id==='mirror')label=PROPS[id].name+' · 本回合计算生效';
+  beats.unshift({type:'effect',owner:command.target,label});
+ }
+ return beats;
+}
+export function actionDuration(old,next,c) {
+ if(c.type==='add')return TOUCH_DURATION_MS * (old.players[old.active].echo?2:1);
+ if(c.type==='forge')return 3000;
+ if(c.type==='attack')return old.players[old.active].weapon==='unify'?(next.winReason==='九九归一'?6500:4500):4000+Math.max(0,actionBeats(old,next,c).length-1)*500;
+ if(c.type==='prop')return 1250+Math.max(0,actionBeats(old,next,c).length-1)*300;
+ return actionBeats(old,next,c).length?900:0;
+}
+export function presentationDuration(old,next,c) {
+ return actionDuration(old,next,c)+(phaseCue(old,next)?.duration||0)+180;
+}
+export const commandArt=(old,c)=>c.type==='attack'?weaponById(old.players[old.active].weapon):c.type==='prop'?PROPS[old.players[old.active].props[c.slot]]:null;

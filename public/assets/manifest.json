@@ -1,0 +1,86 @@
+[
+  {
+    "source": "Assets/Resources/Images/BattleUI/Finger0.png",
+    "output": "assets/hand-0.webp",
+    "originalBytes": 11073,
+    "bytes": 5322
+  },
+  {
+    "source": "Assets/Resources/Images/BattleUI/Finger1.png",
+    "output": "assets/hand-1.webp",
+    "originalBytes": 9907,
+    "bytes": 5004
+  },
+  {
+    "source": "Assets/Resources/Images/BattleUI/Finger2.png",
+    "output": "assets/hand-2.webp",
+    "originalBytes": 11748,
+    "bytes": 6352
+  },
+  {
+    "source": "Assets/Resources/Images/BattleUI/Finger3.png",
+    "output": "assets/hand-3.webp",
+    "originalBytes": 11932,
+    "bytes": 6478
+  },
+  {
+    "source": "Assets/Resources/Images/BattleUI/Finger4.png",
+    "output": "assets/hand-4.webp",
+    "originalBytes": 12138,
+    "bytes": 6450
+  },
+  {
+    "source": "Assets/Resources/Images/BattleUI/Finger5.png",
+    "output": "assets/hand-5.webp",
+    "originalBytes": 12061,
+    "bytes": 6554
+  },
+  {
+    "source": "Assets/Resources/Images/BattleUI/Finger6.png",
+    "output": "assets/hand-6.webp",
+    "originalBytes": 10924,
+    "bytes": 5562
+  },
+  {
+    "source": "Assets/Resources/Images/BattleUI/Finger7.png",
+    "output": "assets/hand-7.webp",
+    "originalBytes": 12840,
+    "bytes": 6152
+  },
+  {
+    "source": "Assets/Resources/Images/BattleUI/Finger8.png",
+    "output": "assets/hand-8.webp",
+    "originalBytes": 10605,
+    "bytes": 4862
+  },
+  {
+    "source": "Assets/Resources/Images/BattleUI/Finger9.png",
+    "output": "assets/hand-9.webp",
+    "originalBytes": 11905,
+    "bytes": 5888
+  },
+  {
+    "source": "Assets/Resources/Images/Blueprint/5+5神圣之盾.png",
+    "output": "assets/shield.webp",
+    "originalBytes": 252631,
+    "bytes": 42504
+  },
+  {
+    "source": "Assets/Resources/Sound/Confirm_03.wav",
+    "output": "assets/click.wav",
+    "originalBytes": 102024,
+    "bytes": 102024
+  },
+  {
+    "source": "Assets/Resources/Sound/Build.wav",
+    "output": "assets/forge.wav",
+    "originalBytes": 776296,
+    "bytes": 776296
+  },
+  {
+    "source": "Assets/Resources/Sound/victory.wav",
+    "output": "assets/victory.wav",
+    "originalBytes": 907200,
+    "bytes": 907200
+  }
+]

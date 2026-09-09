@@ -1,0 +1,11 @@
+node_modules/
+dist/
+test-results/
+release/
+data/
+.env
+.env.*
+!.env.example
+*.log
+*.conf
+__pycache__/
