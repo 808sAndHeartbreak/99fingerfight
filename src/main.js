@@ -121,8 +121,8 @@ function announceSupply(next) {
   const notes=[0,1].flatMap(owner=>{
     return (next.events||[]).some(e=>e.type==="supply-full"&&e.owner===owner)?[`${playerName(participants(),owner)}背包已满，本次补给跳过`]:[];
   });
-  const ticks=(next.events||[]).filter(e=>e.type==="damage"&&["七伤拳","玄冥神掌"].includes(e.source));
-  notes.push(...ticks.map(e=>`${playerName(participants(),e.owner)}${e.source} HP-${e.amount}`));
+  const ticks=(next.events||[]).filter(e=>e.type==="damage"&&["七伤拳","玄冥神掌","中毒"].includes(e.source));
+  notes.push(...ticks.map(e=>`${playerName(participants(),e.owner)}${e.source} ${e.blocked&&e.amount===0?e.blocked:`HP-${e.amount}`}`));
   if(notes.length)toast(notes.join("；"),5200);
 }
 function canTarget(owner, hand) {
@@ -141,10 +141,10 @@ function renderPlayer(owner) {
     active = state.active === owner && state.winner === null;
   const presence=mode==="online" ? participants().find(x=>x.seat===owner) : null;
   const presenceText=presence ? presence.departed?"已离开":online.status!=="connected"?(owner===online.packet.room.seat?"重连中":"待同步"):presence.connected?"在线":"已断线" : "";
-  const statusIcons={echo:'echo',mirror:'mirror',silenced:'silence',skip:'taser',seven:'seven',dark:'dark',foam:'foam',knuckles:'knuckles',nine:'nine-seal'};
+  const statusIcons={echo:'echo',mirror:'mirror',silenced:'silence',skip:'taser',seven:'seven',dark:'dark',foam:'foam',knuckles:'knuckles',peace:'peace',weak:'serpent',poison:'serpent',nine:'nine-seal'};
   const statuses=Object.keys(statusIcons).filter(key=>p[key]).map(key=>{
     const d=describe(`status:${key}:${owner}`,state);
-    const count=({skip:p.skip,seven:p.seven,dark:'∞',foam:p.foam,knuckles:'+10',nine:`${p.nine}/2`})[key];
+    const count=({skip:p.skip,seven:p.seven,dark:'∞',foam:p.foam,knuckles:`+${p.knuckles*10}`,peace:p.peace,weak:`弱${p.weak}`,poison:`毒${p.poison}`,nine:`${p.nine}/2`})[key];
     return `<button class="status-icon" data-info="status:${key}:${owner}" data-info-only aria-label="${d.title}，${d.stats[0][1]}">${img(`ink-mono/${statusIcons[key]}.webp`)}${count!==undefined?`<b class="status-count">${count}</b>`:''}</button>`;
   }).join('');
   const identity=mode==='online'&&owner===online.packet.room.seat?'你':mode==='ai'&&owner===1?'陪练':'';
@@ -528,7 +528,7 @@ function showRecipes(owner, hand) {
   dialog.dataset.view="recipes";
 }
 function showHelp() {
-  openDialog(`<div class="dialog-body concise-help"><button class="dialog-close" data-close aria-label="关闭玩法说明">×</button><small class="kicker">HOW TO PLAY</small><h2>借数字，出绝招。</h2><p class="help-goal">打空对手的 <b>99</b> 点生命，<br>或用 <b>9 + 9</b> 发动两次归一获胜。</p><ol class="rules"><li><b>开始</b><p>切换回合。自己的第 1、4、7…回合获得道具，最多存 3 个。</p></li><li><b>规划</b><p>使用道具调整数字或施加效果，也可直接结束规划。</p></li><li><b>合成</b><p>双手有合法配方才进入。选择技能后双手归 1；也可放弃。</p></li><li><b>行动</b><p>有技能就发动；没有就选自己的手，碰对手的手。必须行动。</p></li></ol><div class="help-example"><b>8 + 4 → 2</b><span>只改主动手，结果留个位。<br>计算凑出的组合，下个回合才能合成。</span></div><details><summary>防御、计时与详细查询</summary><p>单个 5 减半普通伤害后变为 1；55 免疫普通伤害且不消耗。真实伤害无视防御；认真一拳额外破盾。</p><p>规划、合成、计算各 30 秒，技能 10 秒；超时自动行动。无合法计算才自动结束。${mode==='online'?'联机查看菜单或切后台不暂停。':'本地打开菜单或切后台暂停；教学没有倒计时。'}</p><p>「组合图鉴」随时查询全部技能；悬停道具、状态或点 i 查看详情。</p></details><button class="primary" data-close>${started?'继续对局':'返回主菜单'} →</button></div>`);
+  openDialog(`<div class="dialog-body concise-help"><button class="dialog-close" data-close aria-label="关闭玩法说明">×</button><small class="kicker">HOW TO PLAY</small><h2>借数字，出绝招。</h2><p class="help-goal">打空对手的 <b>99</b> 点生命，<br>或用 <b>9 + 9</b> 发动两次归一获胜。</p><ol class="rules"><li><b>开始</b><p>切换回合。自己的第 1、4、7…回合获得道具，最多存 3 个。</p></li><li><b>规划</b><p>使用道具调整数字或施加效果，也可直接结束规划。</p></li><li><b>合成</b><p>双手有合法配方才进入。选择技能后双手归 1；也可放弃。</p></li><li><b>行动</b><p>有技能就发动；没有就选自己的手，碰对手的手。必须行动。</p></li></ol><div class="help-example"><b>8 + 4 → 2</b><span>只改主动手，结果留个位。<br>计算凑出的组合，下个回合才能合成。</span></div><details><summary>防御、计时与详细查询</summary><p>单个 5 减半普通伤害后变为 1；55 免疫普通伤害且不消耗。真实伤害无视护盾；和平免疫所有伤害。认真一拳重置对手数字并清除盾墙。</p><p>规划、合成、计算各 30 秒，技能 10 秒；超时自动行动。无合法计算才自动结束。${mode==='online'?'联机查看菜单或切后台不暂停。':'本地打开菜单或切后台暂停；教学没有倒计时。'}</p><p>「组合图鉴」随时查询全部技能；悬停道具、状态或点 i 查看详情。</p></details><button class="primary" data-close>${started?'继续对局':'返回主菜单'} →</button></div>`);
 }
 
 function showResult() {

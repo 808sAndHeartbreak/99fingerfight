@@ -32,7 +32,7 @@ export function describe(key, state, participants) {
   if (kind === "prop") {
     const owner=hand===undefined?state.active:Number(hand),p=state.players[owner],e=state.players[1-owner];
     const sum=p.hands[0]+p.hands[1],enemySum=e.hands[0]+e.hands[1];
-    const preview={grace:`（当前回复 ${Math.min(MAX_HP-p.hp,sum)}，数字总和 ${sum}）`,ruin:`（当前伤害 ${enemySum}，实际扣血 ${Math.min(e.hp,enemySum)}）`,greed:`（当前获得 ${Math.min(2,4-p.props.length)} 个）`,boon:`（当前己方补 ${4-p.props.length} 个，对方补 ${3-e.props.length} 个）`,balance:`（当前己方重抽 ${Math.max(0,p.props.length-1)} 个，对方重抽 ${e.props.length} 个）`}[id]||'';
+    const preview={grace:`（当前回复 ${Math.min(MAX_HP-p.hp,sum)}，数字总和 ${sum}）`,ruin:`（当前伤害 ${enemySum}，实际扣血 ${e.peace>0?0:Math.min(e.hp,enemySum)}）`,greed:`（当前获得 ${Math.min(2,4-p.props.length)} 个）`,boon:`（当前己方补 ${4-p.props.length} 个，对方补 ${3-e.props.length} 个）`,balance:`（当前己方重抽 ${Math.max(0,p.props.length-1)} 个，对方重抽 ${e.props.length} 个）`}[id]||'';
     return {
       title: PROPS[id].name,
       image: PROPS[id].image,
@@ -55,7 +55,10 @@ export function describe(key, state, participants) {
       seven:["七伤拳",`剩余 ${p.seven} 次`,"每个己方回合开始受到 7 点真实伤害。重复施加剩余次数 +7。"],
       dark:["玄冥神掌","永久","每个己方回合开始受到 5 点真实伤害；不叠加，可与七伤拳共同生效。"],
       foam:["泡沫盾墙",`剩余 ${p.foam} 次`,"完全挡住普通伤害，每段消耗一次。真实伤害穿透且不消耗。重复获得次数 +2。"],
-      knuckles:["指虎","永久","每段直接技能伤害 +10，包括真实伤害和双枪每发；不增加道具或持续伤害，不叠加。"],
+      knuckles:["指虎",`永久 ${p.knuckles} 层 · +${p.knuckles*10}`,"每段直接技能伤害 +10，包括真实伤害和双枪每发；不增加道具或持续伤害。可重复叠加，无层数上限。"],
+      peace:["和平",`剩余 ${p.peace} 个己方回合`,"免疫所有伤害，包括真实伤害、道具与持续伤害，不消耗护盾。各自后续回合结束计数，跳过的回合照常计数；不阻止九标记胜利。"],
+      weak:["虚弱",`剩余 ${p.weak} 个己方回合`,"每段直接技能伤害 −5，最低 0；不影响道具与持续伤害。重复施加延长回合。"],
+      poison:["中毒",`剩余 ${p.poison} 次`,"每个己方回合开始受到 2 点普通伤害，可被防御阻挡。重复施加延长回合。"],
       nine:["九标记",`${p.nine} / 2`,"再次发动归一获得第二枚时，九九归一立即获胜。手的数字变化不影响标记。"]
     }[id];
     return data?{title:data[0],tag:"持续状态",stats:[["时限 / 数量",data[1]]],body:data[2],note:""}:null;
@@ -96,7 +99,7 @@ export function describe(key, state, participants) {
         ["减伤", "50%"],
       ],
       body: "单个 5 使普通伤害减半（向上取整），然后变为 1；双手 55 完全免疫普通伤害，不消耗数字且不限次数，数字变化后立即失效。",
-      note: "防御顺序：55 → 盾墙 → 单个 5。真实伤害穿透且不消耗防御；认真一拳先将所有 5 变为 1 并清除盾墙。零伤害不消耗防御。",
+      note: "防御顺序：和平 → 55 → 盾墙 → 单个 5。真实伤害穿透且不消耗防御；认真一拳先将双手变为 1 并清除盾墙。零伤害不消耗防御。",
     };
   if (kind === "player") {
     const p = state.players[Number(id)];

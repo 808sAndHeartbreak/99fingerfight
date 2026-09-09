@@ -82,7 +82,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,impa
       el.classList.toggle('blocked',!!beat?.blocked&&beat.amount===0);
       const fx=el.querySelector('.cinema-impact');
       animate(fx,[{opacity:0,transform:'scale(.2) rotate(-20deg)'},{opacity:.85,transform:'scale(1) rotate(0)',offset:.2},{opacity:0,transform:'scale(1.45) rotate(8deg)'}],{duration:Math.min(500,beatDuration),fill:'both'});
-      impact(['七伤拳','玄冥神掌'].includes(beat?.source)?'curse':family,beat?.owner??(skill?1-old.active:command.target));
+      impact(['七伤拳','玄冥神掌','中毒'].includes(beat?.source)?'curse':family,beat?.owner??(skill?1-old.active:command.target));
       sound(beat?.blocked&&beat.amount===0?'guard':nine?'nine':family,skill?1:.5);
       if(!await wait(beatDuration))return false;
     }

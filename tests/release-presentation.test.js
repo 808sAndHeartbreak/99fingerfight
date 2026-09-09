@@ -6,7 +6,7 @@ import {WEAPONS,PROPS} from '../src/catalog.js';
 import {MatchHub} from '../server/hub.js';
 const run=(s,c)=>applyCommand(s,{actor:s.active,revision:s.revision,...c});
 test('every skill and item has dedicated art and readable authoritative beats',()=>{
- assert.equal(Object.keys(SKILL_MOTION).length,18);
+ assert.equal(Object.keys(SKILL_MOTION).length,20);
  for(const w of WEAPONS){const s=createGame();s.phase='action';s.players[0].weapon=w.id;const c={type:'attack'},n=run(s,c);assert.equal(w.image,`ink-mono/${w.id}.webp`);assert.ok(actionBeats(s,n,c).length);assert.ok(actionDuration(s,n,c)>=1400);assert.ok(presentationDuration(s,n,c)>=actionDuration(s,n,c));}
  for(const [id,p] of Object.entries(PROPS))assert.equal(p.image,`ink-mono/${id}.webp`);
 });
@@ -25,7 +25,7 @@ test('server protects same-phase item presentation without granting a fresh plan
  const duration=presentationDuration(old,r.state,c);assert.equal(r.readyAt,now+duration);assert.equal(r.deadlineAt,18000+duration);assert.equal(r.deadlineAt-r.readyAt,8000);
 });
 test('all ordinary and true direct skills agree with defense priority for every opponent digit pair',()=>{
- const amounts={serious:30,scissors:5,fan:10,claw:10,buddha:10,dragon:50,frag:30,sniper:30,taser:1,sorrow:20};
+ const amounts={serious:30,scissors:5,fan:10,claw:5,buddha:10,dragon:50,frag:30,sniper:30,taser:1,sorrow:20};
  for(const [id,amount] of Object.entries(amounts))for(let a=0;a<10;a++)for(let b=0;b<10;b++)for(const foam of [0,2])for(const boost of [false,true]){
   const s=createGame();s.phase='action';s.players[0].weapon=id;s.players[0].hp=79;s.players[0].knuckles=boost;s.players[1].hands=[a,b];s.players[1].foam=foam;
   const n=run(s,{type:'attack'}),raw=amount+(boost?10:0),truth=['serious','claw','sniper'].includes(id),expected=truth?raw:a===5&&b===5?0:foam?0:a===5||b===5?Math.ceil(raw/2):raw;
@@ -35,7 +35,7 @@ test('all ordinary and true direct skills agree with defense priority for every 
 import {existsSync,statSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 test('all production illustrations exist with nonempty files and no placeholder aliases',()=>{
- const files=[...WEAPONS.map(w=>w.image),...Object.values(PROPS).map(p=>p.image),'ink-mono/nine-seal.webp'];assert.equal(new Set(files).size,32);
+ const files=[...WEAPONS.map(w=>w.image),...Object.values(PROPS).map(p=>p.image),'ink-mono/nine-seal.webp'];assert.equal(new Set(files).size,34);
  for(const file of files){const path=fileURLToPath(new URL('../public/assets/'+file,import.meta.url));assert.ok(existsSync(path),file);assert.ok(statSync(path).size>1000,file);}
 });
 test('terminal attacks preserve the final cinematic window while ending the match immediately',()=>{

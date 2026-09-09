@@ -1,6 +1,6 @@
-import { PROPS, PROP_IDS, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
+import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
-export const RULES_VERSION = 4;
+export const RULES_VERSION = 5;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -13,8 +13,7 @@ const name = (p) => (p === 0 ? "蓝方" : "红方");
 
 function draw(s, p, source="道具效果") {
   if (p.props.length >= 3) return null;
-  s.rng = (Math.imul(s.rng, 1664525) + 1013904223) >>> 0;
-  const id=PROP_IDS[s.rng % PROP_IDS.length], owner=s.players.indexOf(p);
+  const id=propForTicket(randomInt(s, PROP_WEIGHT_TOTAL)), owner=s.players.indexOf(p);
   p.props.push(id);
   s.events.push({type:"draw",owner,item:id,source});
   log(s,`${name(owner)}${source}获得「${PROPS[id].name}」。`);
@@ -39,6 +38,7 @@ function begin(s) {
   if (s.skipping) { p.skip--; log(s, `${name(s.active)}本回合无法行动，之后还需跳过 ${p.skip} 回合。`); }
   if (p.seven > 0) { p.seven--; damage(s,s.active,7,true,"七伤拳"); }
   if (s.winner === null && p.dark) damage(s,s.active,5,true,"玄冥神掌");
+  if (s.winner === null && p.poison > 0) { p.poison--; damage(s,s.active,2,false,"中毒"); }
 }
 export function createGame(seed = 1) {
   assert(Number.isInteger(seed), "种子必须是整数");
@@ -58,7 +58,7 @@ export function createGame(seed = 1) {
       echo:false,
       mirror:false,
       silenced:false,
-      skip:0, seven:0, dark:false, foam:0, knuckles:false, nine:0,
+      skip:0, seven:0, dark:false, foam:0, knuckles:0, peace:0, peaceSince:0, weak:0, poison:0, nine:0,
       hands: [1, 1],
       locks: [false, false],
       props: [],
@@ -99,7 +99,8 @@ function damage(s, owner, amount, trueDamage, source) {
   if(s.winner !== null) return;
   const target=s.players[owner];
   let value=amount,blocked=null;
-  if(value>0 && !trueDamage) {
+  if(value>0 && target.peace>0) {value=0;blocked="和平";}
+  else if(value>0 && !trueDamage) {
     if(target.hands.every(n=>n===5)) {value=0;blocked="绝对防御";}
     else if(target.foam>0) {target.foam--;value=0;blocked="盾墙";}
     else if(target.hands.includes(5)) {target.hands[target.hands.indexOf(5)]=1;value=Math.ceil(value/2);blocked="五指护盾";}
@@ -111,6 +112,9 @@ function damage(s, owner, amount, trueDamage, source) {
   checkWinner(s);
 }
 function endTurn(s) {
+  const ending=s.players[s.active];
+  if(ending.peace>0 && ending.turns>ending.peaceSince) ending.peace--;
+  if(ending.weak>0) ending.weak--;
   s.players[s.active].locks = [false, false];
   s.players[s.active].echo=false;s.players[s.active].mirror=false;s.players[s.active].silenced=false;
   checkWinner(s);
@@ -213,11 +217,12 @@ export function applyCommand(state, command) {
       assert(w,"无效技能");
       log(s,`${name(s.active)}发动「${w.name}」。`);
       const id=w.id, target=1-s.active;
-      if(id==="serious") { enemy.hands=enemy.hands.map(n=>n===5?1:n);enemy.foam=0;p.skip++; }
+      if(id==="serious") { enemy.hands=[1,1];enemy.foam=0;p.skip++; }
       const direct=["serious","drunken","scissors","fan","claw","buddha","dragon","sorrow","frag","dual","sniper","taser"];
       if(direct.includes(id)) {
-        const base=id==="drunken"?10+randomInt(s,31):id==="sorrow"?MAX_HP-p.hp:w.damage;
-        for(let i=0;i<(id==="dual"?4:1)&&s.winner===null;i++)damage(s,target,base+(p.knuckles?10:0),["serious","claw","sniper"].includes(id),w.name);
+        const base=id==="sorrow"?MAX_HP-p.hp:w.damage;
+        const hits=id==="drunken"?5+randomInt(s,6):id==="claw"?2:id==="dual"?4:1;
+        for(let i=0;i<hits&&s.winner===null;i++)damage(s,target,Math.max(0,base+Number(p.knuckles)*10-(p.weak>0?5:0)),["serious","claw","sniper"].includes(id),w.name);
       }
       if(s.winner===null) {
         if(id==="seven")enemy.seven+=7;
@@ -227,11 +232,15 @@ export function applyCommand(state, command) {
         if(id==="buddha"||id==="taser")enemy.skip+=3;
         if(id==="dark")enemy.dark=true;
         if(id==="foam")p.foam+=2;
-        if(id==="knuckles")p.knuckles=true;
+        if(id==="knuckles")p.knuckles=Number(p.knuckles)+1;
+        if(id==="peace")s.players.forEach(player=>{if(!player.peace)player.peaceSince=player.turns;player.peace+=3;});
+        if(id==="serpent"){enemy.weak+=5;enemy.poison+=5;}
         if(id==="dual")while(p.props.length<3)draw(s,p,"双枪");
-        if(id==="steal") {p.props.push(...enemy.props.slice(0,3-p.props.length));enemy.props=[];p.hands=[...enemy.hands];}
+        if(id==="steal") {p.props.push(...enemy.props.slice(0,3-p.props.length));enemy.props=[];p.knuckles=Number(p.knuckles)+Number(enemy.knuckles);enemy.knuckles=0;
+          if(enemy.peace>0){if(!p.peace)p.peaceSince=p.turns;p.peace+=enemy.peace;enemy.peace=0;}}
         if(id==="unify") {
           p.hands=[1,1];enemy.hands=[1,1];p.nine++;
+          p.locks=[false,false];p.silenced=false;p.skip=0;p.seven=0;p.dark=false;p.weak=0;p.poison=0;
           if(p.nine===2) {s.winner=s.active;s.phase="over";s.winReason="九九归一";log(s,`${name(s.active)}九九归一，立即获胜！`);}
         }
       }
