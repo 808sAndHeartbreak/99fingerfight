@@ -29,7 +29,7 @@
 .field-items.red .selected { transform:translateX(-5px); }
 .field-items .prop-use[aria-disabled="false"] { cursor:pointer; }
 .field-items .prop-use[aria-disabled="false"]:hover { background:#fff; }
-.hand-shield { position:absolute; left:calc(50% + 32px); top:40%; display:flex; align-items:center; background:var(--paper); border:1px solid currentColor; padding:3px 6px; gap:3px; white-space:nowrap; z-index:3; }
+.hand-shield { position:absolute; left:calc(100% + 32px); top:40%; display:flex; align-items:center; background:var(--paper); border:1px solid currentColor; padding:3px 6px; gap:3px; white-space:nowrap; z-index:3; }
 .hand-shield[hidden] { display:none; }
 .hand-shield img { width:24px; height:24px; }
 .hand-shield small { font-size:11px; font-weight:800; }
@@ -64,7 +64,9 @@
  .field-items .prop-slot { height:68px; min-height:60px; }
  .field-items .prop-use img { width:39px; height:39px; }
  .field-items .prop-use b { font-size:10px; }
- .hand-shield { left:50%; top:70%; }
+ .hand-shield { left:calc(100% + 16px); top:40%; padding:2px; }
+ .hand-shield small { display:none; }
+ .hand-shield img { width:18px; height:18px; }
  .reference-deck>header small { display:none; }
  .reference-recipe { flex-basis:145px; }
  .phase-cut.phase-text { inset:170px 20% auto; }

@@ -1,5 +1,5 @@
 import { MAX_HP } from "./catalog.js";
-import { escapeHtml, playerName } from "./identity.js";
+import { escapeHtml } from "./identity.js";
 /** Ephemeral visual feedback, independently paused and cancelled with the match. */
 export function createFeedback() {
   let epoch=0;
