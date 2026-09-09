@@ -1,4 +1,4 @@
-import { actionBeats, actionDuration, commandArt, SKILL_MOTION, skillSummary } from './presentation.js';
+import { ITEM_NOTICE_MS, actionBeats, actionDuration, commandArt, SKILL_MOTION, skillSummary } from './presentation.js';
 import { propUseDetail } from './guidance.js';
 import { playerName, escapeHtml } from './identity.js';
 
@@ -18,7 +18,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,impa
       const card=document.createElement('aside');card.className='item-receipt';card.dataset.owner=owner;card.setAttribute('role','status');
       card.innerHTML=`<img src="${asset(art.image)}" alt=""><div><small>${escapeHtml(playerName(participants(),owner))} 使用</small><strong>${art.name}</strong><p>目标：${escapeHtml(names)}</p><b>${escapeHtml(result)}</b></div>`;
       document.querySelector('.duel').append(card);register(card);
-      animate(card,[{opacity:0,transform:'translate(-50%,-10px)'},{opacity:1,transform:'translate(-50%,0)',offset:.04},{opacity:1,offset:.94},{opacity:0}],{duration:5000,fill:'both'},true);
+      animate(card,[{opacity:0,transform:'translate(-50%,-10px)'},{opacity:1,transform:'translate(-50%,0)',offset:.04},{opacity:1,offset:.94},{opacity:0}],{duration:ITEM_NOTICE_MS,fill:'both'},true);
       for(const o of targets) {
         const el=document.querySelector(command.targetHand===undefined?`#player-${o}`:`#hand-${o}-${command.targetHand}`);
         animate(el,[{filter:'brightness(1)'},{filter:'brightness(1.5)',offset:.25},{filter:'brightness(1)'}],{duration:1000});

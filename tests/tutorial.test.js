@@ -11,10 +11,11 @@ test('all practice steps execute real rules and reach both victory conditions',a
     assert.ok(s.done);
     const result=s.getSnapshot();
     if(chapter===0){assert.equal(result.players[0].hands[0],2);assert.equal(result.active,1);}
-    else if(chapter!==2)assert.equal(result.winner,0);
+    else if(chapter>=3)assert.equal(result.winner,0);
     if(chapter===2){assert.equal(result.players[1].hp,84);assert.equal(result.active,1);}
-    if(chapter===1)assert.equal(result.players[1].hp,0);
-    if(chapter===3){assert.equal(result.players[0].nine,2);assert.equal(result.winReason,'九九归一');assert.equal(result.players[1].hp,99);}
+    if(chapter===1){assert.equal(result.players[1].hp,94);assert.equal(result.winner,null);}
+    if(chapter===3)assert.equal(result.players[1].hp,0);
+    if(chapter===4){assert.equal(result.players[0].nine,2);assert.equal(result.winReason,'九九归一');assert.equal(result.players[1].hp,99);}
   }
 });
 test('wrong actions and stale duplicate clicks never advance a practice checkpoint',async()=>{

@@ -1,6 +1,7 @@
 import {TOUCH_DURATION_MS} from "./motion.js";
 import {PROPS,weaponById} from './catalog.js';
 import {phaseCue} from './phase-cue.js';
+export const ITEM_NOTICE_MS=1600, ITEM_SETTLE_MS=180;
 export const SKILL_MOTION=Object.freeze({
  serious:['punch','归一 · 破盾 · 真实伤害'],drunken:['swirl','醉拳 · 5～10 连击'],seven:['curse','七伤 · 七回合'],scissors:['slash','剪断 · 双手减一'],fan:['fan','花蝶 · 弃置道具'],claw:['slash','爪击 · 两段真实伤害'],buddha:['palm','神掌 · 三回合禁行动'],dragon:['dragon','降龙 · 重击'],sorrow:['palm','残血 · 反击'],dark:['curse','玄冥 · 永久侵蚀'],frag:['burst','爆破'],foam:['guard','盾墙 · 两次防御'],knuckles:['guard','指虎 · 永久强化'],peace:['guard','和平 · 免疫伤害'],serpent:['curse','双头蛇 · 虚弱与中毒'],steal:['steal','窃取 · 道具与增益'],dual:['gun','双枪 · 四连击'],sniper:['snipe','狙击 · 真实伤害'],taser:['bolt','电击 · 三回合禁行动'],unify:['nine','归一 · 累积九印']
 });
@@ -31,7 +32,7 @@ export function actionDuration(old,next,c) {
  if(c.type==='add')return TOUCH_DURATION_MS * (old.players[old.active].echo?2:1);
  if(c.type==='forge')return 0;
  if(c.type==='attack')return old.players[old.active].weapon==='unify'?(next.winReason==='九九归一'?3200:1800):2450+Math.max(0,actionBeats(old,next,c).length-1)*220;
- if(c.type==='prop')return 350;
+ if(c.type==='prop')return ITEM_NOTICE_MS+ITEM_SETTLE_MS;
  return actionBeats(old,next,c).length?900:0;
 }
 export function presentationDuration(old,next,c) {

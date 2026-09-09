@@ -57,7 +57,7 @@ let online, remoteMatch = null, remoteQueue = [], remoteApplying = false;
 const humanTurn = () => mode === "online" ? online?.packet?.room?.seat === state.active : mode === "local" || state.active === 0;
 const team = (id) => (id === 0 ? "蓝方" : "红方");
 const audioCache = new Map();
-const audioSettings=createAudioSettings(asset("music/finger-fight.mp3"));
+const audioSettings=createAudioSettings(asset("music/pixel.mp3"));
 const battleSound=createBattleSound(()=>sound,audioSettings);
 let cinema;
 function play(id) {
@@ -252,7 +252,8 @@ function render() {
   const guide = mode==="online"&&online.status!=="connected"&&state.winner===null ? {title:"正在恢复对局",detail:"连接恢复后继续操作",step:"waiting"} : guidance(state, selected, humanTurn(), busy);
   if(mode==="online" && online.status==="connected" && !busy && !renderedRemoteReady && state.winner===null) Object.assign(guide,{title:"正在交接",detail:"演出结束后即可操作",step:"waiting"});
   if(remotePending && !busy && mode==="online" && online.status==="connected") Object.assign(guide,{title:"操作已发送",detail:"等待服务器确认",step:"waiting"});
-  if(mode==="tutorial") Object.assign(guide, {step:"tutorial"}, busy ? {title:"看清这一手",detail:"演出结束后继续，不用赶时间。"} : session.done ? {title:"本节完成",detail:session.lesson.result} : session.guide);
+
+  if(mode==="tutorial" && state.phase==="synthesis" && !busy)guide.detail="点击高亮技能，合成并使用";
   feedback.reveal(document.querySelector("#instruction"), guide.title);
   document.querySelector("#instruction-detail").textContent = guide.detail;
   document.querySelector(".game-shell").dataset.step = guide.step;
@@ -261,7 +262,7 @@ function render() {
   document.querySelector("#phase-steps").innerHTML = turnSteps(state).map((step,i)=>`<div class="${step.current ? "current" : step.done ? "done" : ""}" ${step.current ? 'aria-current="step"' : ""}><b>${step.done ? (step.id==="synthesis" && state.synthesis==="skipped" ? "—" : "✓") : `0${i+1}`}</b><span>${step.label}<small>${step.note}</small></span></div>`).join("");
   const forgePanel=document.querySelector("#forge-options");
   forgePanel.hidden=busy || remotePending || state.phase !== "synthesis";
-  forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><h2>${humanTurn()?"合成并使用":"对手正在选招"}</h2><p>${p.hands.join(" + ")}</p></div><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${enabled ? "" : "disabled"}><span class="forge-recipe">${w.recipe.join(" · ")}</span>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span><b>${humanTurn()?"释放 ":"等待对手"}</b></button>`).join("")}</div>`;
+  forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><h2>${humanTurn()?"合成并使用":"对手正在选招"}</h2><p>${p.hands.join(" + ")}</p></div><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${enabled && (mode!=="tutorial" || session.guide?.command.weapon===w.id) ? "" : "disabled"}><span class="forge-recipe">${w.recipe.join(" · ")}</span>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span><b>${humanTurn()?"释放 ":"等待对手"}</b></button>`).join("")}</div>`;
   for(const owner of [0,1]) {
     const player=state.players[owner], usable=owner===state.active && enabled && state.phase==="planning" && !player.silenced;
     const supply=player.turns===0?1:supplyIn(player);
@@ -276,7 +277,7 @@ function render() {
     return `<div class="reference-recipe" tabindex="0" data-number="${n}" data-info="recipe:${n}" aria-label="${n} 加 ${n} 配方"><b>${n} + ${n}</b></div>`;
   }).join('');
   for(const el of shelf.children){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',!p.hands.every(v=>v===n)&&p.hands.includes(n));}
-  document.querySelector("#primary-actions").innerHTML = `${selected ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"} </button>` : state.phase === "synthesis" ? `<button class="secondary" id="decline" ${enabled ? "" : "disabled"}>${state.calculated?"放弃合成，结束回合":"放弃合成，继续计算"}</button>` : ""}`;
+  document.querySelector("#primary-actions").innerHTML = `${selected ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"} </button>` : state.phase === "synthesis" && mode!=="tutorial" ? `<button class="secondary" id="decline" ${enabled ? "" : "disabled"}>${state.calculated?"放弃合成，结束回合":"放弃合成，继续计算"}</button>` : ""}`;
   document.querySelector(".game-shell").classList.toggle("is-busy", busy);
   document.querySelectorAll("#menu,#help").forEach((b) => (b.disabled = busy));
 
@@ -284,20 +285,26 @@ function render() {
   for(const [key,until] of arrivingSlots){const [owner,slot]=key.split(":");if(until>Date.now())document.querySelector(`#items-${owner} .prop-slot:nth-of-type(${Number(slot)+2})`)?.classList.add("item-arriving");}
   stage?.sync(state, selected, enabled);
 }
+function showTutorialNote(){
+  const done=session.done,g=session.guide;
+  session.notices.add(done?'done':session.step);
+  openDialog(`<section class="tutorial-sticker"><small>新手教学 ${session.chapter+1} / ${LESSONS.length}</small><h2>${done?session.chapter===3?'HP 归零，胜利！':session.chapter===4?'九九归一，胜利！':'学会了！':g.title}</h2><p>${done?session.lesson.result:g.detail}</p><button class="primary" ${done?'data-tutorial-next':'data-tutorial-understood'}>${done?session.chapter===LESSONS.length-1?'完成教学':'下一节':'明白了，试试看'}</button><footer><button data-tutorial-retry>重试本节</button><button data-tutorial-exit>退出教学</button></footer></section>`,"tutorial-sticker-dialog");
+  dialog.dataset.view='tutorial-note';
+}
 function renderTutorial() {
-  const host=document.querySelector('#tutorial-guide');
-  host.hidden=mode!=="tutorial";
+  const host=document.querySelector('#tutorial-guide');host.hidden=true;host.innerHTML='';
   document.querySelector('.game-shell').classList.toggle('is-tutorial',mode==='tutorial');
   document.querySelectorAll('.tutorial-target').forEach(el=>el.classList.remove('tutorial-target'));
-  if(mode!=="tutorial")return;
-  host.innerHTML=`<div><small>新手教学 ${session.chapter+1} / ${LESSONS.length} · ${session.done?'已完成':`第 ${session.step+1} 步`}</small><strong>${busy?"看清这一手":session.done?"本节完成":session.guide.title}</strong><p>${busy?"演出结束后继续，不用赶时间。":session.done?session.lesson.result:session.guide.detail}</p><details><summary>${session.lesson.title} · 练习设置</summary><p>${session.lesson.setup}</p></details></div><div class="tutorial-controls"><button id="tutorial-retry">重试本节</button><button id="tutorial-exit">退出教学</button></div>`;
-  if(session.done)document.querySelector('#primary-actions').innerHTML=`<button class="primary" id="tutorial-next" ${busy?"disabled":""}>${session.chapter===LESSONS.length-1?'完成教学 · 选择对战':'下一节'} </button>`;
-  if(!busy&&!session.done){
-    const g=session.guide;
+  if(mode!=="tutorial"||busy)return;
+  const done=session.done,g=session.guide;
+  if(!dialog.open&&!session.notices.has(done?'done':session.step)&&(done||!['advance','attack'].includes(g.command.type))){showTutorialNote();return;}
+  if(done){document.querySelector('#primary-actions').innerHTML='<button class="primary" id="tutorial-next">'+(session.chapter===LESSONS.length-1?'完成教学':'下一节')+'</button>';}
+  if(!done){
     const target=selected&&g.selectedTarget?g.selectedTarget:g.target;
     if(target)document.querySelectorAll(target).forEach(el=>{if(!el.disabled)el.classList.add('tutorial-target');});
   }
 }
+
 function nextTutorial(chapter) {
   closeDialog();startGame('tutorial',chapter);
 }
@@ -536,6 +543,7 @@ async function showMenu(page = "home") {
   root.classList.remove('menu-entering');buttons.forEach(b=>b.disabled=false);buttons[0]?.focus({preventScroll:true});
 }
 function dismissDialog() {
+  if(dialog.dataset.view==="tutorial-note"){closeDialog();render();return;}
   if(dialog.dataset.view==="developer-slide"){showDeveloper();dialog.querySelector("[data-developer-slide]").focus({preventScroll:true});return;}
   if(dialog.dataset.view==="developer"){showMenu("home");return;}
   if(dialog.dataset.view==="online") {
@@ -552,7 +560,7 @@ function showNameEditor(seat) {
   document.querySelector('#player-name-input').focus();
 }
 function showBattleMenu() {
-  openDialog(`<div class="dialog-body battle-menu"><button class="dialog-close" data-close aria-label="继续游戏">×</button><h2>暂停一下。</h2><button data-close>继续游戏 </button><button data-battle-online>房间和玩家信息 </button><button data-menu-settings>设置 </button>${mode==='online'?'':'<button data-menu="home">主菜单 </button>'}<small>${mode==='online'?'联机对局继续计时':''}</small></div>`);
+  openDialog(`<div class="dialog-body battle-menu"><button class="dialog-close" data-close aria-label="继续游戏">×</button><h2>暂停一下。</h2><button data-close>继续游戏 </button>${mode==='tutorial'?'<button data-tutorial-help>本节提示</button><button data-tutorial-retry>重试本节</button><button data-tutorial-exit>退出教学</button>':''}${mode==='tutorial'?'':'<button data-battle-online>房间和玩家信息 </button>'}<button data-menu-settings>设置 </button>${mode==='online'?'':'<button data-menu="home">主菜单 </button>'}<small>${mode==='online'?'联机对局继续计时':''}</small></div>`);
 }
 function showDeveloper(){
   openDialog(`<article class="developer-story"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><header><span>2023 — 2026</span><h2>开发者<span>说。</span></h2></header><div class="developer-copy"><p>考虑 finger fight 稍作改编就可以贴合本次“99”主题，但之前就做过了，还是不做回锅肉，就新做了个躲避球游戏。本游戏其实是 2023 年首次 minigame 设计推出的（尊重给到 <strong>[UI&amp;特效] 潘朱炜</strong>，<strong>[程序] 王璨、王崴、佘壕镪</strong>），可惜完成度不高，也没有拿到任何奖项。</p><p>今年响应“超级个体”的号召，solo 参赛做了。躲避球晋级后自觉内容量已足够，不太想进一步开发了。于是移植了 finger fight 到网页端，补全了玩法，实现了联网，重做了美术，打磨了交互体验。既然今年躲避球晋级决赛，就私心把这个游戏再塞进来给大家再玩玩了。</p><p>至于这个游戏的灵感来源，可以点击<button class="story-slide-link" data-developer-slide>当时的幻灯片页面</button>查看。我自己还是蛮喜欢玩的。谢谢大家。</p></div><footer>开发者：<strong>谭越天</strong></footer></article>`,"developer-dialog");
@@ -779,6 +787,11 @@ listen(dialog, "click", (e) => {
   if (b.dataset.menu) {showMenu(b.dataset.menu);return;}
   if(b.hasAttribute("data-battle-online")){mode==="online"?showOnline():showNameEditor(mode==="local"?state.active:0);return;}
   if(b.hasAttribute("data-resume-pve")){const saved=savedPve();if(saved){started=true;closeDialog();startGame("ai",0,saved);}return;}
+  if(b.hasAttribute("data-tutorial-understood")){closeDialog();render();return;}
+  if(b.hasAttribute("data-tutorial-next")){if(session.chapter===LESSONS.length-1)exitTutorial();else nextTutorial(session.chapter+1);return;}
+  if(b.hasAttribute("data-tutorial-retry")){nextTutorial(session.chapter);return;}
+  if(b.hasAttribute("data-tutorial-exit")){exitTutorial();return;}
+  if(b.hasAttribute("data-tutorial-help")){showTutorialNote();return;}
   if(b.hasAttribute("data-developer")){showDeveloper();return;}
   if(b.hasAttribute("data-developer-slide")){showDeveloperSlide();return;}
   if(b.hasAttribute("data-tutorial")){showTutorialIntro();return;}
