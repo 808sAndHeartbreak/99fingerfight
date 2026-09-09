@@ -46,3 +46,4 @@ button:focus-visible{outline:3px solid #eab94b;outline-offset:4px}
 @keyframes winner-drift{from{translate:0 0}to{translate:0 -10px}}
 @media(max-width:650px){.match-history section{grid-template-columns:55px 1fr;gap:8px}.match-history .history-phase{grid-template-columns:1fr}.match-history section>h3{font-size:14px}.game-shell #instruction{font-size:15px}}
 @media(prefers-reduced-motion:reduce){.result-dialog.manga-result .result-art{animation:none}button{transition:none!important}.menu-choice:hover,.battle-menu>button:hover,.hud-tools button:hover,.item-advance:hover{translate:none}}
+.result-dialog.manga-result { overflow:hidden; } @media(max-height:600px) { .result-dialog.manga-result { overflow-y:auto; overflow-x:hidden; } .result-dialog.manga-result::after { display:none; } }
