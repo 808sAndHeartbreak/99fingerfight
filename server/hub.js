@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync, renameSync, mkdirSync } from '
 import { dirname } from 'node:path';
 import { createGame, applyCommand, RULES_VERSION } from '../src/engine.js';
 import { chooseCommand } from '../src/ai.js';
-import { phaseSeconds, phaseCue } from '../src/phase-cue.js';
+import { phaseSeconds, phaseCue, autoItemPhase } from '../src/phase-cue.js';
 import { presentationDuration } from '../src/presentation.js';
 import { normalizeParticipants } from '../src/identity.js';
 const hash = token => createHash('sha256').update(token).digest('hex');
@@ -89,7 +89,7 @@ export class MatchHub {
   }
   finish(r,winner,reason) {
     if(r.status!=='playing')return;
-    r.state={...r.state,revision:r.state.revision+1,winner,phase:'over',log:[...r.state.log,reason].slice(-30)};
+    r.state={...r.state,revision:r.state.revision+1,winner,phase:'over',log:[...r.state.log,`[回合 ${Math.ceil(r.state.turn/2)}] ${reason}`].slice(-30)};
     r.status='finished';r.finishReason=reason;r.deadlineAt=null;r.readyAt=0;
   }
   step(r,command) {
@@ -98,7 +98,7 @@ export class MatchHub {
     else {
       const buffer=this.animationMs===null?presentationDuration(old,next,command):( ['add','forge','attack'].includes(command.type)?this.animationMs:1000);
       r.readyAt=this.now()+buffer;
-      if(next.turn!==old.turn||next.phase!==old.phase)r.deadlineAt=r.readyAt+(next.phase==='start'?0:phaseSeconds(next)*1000);
+      if(next.turn!==old.turn||next.phase!==old.phase||autoItemPhase(next))r.deadlineAt=r.readyAt+(next.phase==='start'?0:phaseSeconds(next)*1000);
       else r.deadlineAt+=buffer;
     }
     return {command,revision:next.revision,matchId:r.matchId};

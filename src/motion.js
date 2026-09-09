@@ -1,6 +1,6 @@
 import { calculationOutcome } from "./engine.js";
 // Pure presentation timing: rule state remains authoritative and separate.
-export const TOUCH_DURATION_MS = 650;
+export const TOUCH_DURATION_MS = 1000;
 export const CONTACT_AT = 0.46;
 export const RELEASE_AT = 0.74;
 export const smooth = (t) => {

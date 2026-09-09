@@ -98,8 +98,8 @@ test("item contact shows pre-forge pair before hands reset", () => {
 test('planning guidance follows actual synthesis eligibility and respects silence and opponent turns',()=>{
  const s=createGame();s.phase='planning';s.players[0].props=['add'];
  s.players[0].hands=[1,2];assert.match(guidance(s,null,true,false).detail,/触碰计算/);
- s.players[0].hands=[2,2];assert.match(guidance(s,null,true,false).detail,/选择合成技能/);
+ s.players[0].hands=[2,2];assert.match(guidance(s,null,true,false).detail,/选择技能/);
  s.players[0].silenced=true;assert.match(guidance(s,null,true,false).title,/沉默/);
- assert.equal(guidance(s,null,false,false).title,'对手正在规划');
+ assert.equal(guidance(s,null,false,false).title,'对手正在使用道具');
  assert.equal(guidance(s,null,false,false).detail,'');
 });

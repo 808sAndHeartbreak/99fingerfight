@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {handPropNumber,PROPS,PROP_IDS} from '../src/catalog.js';
-test('new item pool contains thirteen supported items without removed healing/poison',()=>{
- assert.equal(PROP_IDS.length,13);assert.equal(PROPS.heal,undefined);assert.equal(PROPS.poison,undefined);assert.equal(PROPS.sub.name,'退化');
+test('new item pool contains fifteen supported items without removed healing/poison',()=>{
+ assert.equal(PROP_IDS.length,15);assert.equal(PROPS.heal,undefined);assert.equal(PROPS.poison,undefined);assert.equal(PROPS.sub.name,'退化');
 });
 test('civil war and doubling preserve decimal hands across all input pairs',()=>{
  for(let a=0;a<10;a++)for(let b=0;b<10;b++){
@@ -25,7 +25,7 @@ const use=(id,{hands=[1,1],enemy=[1,1],target=0,targetHand,props=[id]}={})=>{
 };
 test('99 starting life and every new item can appear in deterministic turn supplies',()=>{
  const seen=new Set();for(let seed=0;seed<512;seed++){const s=createGame(seed);assert.deepEqual(s.players.map(p=>p.hp),[99,99]);seen.add(s.players[0].props[0]);assert.equal(s.events[0].source,'回合补给');}
- assert.equal(seen.size,13);assert.equal(supplyIn({turns:1}),3);assert.equal(supplyIn({turns:3}),1);
+ assert.equal(seen.size,15);assert.equal(supplyIn({turns:1}),3);assert.equal(supplyIn({turns:3}),1);
 });
 test('hand items may affect either side including locked hands; no implicit forge',()=>{
  for(const id of ['civil','double','add','sub'])for(const target of [0,1])for(const targetHand of [0,1]){

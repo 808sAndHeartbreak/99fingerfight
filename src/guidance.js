@@ -38,8 +38,8 @@ export function handPreview(state, selected, owner, hand) {
 }
 
 export function propUseDetail(state,id) {
-  const p=state.players[state.active],e=state.players[1-state.active],sum=p.hands[0]+p.hands[1],enemySum=e.hands[0]+e.hands[1];
-  return ({greed:`获得 ${Math.min(2,4-p.props.length)} 个道具，立即结束回合并清除本回合状态`,balance:`自己重抽 ${p.props.length-1} 个，对手重抽 ${e.props.length} 个；先消耗制衡`,boon:`自己补 ${4-p.props.length} 个，对手补 ${3-e.props.length} 个；各自最多 3 个`,grace:`恢复 ${Math.min(MAX_HP-p.hp,sum)} 生命（己方数字 ${p.hands.join(" + ")}）`,ruin:e.peace>0?`对手处于和平，伤害被免疫（数字总和 ${enemySum}）`:`造成 ${enemySum} 点直接伤害（对手数字 ${e.hands.join(" + ")}），不触发护盾`,echo:p.echo?"已有回响，重复使用不会增加次数": "本回合下一次计算将同一个结果写入己方双手",mirror:p.mirror?"已有镜像，重复使用不会增加次数":"本回合下一次计算只改变对手目标手",silence:"对手下回合不能主动使用道具，正常补给不受影响"})[id] || PROPS[id].detail;
+  const p=state.players[state.active],e=state.players[1-state.active],sum=p.hands[0]+p.hands[1],enemySum=e.hands[0]+e.hands[1],ruinDamage=Math.max(0,enemySum+(p.adrenaline>0?5:0)-(e.adrenaline>0?5:0));
+  return ({wine:`下一次直接攻击首段 +${(p.wine+1)*10}，一次消耗所有酒；无回合期限`,adrenaline:`立即结束本回合；后续 ${p.adrenaline+3} 个己方回合，所有伤害 +5、受到伤害 −5`,greed:`获得 ${Math.min(2,4-p.props.length)} 个道具，立即结束回合并清除本回合状态`,balance:`自己重抽 ${p.props.length-1} 个，对手重抽 ${e.props.length} 个；先消耗制衡`,boon:`自己补 ${4-p.props.length} 个，对手补 ${3-e.props.length} 个；各自最多 3 个`,grace:`恢复 ${Math.min(MAX_HP-p.hp,sum)} 生命（己方数字 ${p.hands.join(" + ")}）`,ruin:e.peace>0?`对手处于和平，伤害被免疫（数字总和 ${enemySum}）`:`造成 ${ruinDamage} 点直接伤害（对手数字 ${e.hands.join(" + ")}），不触发护盾`,echo:p.echo?"已有回响，重复使用不会增加次数": "本回合下一次计算将同一个结果写入己方双手",mirror:p.mirror?"已有镜像，重复使用不会增加次数":"本回合下一次计算只改变对手目标手",silence:"对手下回合不能主动使用道具，正常补给不受影响"})[id] || PROPS[id].detail;
 }
 export function guidance(state, selected, human, busy) {
   const p = state.players[state.active];
@@ -51,7 +51,7 @@ export function guidance(state, selected, human, busy) {
   if (busy) return { title: "出手！", detail: "", step: "resolving", canTouch };
   if (!human)
     return {
-      title: ({start:"对手回合开始",planning:"对手正在规划",synthesis:"对手正在选择武器",action:p.weapon?"对手准备进攻":"对手正在选择触碰"})[state.phase] || "等待对手",
+      title: ({start:"对手回合开始",planning:"对手正在使用道具",synthesis:"对手正在选择武器",action:p.weapon?"对手准备进攻":"对手正在选择触碰"})[state.phase] || "等待对手",
       detail: "",
       step: "waiting",
       canTouch,
@@ -69,12 +69,12 @@ export function guidance(state, selected, human, busy) {
   if (state.phase === "synthesis") return {title:"选择要合成的技能",detail:"也可放弃合成，进入计算。",step:"synthesis",canTouch};
   if (state.phase === "planning")
     return {
-      title: p.silenced ? "本回合被沉默，结束规划继续" : p.weapon
+      title: p.silenced ? "本回合被沉默，准备行动" : p.weapon
         ? `${weaponById(p.weapon).name}已就绪`
         : p.props.length
-          ? "使用道具，规划这一手"
-          : "结束规划，进入下一阶段",
-      detail: matchingWeapons(p.hands).length ? "结束规划 → 选择合成技能" : "结束规划 → 触碰计算（无可用配方）",
+          ? "点击道具，选择目标使用"
+          : "没有道具，准备行动",
+      detail: matchingWeapons(p.hands).length ? "行动时选择技能或触碰计算" : "行动时触碰计算",
       step: "planning",
       canTouch,
     };
@@ -104,7 +104,7 @@ export function comboHint(state) {
   const p=state.players[state.active];
   if(p.weapon) return `${weaponById(p.weapon).name} · ${weaponById(p.weapon).detail}`;
   const options=matchingWeapons(p.hands);
-  return options.length ? `配方已满足 · ${state.phase === "planning" || state.phase === "synthesis" ? "合成阶段可选" : "留待下回合"}` : "仅在合成阶段形成武器";
+  return options.length ? `配方已满足 · ${state.phase === "planning" || state.phase === "synthesis" ? "行动时可选" : "留待下回合"}` : "行动时选择技能或计算";
 }
 export function comboRoutes(state, owner, hand) {
   const p=state.players[owner], enemy=state.players[1-owner];

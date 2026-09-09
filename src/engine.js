@@ -1,12 +1,12 @@
 import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
-export const RULES_VERSION = 5;
+export const RULES_VERSION = 6;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
 const mod10 = (n) => (n + 10) % 10;
 const log = (s, message) => {
-  s.log.push(message);
+  s.log.push(`[回合 ${Math.ceil(s.turn/2)}] ${message}`);
   s.log = s.log.slice(-30);
 };
 const name = (p) => (p === 0 ? "蓝方" : "红方");
@@ -58,7 +58,7 @@ export function createGame(seed = 1) {
       echo:false,
       mirror:false,
       silenced:false,
-      skip:0, seven:0, dark:false, foam:0, knuckles:0, peace:0, peaceSince:0, weak:0, poison:0, nine:0,
+      skip:0, seven:0, dark:false, foam:0, knuckles:0, peace:0, peaceSince:0, wine:0, adrenaline:0, adrenalineSince:0, weak:0, poison:0, nine:0,
       hands: [1, 1],
       locks: [false, false],
       props: [],
@@ -98,7 +98,8 @@ function randomInt(s, count) {
 function damage(s, owner, amount, trueDamage, source) {
   if(s.winner !== null) return;
   const target=s.players[owner];
-  let value=amount,blocked=null;
+  amount=Math.max(0,amount+(s.players[1-owner].adrenaline>0?5:0));
+  let value=Math.max(0,amount-(target.adrenaline>0?5:0)),blocked=amount>0&&value===0?"肾上腺素":null;
   if(value>0 && target.peace>0) {value=0;blocked="和平";}
   else if(value>0 && !trueDamage) {
     if(target.hands.every(n=>n===5)) {value=0;blocked="绝对防御";}
@@ -115,6 +116,7 @@ function endTurn(s) {
   const ending=s.players[s.active];
   if(ending.peace>0 && ending.turns>ending.peaceSince) ending.peace--;
   if(ending.weak>0) ending.weak--;
+  if(ending.adrenaline>0 && ending.turns>ending.adrenalineSince) ending.adrenaline--;
   s.players[s.active].locks = [false, false];
   s.players[s.active].echo=false;s.players[s.active].mirror=false;s.players[s.active].silenced=false;
   checkWinner(s);
@@ -155,7 +157,7 @@ export function applyCommand(state, command) {
       enterAction(s);
       break;
     case "forge": {
-      assert(s.phase === "synthesis", "武器只能在合成阶段形成");
+      assert(s.phase === "synthesis", "只能在行动阶段的技能选择中合成");
       const w = synthesisOptions(s).find(w => w.id === command.weapon);
       assert(w, "不满足该武器的组合条件");
       p.weapon = w.id;
@@ -181,7 +183,7 @@ export function applyCommand(state, command) {
       break;
     }
     case "prop": {
-      assert(s.phase === "planning", "道具只能在规划阶段使用");
+      assert(s.phase === "planning", "道具只能在道具阶段使用");
       assert(!p.silenced,"本回合被沉默，不能使用道具");
       assert(Number.isInteger(command.slot)&&command.slot>=0&&command.slot<p.props.length,"道具不存在");
       const id=p.props[command.slot],prop=PROPS[id];
@@ -200,6 +202,8 @@ export function applyCommand(state, command) {
       } else if(id==="echo")p.echo=true;
       else if(id==="mirror")p.mirror=true;
       else if(id==="silence")enemy.silenced=true;
+      else if(id==="wine")p.wine++;
+      else if(id==="adrenaline"){if(!p.adrenaline)p.adrenalineSince=p.turns;p.adrenaline+=3;endTurn(s);}
       else if(id==="balance") {
         const counts=s.players.map(player=>player.props.length);
         s.players.forEach(player=>player.props=[]);
@@ -222,7 +226,8 @@ export function applyCommand(state, command) {
       if(direct.includes(id)) {
         const base=id==="sorrow"?MAX_HP-p.hp:w.damage;
         const hits=id==="drunken"?5+randomInt(s,6):id==="claw"?2:id==="dual"?4:1;
-        for(let i=0;i<hits&&s.winner===null;i++)damage(s,target,Math.max(0,base+Number(p.knuckles)*10-(p.weak>0?5:0)),["serious","claw","sniper"].includes(id),w.name);
+        const wine=p.wine*10;p.wine=0;
+        for(let i=0;i<hits&&s.winner===null;i++)damage(s,target,base+Number(p.knuckles)*10+(i===0?wine:0)-(p.weak>0?5:0),["serious","claw","sniper"].includes(id),w.name);
       }
       if(s.winner===null) {
         if(id==="seven")enemy.seven+=7;
@@ -237,7 +242,9 @@ export function applyCommand(state, command) {
         if(id==="serpent"){enemy.weak+=5;enemy.poison+=5;}
         if(id==="dual")while(p.props.length<3)draw(s,p,"双枪");
         if(id==="steal") {p.props.push(...enemy.props.slice(0,3-p.props.length));enemy.props=[];p.knuckles=Number(p.knuckles)+Number(enemy.knuckles);enemy.knuckles=0;
-          if(enemy.peace>0){if(!p.peace)p.peaceSince=p.turns;p.peace+=enemy.peace;enemy.peace=0;}}
+          if(enemy.peace>0){if(!p.peace)p.peaceSince=p.turns;p.peace+=enemy.peace;enemy.peace=0;}
+          p.wine+=enemy.wine;enemy.wine=0;
+          if(enemy.adrenaline>0){if(!p.adrenaline)p.adrenalineSince=p.turns;p.adrenaline+=enemy.adrenaline;enemy.adrenaline=0;}}
         if(id==="unify") {
           p.hands=[1,1];enemy.hands=[1,1];p.nine++;
           p.locks=[false,false];p.silenced=false;p.skip=0;p.seven=0;p.dark=false;p.weak=0;p.poison=0;

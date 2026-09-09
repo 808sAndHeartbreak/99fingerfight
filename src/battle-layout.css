@@ -132,3 +132,22 @@
 }
 
 .round-inline .phase-time[hidden] { display:none; }
+
+.field-items .prop-confirm { position:absolute; left:calc(100% + 10px); top:50%; transform:translateY(-50%); min-width:92px; padding:12px; background:var(--blue); color:white; border:2px solid var(--paper); box-shadow:3px 3px 0 var(--ink); z-index:9; white-space:nowrap; }
+.field-items.red .prop-confirm { left:auto; right:calc(100% + 10px); background:var(--red); }
+.prop-confirm { animation:confirm-reveal .16s ease-out; }
+@keyframes confirm-reveal { from { opacity:0; scale:.9; } to { opacity:1; scale:1; } }
+.equation-team-0 { color:#7ea6ff; font-weight:900; }
+.equation-team-1 { color:#ff8d83; font-weight:900; }
+.history-body { padding-top:48px; }
+.history-body .history-list { list-style:none; padding:0; margin:0; }
+.history-body .history-list li { display:grid; grid-template-columns:64px 1fr; gap:14px; padding:12px 0; border-bottom:1px solid #171e3020; }
+.history-body .history-list b { font-size:13px; opacity:.65; }
+@media(prefers-reduced-motion:reduce) { .prop-confirm { animation:none; } }
+
+.turn-overview { flex-basis:220px; }
+.battle-banner .primary-actions:empty { display:none; }
+
+.battle-banner .primary-actions .cancel-action { background:transparent; color:var(--paper); border:1px solid var(--paper); }
+
+.field-items .prop-confirm:not(:disabled):active { transform:translateY(calc(-50% + 2px)); }

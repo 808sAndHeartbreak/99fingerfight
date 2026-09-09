@@ -12,7 +12,7 @@ export function describe(key, state, participants) {
   if(kind === "recipe") {
     const options=WEAPONS.filter(w=>w.recipe.every(n=>n===Number(id)));
     if(!options.length)return null;
-    return {title:`${id} + ${id} 技能组合`,tag:"配方选项",stats:[["可选",`${options.length} 种技能`]],body:options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:"仅在合成阶段选择其中一种，双手归 1，随后行动阶段发动；也可放弃合成。"};
+    return {title:`${id} + ${id} 技能组合`,tag:"配方选项",stats:[["可选",`${options.length} 种技能`]],body:options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:"行动时选择其中一种，双手归 1，再发动；也可放弃合成。"};
   }
   if (kind === "weapon") {
     const w = weaponById(id);
@@ -26,23 +26,24 @@ export function describe(key, state, participants) {
         ["使用", "行动阶段"],
       ],
       body: w.detail,
-      note: "只有合成阶段可以选择此武器，确认后双手归 1；随后行动阶段必须发动技能，使用后消耗。可放弃合成并进入计算。",
+      note: "行动时可以选择此武器，确认后双手归 1，再发动技能，使用后消耗。可放弃合成并进入计算。",
     };
   }
   if (kind === "prop") {
     const owner=hand===undefined?state.active:Number(hand),p=state.players[owner],e=state.players[1-owner];
     const sum=p.hands[0]+p.hands[1],enemySum=e.hands[0]+e.hands[1];
-    const preview={grace:`（当前回复 ${Math.min(MAX_HP-p.hp,sum)}，数字总和 ${sum}）`,ruin:`（当前伤害 ${enemySum}，实际扣血 ${e.peace>0?0:Math.min(e.hp,enemySum)}）`,greed:`（当前获得 ${Math.min(2,4-p.props.length)} 个）`,boon:`（当前己方补 ${4-p.props.length} 个，对方补 ${3-e.props.length} 个）`,balance:`（当前己方重抽 ${Math.max(0,p.props.length-1)} 个，对方重抽 ${e.props.length} 个）`}[id]||'';
+    const ruinDamage=Math.max(0,enemySum+(p.adrenaline>0?5:0)-(e.adrenaline>0?5:0));
+    const preview={wine:`（当前叠加后首段 +${(p.wine+1)*10}）`,adrenaline:`（当前剩余 ${p.adrenaline} 个己方回合，使用延长 3 回合）`,grace:`（当前回复 ${Math.min(MAX_HP-p.hp,sum)}，数字总和 ${sum}）`,ruin:`（当前伤害 ${ruinDamage}，实际扣血 ${e.peace>0?0:Math.min(e.hp,ruinDamage)}）`,greed:`（当前获得 ${Math.min(2,4-p.props.length)} 个）`,boon:`（当前己方补 ${4-p.props.length} 个，对方补 ${3-e.props.length} 个）`,balance:`（当前己方重抽 ${Math.max(0,p.props.length-1)} 个，对方重抽 ${e.props.length} 个）`}[id]||'';
     return {
       title: PROPS[id].name,
       image: PROPS[id].image,
       tag: "一次性道具",
       stats: [
-        ["阶段", "规划阶段"],
+        ["阶段", "道具阶段"],
         ["目标", ({hand:"任意一方的手",self:"自己",enemy:"对手",all:"双方"})[PROPS[id].target]],
       ],
       body: (PROP_INFO[id] || PROPS[id].detail)+preview,
-      note: ({echo:"本回合下一次计算复制同一个结果；另一只手被封印也会接收复制值。未计算则回合结束失效；重复使用不叠加。",mirror:"与回响同时存在时，两次触碰使用同一个结果，只写入对手目标手。回合结束失效，重复使用不叠加。",silence:"持续到对手下一回合结束；禁止主动使用道具，不影响补给和武器补牌。",balance:"先消耗制衡，再按双方各自剩余道具数量重抽。允许抽到同名道具。",boon:"补到每人 3 个，已满的玩家不会再获得；不会移除已有状态。",greed:"先消耗强欲，最多补至 3 个；跳过本回合合成与行动，回响、镜像等回合状态随之结束。",grace:"以使用时自己的双手数字之和计算，生命最多为 99；满血或数字总和为 0 仍会消耗。",ruin:"以使用时对手双手数字之和计算，忽略护盾且不消耗护盾；生命归零立即结算。"})[id] || "点击道具再选择高亮手势，确认后消耗；数字变化不会立即形成武器。",
+      note: ({wine:"只强化下一次有直接伤害的技能首段，出手时一次消耗全部酒；无伤害技能不消耗，被免疫或护盾挡住仍消耗。无回合期限，可被窃取。",adrenaline:"包括真实伤害、道具与持续伤害；先合并增减伤，再结算护盾，最低 0。重复使用延长三回合，不叠加强度；可被窃取。",echo:"本回合下一次计算复制同一个结果；另一只手被封印也会接收复制值。未计算则回合结束失效；重复使用不叠加。",mirror:"与回响同时存在时，两次触碰使用同一个结果，只写入对手目标手。回合结束失效，重复使用不叠加。",silence:"持续到对手下一回合结束；禁止主动使用道具，不影响补给和武器补牌。",balance:"先消耗制衡，再按双方各自剩余道具数量重抽。允许抽到同名道具。",boon:"补到每人 3 个，已满的玩家不会再获得；不会移除已有状态。",greed:"先消耗强欲，最多补至 3 个；跳过本回合合成与行动，回响、镜像等回合状态随之结束。",grace:"以使用时自己的双手数字之和计算，生命最多为 99；满血或数字总和为 0 仍会消耗。",ruin:"以使用时对手双手数字之和计算，忽略护盾且不消耗护盾；生命归零立即结算。"})[id] || "点击道具再选择高亮手势，确认后消耗；数字变化不会立即形成武器。",
     };
   }
   if(kind==="status") {
@@ -56,6 +57,8 @@ export function describe(key, state, participants) {
       dark:["玄冥神掌","永久","每个己方回合开始受到 5 点真实伤害；不叠加，可与七伤拳共同生效。"],
       foam:["泡沫盾墙",`剩余 ${p.foam} 次`,"完全挡住普通伤害，每段消耗一次。真实伤害穿透且不消耗。重复获得次数 +2。"],
       knuckles:["指虎",`永久 ${p.knuckles} 层 · +${p.knuckles*10}`,"每段直接技能伤害 +10，包括真实伤害和双枪每发；不增加道具或持续伤害。可重复叠加，无层数上限。"],
+      wine:["酒",`${p.wine} 层 · 首段 +${p.wine*10}`,"下一次直接技能攻击只强化第一段；一次消耗全部层数，被挡住也消耗。无伤害技能不消耗，无回合期限，可被窃取。"],
+      adrenaline:["肾上腺素",`剩余 ${p.adrenaline} 个己方回合`,"造成的所有伤害 +5，受到的所有伤害 −5，包括真实伤害、道具和持续伤害。先增减伤，再结算护盾，最低 0；重复延长、可被窃取。"],
       peace:["和平",`剩余 ${p.peace} 个己方回合`,"免疫所有伤害，包括真实伤害、道具与持续伤害，不消耗护盾。各自后续回合结束计数，跳过的回合照常计数；不阻止九标记胜利。"],
       weak:["虚弱",`剩余 ${p.weak} 个己方回合`,"每段直接技能伤害 −5，最低 0；不影响道具与持续伤害。重复施加延长回合。"],
       poison:["中毒",`剩余 ${p.poison} 次`,"每个己方回合开始受到 2 点普通伤害，可被防御阻挡。重复施加延长回合。"],
@@ -99,7 +102,7 @@ export function describe(key, state, participants) {
         ["减伤", "50%"],
       ],
       body: "单个 5 使普通伤害减半（向上取整），然后变为 1；双手 55 完全免疫普通伤害，不消耗数字且不限次数，数字变化后立即失效。",
-      note: "防御顺序：和平 → 55 → 盾墙 → 单个 5。真实伤害穿透且不消耗防御；认真一拳先将双手变为 1 并清除盾墙。零伤害不消耗防御。",
+      note: "防御顺序：和平 → 55 → 盾墙 → 单个 5。真实伤害跳过护盾，仍受和平与肾上腺素影响；认真一拳先将双手变为 1 并清除盾墙。零伤害不消耗防御。",
     };
   if (kind === "player") {
     const p = state.players[Number(id)];
@@ -119,11 +122,11 @@ export function describe(key, state, participants) {
       title: "回合流程",
       tag: "行动规则",
       stats: [
-        ["规划 / 合成 / 计算", "30 秒"],
+        ["道具 / 选招 / 计算", "30 秒"],
         ["攻击", "10 秒"],
       ],
-      body: "规划 → 合成（无配方略过）→ 行动。合成后发动技能，未合成则计算，行动完成后交给对手。",
-      note: "超时自动推进、选择合成或执行合法行动。除强欲效果外不能手动跳过；无合法计算时自动结束。本地对局在查看菜单、说明或切到后台时暂停，触碰演出期间不扣操作时间。",
+      body: "道具 → 行动（选择技能或触碰计算）。合成后发动技能，未合成则计算，行动完成后交给对手。",
+      note: "超时自动推进、选择合成或执行合法行动。除强欲、肾上腺素效果外不能手动跳过；无合法计算时自动结束。本地对局在查看菜单、说明或切到后台时暂停，触碰演出期间不扣操作时间。",
     };
   return null;
 }
@@ -147,7 +150,7 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
     if (
       !pin &&
       button?.matches(
-        ".hand-hotspot.target,.hand-hotspot.selected,.prop-slot.selected .prop-use",
+        ".hand-hotspot.target:not([data-info='shield']),.hand-hotspot.selected:not([data-info='shield']),.prop-slot.selected .prop-use",
       )
     )
       return;

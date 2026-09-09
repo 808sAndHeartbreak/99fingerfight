@@ -24,7 +24,7 @@ test("eight recipes require explicit synthesis and never form during calculation
     let s=planning(); s.players[0].hands=[(n+9)%10,n]; s.players[0].props=["add"];
     s=run(s,{type:"prop",slot:0,target:0,targetHand:0});
     assert.equal(s.players[0].weapon,null); assert.deepEqual(s.players[0].hands,[n,n]);
-    assert.throws(()=>run(s,{type:"forge",weapon}),/合成阶段/);
+    assert.throws(()=>run(s,{type:"forge",weapon}),/技能选择/);
     s=run(s,{type:"advance"}); assert.equal(s.phase,"synthesis");
     assert.equal(synthesisOptions(s)[0].id,weapon);
     s=run(s,{type:"forge",weapon}); assert.equal(s.phase,"action");
