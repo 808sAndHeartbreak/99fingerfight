@@ -29,7 +29,7 @@ export function actionDuration(old,next,c) {
  if(c.type==='add')return TOUCH_DURATION_MS * (old.players[old.active].echo?2:1);
  if(c.type==='forge')return 0;
  if(c.type==='attack')return old.players[old.active].weapon==='unify'?(next.winReason==='九九归一'?3200:1800):1400+Math.max(0,actionBeats(old,next,c).length-1)*220;
- if(c.type==='prop')return 650+Math.max(0,actionBeats(old,next,c).length-1)*150;
+ if(c.type==='prop')return 350;
  return actionBeats(old,next,c).length?900:0;
 }
 export function presentationDuration(old,next,c) {

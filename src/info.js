@@ -29,7 +29,10 @@ export function describe(key, state, participants) {
       note: "只有合成阶段可以选择此武器，确认后双手归 1；随后行动阶段必须发动技能，使用后消耗。可放弃合成并进入计算。",
     };
   }
-  if (kind === "prop")
+  if (kind === "prop") {
+    const owner=hand===undefined?state.active:Number(hand),p=state.players[owner],e=state.players[1-owner];
+    const sum=p.hands[0]+p.hands[1],enemySum=e.hands[0]+e.hands[1];
+    const preview={grace:`（当前回复 ${Math.min(MAX_HP-p.hp,sum)}，数字总和 ${sum}）`,ruin:`（当前伤害 ${enemySum}，实际扣血 ${Math.min(e.hp,enemySum)}）`,greed:`（当前获得 ${Math.min(2,4-p.props.length)} 个）`,boon:`（当前己方补 ${4-p.props.length} 个，对方补 ${3-e.props.length} 个）`,balance:`（当前己方重抽 ${Math.max(0,p.props.length-1)} 个，对方重抽 ${e.props.length} 个）`}[id]||'';
     return {
       title: PROPS[id].name,
       image: PROPS[id].image,
@@ -38,9 +41,10 @@ export function describe(key, state, participants) {
         ["阶段", "规划阶段"],
         ["目标", ({hand:"任意一方的手",self:"自己",enemy:"对手",all:"双方"})[PROPS[id].target]],
       ],
-      body: PROP_INFO[id] || PROPS[id].detail,
+      body: (PROP_INFO[id] || PROPS[id].detail)+preview,
       note: ({echo:"本回合下一次计算复制同一个结果；另一只手被封印也会接收复制值。未计算则回合结束失效；重复使用不叠加。",mirror:"与回响同时存在时，两次触碰使用同一个结果，只写入对手目标手。回合结束失效，重复使用不叠加。",silence:"持续到对手下一回合结束；禁止主动使用道具，不影响补给和武器补牌。",balance:"先消耗制衡，再按双方各自剩余道具数量重抽。允许抽到同名道具。",boon:"补到每人 3 个，已满的玩家不会再获得；不会移除已有状态。",greed:"先消耗强欲，最多补至 3 个；跳过本回合合成与行动，回响、镜像等回合状态随之结束。",grace:"以使用时自己的双手数字之和计算，生命最多为 99；满血或数字总和为 0 仍会消耗。",ruin:"以使用时对手双手数字之和计算，忽略护盾且不消耗护盾；生命归零立即结算。"})[id] || "点击道具再选择高亮手势，确认后消耗；数字变化不会立即形成武器。",
     };
+  }
   if(kind==="status") {
     const p=state.players[Number(hand)];
     const data={
@@ -58,7 +62,8 @@ export function describe(key, state, participants) {
   }
   if(kind==="supply") {
     const p=state.players[Number(id)];
-    return {title:"回合补给",tag:"每三个己方回合",stats:[["持有",`${p.props.length} / 3`],["下次",p.turns===0?"首次己方回合":`${supplyIn(p)} 个己方回合后`]],body:"每位玩家自己的第 1、4、7…回合开始时随机获得 1 个道具。双方分别计数，强欲结束的回合也计入。",note:"背包已满时当次补给跳过，不积攒；沉默不阻止补给。点击玩家信息区的道具图标查看效果。"};
+    const rounds=p.turns===0?1:supplyIn(p);
+    return {title:"道具补给",tag:"",stats:[],body:`道具补给：将在 ${rounds} 回合后的开始阶段获得一个随机道具。`,note:"按该玩家自己的回合计数；背包满时跳过本次补给。"};
   }
   if (kind === "hand") {
     const owner = Number(id),
@@ -78,7 +83,7 @@ export function describe(key, state, participants) {
       note:
         n === 5
           ? "单个 5：普通伤害减半并变为 1。双手 55：完全免疫普通伤害且数字不变，数字变化后立即失效。真实伤害不消耗防御。"
-          : "双手同为 0、2、4、5、6、7、8、9 时有技能配方；点击组合图鉴查看全部选项。",
+          : "双手同为 0、2、4、5、6、7、8、9 时有技能配方；悬停底部配方查看全部选项。",
     };
   }
   if (kind === "shield")
@@ -114,7 +119,7 @@ export function describe(key, state, participants) {
         ["规划 / 合成 / 计算", "30 秒"],
         ["攻击", "10 秒"],
       ],
-      body: "开始 → 规划 → 合成（无配方略过）→ 行动。合成后发动技能，未合成则计算，行动完成后交给对手。",
+      body: "规划 → 合成（无配方略过）→ 行动。合成后发动技能，未合成则计算，行动完成后交给对手。",
       note: "超时自动推进、选择合成或执行合法行动。除强欲效果外不能手动跳过；无合法计算时自动结束。本地对局在查看菜单、说明或切到后台时暂停，触碰演出期间不扣操作时间。",
     };
   return null;

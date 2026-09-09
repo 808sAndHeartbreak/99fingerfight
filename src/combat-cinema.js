@@ -1,4 +1,5 @@
 import { actionBeats, actionDuration, commandArt, SKILL_MOTION } from './presentation.js';
+import { propUseDetail } from './guidance.js';
 import { playerName, escapeHtml } from './identity.js';
 
 // Presentation consumes authoritative events; it never rolls randomness or changes game state.
@@ -6,6 +7,27 @@ export function createCombatCinema({animate,register,generation,asset,sound,impa
   return async function perform(old,next,command,onBeat) {
     const epoch=generation(), art=commandArt(old,command), skill=command.type==='attack';
     if(!art)return true;
+    if(!skill) {
+      const beats=actionBeats(old,next,command),owner=old.active;
+      const targets=art.target==='all'?[0,1]:[command.target];
+      const names=targets.map(o=>playerName(participants(),o)+(command.targetHand===undefined?'':` · ${command.targetHand===0?'左':'右'}手`)).join('、');
+      const result=command.targetHand!==undefined && old.players[old.active].props[command.slot]!=='lock'
+        ? `${old.players[command.target].hands[command.targetHand]} → ${next.players[command.target].hands[command.targetHand]}`
+        : ['balance','boon','greed'].includes(old.players[owner].props[command.slot])?propUseDetail(old,old.players[owner].props[command.slot]):beats.map(b=>b.label).join(' · ');
+      document.querySelector(`.item-receipt[data-owner="${owner}"]`)?.remove();
+      const card=document.createElement('aside');card.className='item-receipt';card.dataset.owner=owner;card.setAttribute('role','status');
+      card.innerHTML=`<img src="${asset(art.image)}" alt=""><div><small>${escapeHtml(playerName(participants(),owner))} 使用</small><strong>${art.name}</strong><p>目标：${escapeHtml(names)}</p><b>${escapeHtml(result)}</b></div>`;
+      document.querySelector('.duel').append(card);register(card);
+      animate(card,[{opacity:0,transform:'translate(-50%,-40%)'},{opacity:1,transform:'translate(-50%,-50%)',offset:.04},{opacity:1,offset:.94},{opacity:0}],{duration:5000,fill:'both'},true);
+      for(const o of targets) {
+        const el=document.querySelector(command.targetHand===undefined?`#player-${o}`:`#hand-${o}-${command.targetHand}`);
+        animate(el,[{filter:'brightness(1)'},{filter:'brightness(1.5)',offset:.25},{filter:'brightness(1)'}],{duration:1000});
+      }
+      for(const beat of beats)onBeat(beat);
+      sound('guard',.45);
+      await animate(card,[{scale:'.96'},{scale:'1'}],{duration:actionDuration(old,next,command)}).finished.catch(()=>{});
+      return generation()===epoch;
+    }
     const id=skill?old.players[old.active].weapon:old.players[old.active].props[command.slot];
     const family=skill?SKILL_MOTION[id][0]:['grace','boon','echo','mirror'].includes(id)?'guard':['ruin','lock','silence'].includes(id)?'curse':'steal';
     const nine=id==='unify',won=nine&&next.winReason==='九九归一';

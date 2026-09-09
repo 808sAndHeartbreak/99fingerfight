@@ -7,7 +7,7 @@ import {MatchHub} from '../server/hub.js';
 const run=(s,c)=>applyCommand(s,{actor:s.active,revision:s.revision,...c});
 test('every skill and item has dedicated art and readable authoritative beats',()=>{
  assert.equal(Object.keys(SKILL_MOTION).length,18);
- for(const w of WEAPONS){const s=createGame();s.phase='action';s.players[0].weapon=w.id;const c={type:'attack'},n=run(s,c);assert.equal(w.image,`ink-mono/${w.id}.webp`);assert.ok(actionBeats(s,n,c).length);assert.ok(actionDuration(s,n,c)>=1400);assert.ok(presentationDuration(s,n,c)>actionDuration(s,n,c));}
+ for(const w of WEAPONS){const s=createGame();s.phase='action';s.players[0].weapon=w.id;const c={type:'attack'},n=run(s,c);assert.equal(w.image,`ink-mono/${w.id}.webp`);assert.ok(actionBeats(s,n,c).length);assert.ok(actionDuration(s,n,c)>=1400);assert.ok(presentationDuration(s,n,c)>=actionDuration(s,n,c));}
  for(const [id,p] of Object.entries(PROPS))assert.equal(p.image,`ink-mono/${id}.webp`);
 });
 test('dual-gun presentation preserves per-hit shield resolution and never invents extra bullets after lethal damage',()=>{

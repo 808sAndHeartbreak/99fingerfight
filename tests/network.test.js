@@ -123,12 +123,10 @@ test('v4 status counters survive public snapshots, duplicate attacks, and reconn
  x.tick(5000);assert.equal(r.state.active,0);assert.equal(r.state.players[1].skip,2);
 });
 
-test('production opening cut-in is protected before planning begins',()=>{
+test('production handoff has no cut-in delay',()=>{
  const x=harness({animationMs:null});x.req(x.a,'create');x.req(x.b,'join',{code:x.room().code});x.req(x.a,'ready',{ready:true});x.req(x.b,'ready',{ready:true});
- assert.equal(x.room().readyAt,1450);assert.equal(x.room().deadlineAt,1450);
- x.tick(449);assert.equal(x.room().state.phase,'start');
- assert.throws(()=>x.req(x.a,'command',{matchId:x.room().matchId,command:{type:'advance',revision:0}}),/阶段切换/);
- x.tick(2);assert.equal(x.room().state.phase,'planning');
+ assert.equal(x.room().readyAt,1000);assert.equal(x.room().deadlineAt,1000);
+ x.tick(1);assert.equal(x.room().state.phase,'planning');
  assert.equal(x.room().deadlineAt-x.room().readyAt,30000);
 });
 

@@ -67,10 +67,10 @@ function play(id) {
 app.innerHTML = `<main class="game-shell">
   <div class="paper-grain" aria-hidden="true"></div>
   <header class="topbar"><a class="brand" href="./"><span class="brand-symbol">FF<span>!</span></span><div><b>指尖对决</b><small>FINGER FIGHT</small></div></a><div class="match-label"><span class="live-dot"></span><span id="mode-label">人机练习</span><span class="match-divider">/</span><span id="connection-label">本地对局</span></div><nav><button id="online">联机</button><button id="sound" aria-pressed="false">音效 <span>关</span></button><button id="help">玩法说明 <b>?</b></button><button id="menu">菜单 <span>☰</span></button></nav></header>
-  <div id="network-notice" class="network-notice" role="status" hidden></div><section id="tutorial-guide" class="tutorial-guide" hidden aria-label="实战教学"></section><nav id="phase-steps" class="phase-steps turn-track" aria-label="回合流程"></nav><section class="battle-banner" aria-label="当前操作"><div class="turn-instruction"><div class="turn-tag" id="phase-label"></div><h1 id="instruction"></h1><p id="instruction-detail"></p></div><div id="primary-actions" class="primary-actions"></div></section><section class="duel" aria-label="指尖对战场">
+  <div id="network-notice" class="network-notice" role="status" hidden></div><section id="tutorial-guide" class="tutorial-guide" hidden aria-label="实战教学"></section><section class="battle-banner" aria-label="当前操作"><div class="turn-overview"><div class="round-inline">回合 <b id="round-number">01</b><span id="phase-label"></span><div class="phase-time" id="phase-time" role="timer" aria-live="off" aria-label="剩余时间"><span id="clock">30</span><small>SEC</small></div></div><nav id="phase-steps" class="phase-steps turn-track" aria-label="回合流程"></nav></div><div class="turn-instruction"><h1 id="instruction"></h1><p id="instruction-detail"></p></div><div id="primary-actions" class="primary-actions"></div></section><section class="duel" aria-label="指尖对战场">
     <div class="character-art character-blue" aria-hidden="true">${img("manga/blue.webp")}<span class="character-ink">一</span></div>
     <div class="character-art character-red" aria-hidden="true">${img("manga/red.webp")}<span class="character-ink">二</span></div>
-    <div class="scoreboard"><div id="player-0" class="player blue"></div><div class="round-block"><span>ROUND</span><b id="round-number">01</b><div class="phase-time" id="phase-time" role="timer" aria-live="off" aria-label="剩余时间"><span id="clock">30</span><small>SEC</small></div></div><div id="player-1" class="player red"></div></div>
+    <div class="scoreboard"><div id="player-0" class="player blue"></div><div class="round-block"></div><div id="player-1" class="player red"></div></div>
     <div class="stage-caption" aria-hidden="true"><span>一 触</span><b>即 发</b><small>MAKE YOUR MOVE.</small></div>
     <div id="stage" class="stage" data-motion="idle"><div class="hand-layer" id="hand-layer">${[0, 1].map((owner) => [0, 1].map((hand) => `<button id="hand-${owner}-${hand}" class="hand-hotspot ${owner ? "red" : "blue"}" data-owner="${owner}" data-hand="${hand}" aria-pressed="false"><span class="hand-corner"></span>${img("hand-1.webp", "fallback-hand")}<b class="hand-value">1</b><span class="hand-status"></span><span class="hand-shield" data-info="shield" data-info-only hidden></span><span class="sum-preview"></span></button>`).join("")).join("")}</div><div class="contact-fx" id="contact-fx" aria-hidden="true">${img("manga/contact.webp")}<b>碰!</b></div></div>
     <div id="combat-callout" class="combat-callout" aria-live="polite"></div>
@@ -78,7 +78,7 @@ app.innerHTML = `<main class="game-shell">
     <div id="items-0" class="field-items blue" aria-label="蓝方道具"></div><div id="items-1" class="field-items red" aria-label="红方道具"></div>
     <section id="forge-options" class="forge-options" hidden aria-label="合成选项"></section>
   </section>
-  <section class="reference-deck" aria-label="常驻组合图鉴"><header><strong>组合图鉴</strong><small>55 绝对防御 · 点击查看招式</small><button id="history">战报 ↗</button><span id="render-status"></span></header><div id="recipe-shelf" class="recipe-shelf" tabindex="0" aria-label="横向滚动查看组合"></div></section>
+  <section class="reference-deck" aria-label="常驻组合图鉴"><header><strong>组合图鉴</strong><small>悬停查看招式</small><button id="history">战报 ↗</button><span id="render-status"></span></header><div id="recipe-shelf" class="recipe-shelf" tabindex="0" aria-label="横向滚动查看组合"></div></section>
 </main><dialog id="dialog"></dialog><aside id="info-popover" role="tooltip" hidden></aside><div id="toast" class="toast" role="status"></div>`;
 
 document.querySelector('#recipe-shelf').addEventListener('wheel',event=>{
@@ -102,11 +102,23 @@ function toast(message, duration=2400) {
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => el.classList.remove("visible"), duration);
 }
+const announcedGains=new Set();
 function announceSupply(next) {
   if(mode === "tutorial") return;
+  const key=`${actionSerial}:${mode==='online'?remoteMatch:''}:${next.revision}`;
+  if(!announcedGains.has(key)) {
+    announcedGains.add(key);if(announcedGains.size>100)announcedGains.delete(announcedGains.values().next().value);
+    for(const owner of [0,1]) {
+      const gains=(next.events||[]).filter(e=>e.type==='draw'&&e.owner===owner);
+      if(!gains.length)continue;
+      document.querySelector(`.gain-receipt[data-owner="${owner}"]`)?.remove();
+      const el=document.createElement('aside');el.className='gain-receipt';el.dataset.owner=owner;el.setAttribute('role','status');
+      el.innerHTML=`<small>${name(owner)} · 获得道具</small><div>${gains.map(e=>`<span>${propArt(e.item)}<b>${PROPS[e.item].name}</b></span>`).join('')}</div>`;
+      document.querySelector('.duel').append(el);feedback.register(el);
+      feedback.animate(el,[{opacity:0},{opacity:1,offset:.04},{opacity:1,offset:.94},{opacity:0}],{duration:6500,fill:'both'},true);
+    }
+  }
   const notes=[0,1].flatMap(owner=>{
-    const draws=(next.events||[]).filter(e=>e.type==="draw"&&e.owner===owner);
-    if(draws.length)return [`${playerName(participants(),owner)}获得：${draws.map(e=>PROPS[e.item].name).join("、")}`];
     return (next.events||[]).some(e=>e.type==="supply-full"&&e.owner===owner)?[`${playerName(participants(),owner)}背包已满，本次补给跳过`]:[];
   });
   const ticks=(next.events||[]).filter(e=>e.type==="damage"&&["七伤拳","玄冥神掌"].includes(e.source));
@@ -135,10 +147,9 @@ function renderPlayer(owner) {
     const count=({skip:p.skip,seven:p.seven,dark:'∞',foam:p.foam,knuckles:'+10',nine:`${p.nine}/2`})[key];
     return `<button class="status-icon" data-info="status:${key}:${owner}" data-info-only aria-label="${d.title}，${d.stats[0][1]}">${img(`ink-mono/${statusIcons[key]}.webp`)}${count!==undefined?`<b class="status-count">${count}</b>`:''}</button>`;
   }).join('');
-  const supply=p.turns===0?1:supplyIn(p);
   const identity=mode==='online'&&owner===online.packet.room.seat?'你':mode==='ai'&&owner===1?'陪练':'';
   document.querySelector(`#player-${owner}`).innerHTML =
-    `<div class="player-head"><div class="player-identity"><strong title="${name(owner)}">${name(owner)}</strong>${identity?`<small class="seat-label">${identity}</small>`:''}${presence?`<small class="player-presence ${presenceText==='在线'?'connected':''}" aria-label="${presenceText}"><i class="status-dot"></i>${presenceText==='在线'?'':presenceText}</small>`:''}</div><div class="health-number"><b>${p.hp}</b><small>/ ${MAX_HP}</small></div></div><div class="hp-bar" role="meter" aria-label="${team(owner)}生命" aria-valuenow="${p.hp}" aria-valuemin="0" aria-valuemax="${MAX_HP}"><i style="width:${(p.hp/MAX_HP)*100}%"></i></div><div class="status-strip">${statuses}<button class="supply-label" data-info="supply:${owner}" data-info-only aria-label="${supply} 个己方回合后补给"><span>补给</span><span class="supply-pips" aria-hidden="true">${[1,2,3].map(n=>`<i class="${n<=3-supply?'filled':''}"></i>`).join('')}</span></button></div><div class="player-loadout">${w?`<button class="weapon-ready" data-info="weapon:${w.id}" data-info-only aria-label="已合成${w.name}">${img(w.image)}<b>${w.name}</b></button>`:''}</div>`;
+    `<div class="player-head"><div class="player-identity"><strong title="${name(owner)}">${name(owner)}</strong>${identity?`<small class="seat-label">${identity}</small>`:''}${presence?`<small class="player-presence ${presenceText==='在线'?'connected':''}" aria-label="${presenceText}"><i class="status-dot"></i>${presenceText==='在线'?'':presenceText}</small>`:''}</div><div class="health-number"><b>${p.hp}</b><small>/ ${MAX_HP}</small></div></div><div class="hp-bar" role="meter" aria-label="${team(owner)}生命" aria-valuenow="${p.hp}" aria-valuemin="0" aria-valuemax="${MAX_HP}"><i style="width:${(p.hp/MAX_HP)*100}%"></i></div><div class="status-strip">${statuses}</div><div class="player-loadout">${w?`<button class="weapon-ready" data-info="weapon:${w.id}" data-info-only aria-label="已合成${w.name}">${img(w.image)}<b>${w.name}</b></button>`:''}</div>`;
   document.querySelector(`#player-${owner}`).classList.toggle("active", active);
 }
 function renderHandShield(el,p,h) {
@@ -230,18 +241,18 @@ function render() {
   document.querySelector("#phase-steps").innerHTML = turnSteps(state).map((step,i)=>`<div class="${step.current ? "current" : step.done ? "done" : ""}" ${step.current ? 'aria-current="step"' : ""}><b>${step.done ? (step.id==="synthesis" && state.synthesis==="skipped" ? "—" : "✓") : `0${i+1}`}</b><span>${step.label}<small>${step.note}</small></span></div>`).join("");
   const forgePanel=document.querySelector("#forge-options");
   forgePanel.hidden=busy || remotePending || state.phase !== "synthesis";
-  forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><small>03 / FUSE</small><h2>${humanTurn()?"选择你的技能":"对手正在选择技能"}</h2><p>当前双手 ${p.hands.join(" · ")}</p></div><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${enabled ? "" : "disabled"}><span class="forge-recipe">${w.recipe.join(" · ")}</span>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span><b>${humanTurn()?"确认合成 →":"等待对手确认"}</b></button>`).join("")}</div>`;
+  forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><small>02 / FUSE</small><h2>${humanTurn()?"选择你的技能":"对手正在选择技能"}</h2><p>当前双手 ${p.hands.join(" · ")}</p></div><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${enabled ? "" : "disabled"}><span class="forge-recipe">${w.recipe.join(" · ")}</span>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span><b>${humanTurn()?"确认合成 →":"等待对手确认"}</b></button>`).join("")}</div>`;
   for(const owner of [0,1]) {
     const player=state.players[owner], usable=owner===state.active && enabled && state.phase==="planning" && !player.silenced;
-    document.querySelector(`#items-${owner}`).innerHTML=[0,1,2].map(slot=>{
+    const supply=player.turns===0?1:supplyIn(player);
+    document.querySelector(`#items-${owner}`).innerHTML=`<div class="supply-dots" data-info="supply:${owner}" tabindex="0" aria-label="道具补给：${supply} 回合后">${[1,2,3].map(n=>`<i class="${n<=3-supply?'filled':''}"></i>`).join('')}</div>`+[0,1,2].map(slot=>{
       const id=player.props[slot], mine=owner===state.active && humanTurn();
-      return id ? `<div class="prop-slot ${mine&&selected?.kind==='prop'&&selected.slot===slot?'selected':''}"><button class="prop-use" ${mine?`data-prop="${slot}"`:'data-info-only'} data-info="prop:${id}" aria-disabled="${!usable}" aria-label="${mine?'使用':'查看'}${PROPS[id].name}">${propArt(id)}<b>${PROPS[id].name}</b></button><button class="prop-info" data-info="prop:${id}" data-info-only aria-label="${PROPS[id].name}完整说明">i</button></div>` : '<div class="prop-slot empty" aria-label="空道具位"><span>＋</span></div>';
+      return id ? `<div class="prop-slot ${mine&&selected?.kind==='prop'&&selected.slot===slot?'selected':''}"><button class="prop-use" ${mine?`data-prop="${slot}"`:'data-info-only'} data-info="prop:${id}:${owner}" aria-disabled="${!usable}" aria-label="${mine?'使用':'查看'}${PROPS[id].name}">${propArt(id)}<b>${PROPS[id].name}</b></button><button class="prop-info" data-info="prop:${id}:${owner}" data-info-only aria-label="${PROPS[id].name}完整说明">i</button></div>` : '<div class="prop-slot empty" aria-label="空道具位"><span>＋</span></div>';
     }).join('');
   }
   const shelf=document.querySelector('#recipe-shelf');
   if(!shelf.children.length)shelf.innerHTML=[5,0,2,4,6,7,8,9].map(n=>{
-    const weapons=WEAPONS.filter(w=>w.recipe[0]===n);
-    return `<button class="reference-recipe" data-number="${n}" data-info="recipe:${n}" data-info-only><b>${n} + ${n}</b>${img(weapons[0].image)}<span>${n===5?'绝对防御':n===9?'九九归一':weapons.map(w=>w.name).join(' / ')}</span><small>${weapons.length} 种招式</small></button>`;
+    return `<div class="reference-recipe" tabindex="0" data-number="${n}" data-info="recipe:${n}" aria-label="${n} 加 ${n} 配方"><b>${n} + ${n}</b></div>`;
   }).join('');
   for(const el of shelf.children){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',selected?.kind==='hand'&&p.hands[selected.hand]===n);}
   document.querySelector("#primary-actions").innerHTML = `${selected ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${selected?.kind==="prop"&&PROPS[p.props[selected.slot]].target!=="hand" ? `<button class="primary" id="use-prop" ${enabled&&!p.silenced?"":"disabled"}>确认使用${PROPS[p.props[selected.slot]].name} →</button>` : state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"} →</button>` : state.phase === "planning" && selected?.kind !== "prop" ? `<button class="primary" id="advance" ${enabled ? "" : "disabled"}>结束规划 <span>→</span></button>` : state.phase === "synthesis" ? `<button class="secondary" id="decline" ${enabled ? "" : "disabled"}>放弃合成，进入计算 →</button>` : state.phase === "action" && p.weapon ? `<button class="primary red-button" id="attack" ${enabled ? "" : "disabled"}>发动技能 <span>↗</span></button>` : ""}`;

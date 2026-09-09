@@ -108,6 +108,11 @@ export function createFeedback() {
     animate, register:el=>nodes.add(el), generation:()=>epoch,
     async phase(cue, asset) {
       if (!cue) return;
+      if(cue.kind!=='finish') {
+        const banner=document.querySelector('.battle-banner');
+        animate(banner,[{filter:'brightness(1.4)'},{filter:'brightness(1)'}],{duration:450});
+        return;
+      }
       document.querySelectorAll(".phase-cut:not(.finish)").forEach(node=>node.remove());
       const el = document.createElement("div");
       el.className = `phase-cut ${cue.kind}`;
