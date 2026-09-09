@@ -15,8 +15,8 @@ export class OnlineClient {
   socket.onmessage=e=>{
    if(this.socket!==socket)return;
    let m;try{m=JSON.parse(e.data);}catch{return;}
-   if(m.type==='welcome'){write('ff-token',m.token);this.status='connected';this.retry=0;this.onStatus?.();}
-   if(m.type==='snapshot'){this.packet=m;this.offset=Date.now()-m.serverNow;this.onChange(m);}
+   if(m.type==='welcome'){write('ff-token',m.token);this.restoreResolve?.();this.restoreResolve=null;this.status='connected';this.retry=0;this.onStatus?.();}
+   if(m.type==='snapshot'){if(m.room?.code){let rooms={};try{rooms=JSON.parse(read('ff-room-tokens','localStorage')||'{}');}catch{}rooms[m.room.code]=read('ff-token');write('ff-room-tokens',JSON.stringify(Object.fromEntries(Object.entries(rooms).slice(-20))),'localStorage');}this.packet=m;this.offset=Date.now()-m.serverNow;this.onChange(m);}
    if(m.type==='ack'||m.type==='error'){const p=this.pending.get(m.id);if(p){clearTimeout(p.timer);this.pending.delete(m.id);m.type==='ack'?p.resolve():p.reject(new Error(m.message));}else if(m.type==='error')this.onStatus?.(m.message);}
   };
   socket.onclose=e=>{
@@ -30,6 +30,11 @@ export class OnlineClient {
   if(this.status!=='connected'||this.socket.readyState!==WebSocket.OPEN)return Promise.reject(new Error('正在重连，请稍候'));
   const id=crypto.randomUUID();
   return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{this.pending.delete(id);reject(new Error('请求未确认，正在刷新状态'));this.socket.close();},8000);this.pending.set(id,{resolve,reject,timer});this.socket.send(JSON.stringify({type:'request',id,op,...fields}));});
+ }
+ async join(code){
+  code=String(code).trim().toUpperCase();let token;try{token=JSON.parse(read('ff-room-tokens','localStorage')||'{}')[code];}catch{}
+  if(token&&token!==read('ff-token')){write('ff-token',token);await new Promise((resolve,reject)=>{const timer=setTimeout(()=>{this.restoreResolve=null;reject(new Error('恢复连接超时，请重试'));},8000);this.restoreResolve=()=>{clearTimeout(timer);resolve();};this.connect();});}
+  return this.request('join',{code});
  }
  async saveDraft(){if(this.nameDraft!=null)await this.rename(this.nameDraft);}
  async rename(name){await this.request('name',{name});write('ff-name',name.trim()?normalizeParticipants([{displayName:name}])[0].displayName:'','localStorage');if(this.nameDraft===name)this.nameDraft=null;}

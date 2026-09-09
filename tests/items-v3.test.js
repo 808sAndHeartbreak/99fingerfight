@@ -38,7 +38,7 @@ test('echo and mirror combinations match previews and visual writes across all d
   const s=createGame();s.active=actor;s.phase='action';s.players[actor].hands=[a,7];s.players[1-actor].hands=[b,3];Object.assign(s.players[actor],{echo,mirror});
   const c={type:'add',actor,revision:s.revision,hand:0,targetHand:0},copy=structuredClone(s),out=calculationOutcome(s,c),next=run(s,c),n=(a+b)%10;
   assert.deepEqual(s,copy);assert.deepEqual(next.players[actor].hands,mirror?[a,7]:echo?[n,n]:[n,7]);assert.deepEqual(next.players[1-actor].hands,mirror?[n,3]:[b,3]);
-  assert.equal(next.players[actor].echo,false);assert.equal(next.players[actor].mirror,false);
+  assert.equal(next.players[actor].echo,next.active===actor?echo:false);assert.equal(next.players[actor].mirror,next.active===actor?mirror:false);
   const preview=handPreview(s,{kind:'hand',hand:0},1-actor,0);assert.equal(preview.number,n);
   const steps=touchVisualSteps(s,c);assert.equal(steps.length,echo?2:1);assert.ok(steps.every(step=>step.visualResult===n));
   const visual=structuredClone(s.players.map(p=>p.hands));for(const step of steps)for(const w of step.visualWrites)visual[w.owner][w.hand]=w.value;
@@ -72,6 +72,6 @@ test('grace caps healing and ruin uses enemy sum, bypassing and preserving shiel
 test('turn-limited modifiers expire on attack or no legal calculation and do not accumulate uses',()=>{
  const [s]=use('echo',{props:['echo','echo','mirror']});let n=run(s,{type:'prop',slot:0,target:0});n=run(n,{type:'prop',slot:0,target:0});assert.equal(n.players[0].echo,true);
  n=run(n,{type:'prop',slot:0,target:0});n.players[0].hands=[9,9];n=run(n,{type:'advance'});n=run(n,{type:'forge',weapon:'unify'});assert.equal(n.players[0].echo,true);
- n=run(n,{type:'attack'});assert.equal(n.players[0].echo,false);assert.equal(n.players[0].mirror,false);
+ n=run(n,{type:'attack'});assert.equal(n.players[0].echo,true);n=run(n,{type:'add',hand:0,targetHand:0});if(n.phase==='synthesis')n=run(n,{type:'decline'});assert.equal(n.players[0].echo,false);assert.equal(n.players[0].mirror,false);
  const b=planning();b.players[0].echo=true;b.players[0].mirror=true;b.players[0].locks=[true,true];const bn=run(b,{type:'advance'});assert.equal(bn.active,1);assert.equal(bn.players[0].echo,false);assert.equal(bn.players[0].mirror,false);
 });

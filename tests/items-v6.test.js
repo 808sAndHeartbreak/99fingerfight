@@ -8,9 +8,10 @@ import {propUseDetail} from '../src/guidance.js';
 import {MatchHub} from '../server/hub.js';
 const run=(s,c)=>applyCommand(s,{actor:s.active,revision:s.revision,...c});
 const fixture=(weapon='dual')=>{const s=createGame(27);s.phase='action';s.players[0].weapon=weapon;s.players.forEach(p=>{p.props=[];p.turns=1;});return s;};
-const attack=s=>run(s,{type:'attack'});
+// These duration tests resolve skills after the turn's calculation.
+const attack=s=>run({...s,calculated:true},{type:'attack'});
 const damage=n=>n.events.filter(e=>e.type==='damage');
-const touch=s=>{s.phase='action';s.players[s.active].weapon=null;return run(s,{type:'add',hand:0,targetHand:0});};
+const touch=s=>{s.phase='action';s.calculated=false;s.players[s.active].weapon=null;const n=run(s,{type:'add',hand:0,targetHand:0});return n.phase==='synthesis'?run(n,{type:'decline'}):n;};
 
 test('wine and adrenaline are tier B and wine stacks for only the next first direct segment',()=>{
  assert.equal(PROP_WEIGHTS.wine,2);assert.equal(PROP_WEIGHTS.adrenaline,2);
@@ -60,7 +61,7 @@ test('steal transfers consumable and timed buffs but never nine; unify retains b
 
 test('two visible phases retain optional skill selection; empty or silenced item phase gets one second server deadline',()=>{
  const s=fixture();s.phase='planning';s.players[0].weapon=null;assert.equal(autoItemPhase(s),true);assert.equal(phaseSeconds(s),1);
- s.players[0].props=['wine'];assert.equal(phaseSeconds(s),30);s.players[0].silenced=true;assert.equal(phaseSeconds(s),1);s.players[0].silenced=false;
- const h=new MatchHub({now:()=>10000}),r={state:s,status:'playing',readyAt:0,deadlineAt:30000};h.step(r,{type:'prop',actor:0,revision:s.revision,slot:0,target:0});assert.equal(r.deadlineAt,r.readyAt+1000);
+ s.players[0].props=['wine'];assert.equal(phaseSeconds(s),20);s.players[0].silenced=true;assert.equal(phaseSeconds(s),1);s.players[0].silenced=false;
+ const h=new MatchHub({now:()=>10000}),r={state:s,status:'playing',readyAt:0,deadlineAt:20000};h.step(r,{type:'prop',actor:0,revision:s.revision,slot:0,target:0});assert.equal(r.deadlineAt,r.readyAt+1000);
  assert.deepEqual(turnSteps(s).map(x=>x.label),['道具','行动']);s.phase='synthesis';assert.equal(turnSteps(s)[1].current,true);s.phase='action';assert.equal(turnSteps(s)[1].current,true);
 });

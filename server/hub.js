@@ -99,7 +99,7 @@ export class MatchHub {
     else {
       const buffer=this.animationMs===null?presentationDuration(old,next,command):( ['add','forge','attack'].includes(command.type)?this.animationMs:1000);
       r.readyAt=this.now()+buffer;
-      if(next.turn!==old.turn||next.phase!==old.phase||autoItemPhase(next))r.deadlineAt=r.readyAt+(next.phase==='start'?0:phaseSeconds(next)*1000);
+      if(next.turn!==old.turn||next.phase!==old.phase||command.type==='attack'||autoItemPhase(next))r.deadlineAt=r.readyAt+(next.phase==='start'?0:phaseSeconds(next)*1000);
       else r.deadlineAt+=buffer;
     }
     return {command,revision:next.revision,matchId:r.matchId};
@@ -111,9 +111,9 @@ export class MatchHub {
     if(op==='name') {check(typeof message.name==='string'&&message.name.length<=200,'名字过长');u.name=cleanName(message.name);if(r?.seatNames)r.seatNames[r.seats.indexOf(u.id)]=u.name;}
     else if(op==='create') r=this.create(u);
     else if(op==='join') {
-      check(!u.room&&!u.queued,'请先退出当前房间或匹配');
       const code=String(message.code||'').trim().toUpperCase();check(/^[A-F0-9]{6}$/.test(code),'请输入六位房间码');
-      r=this.rooms.get(code);check(r&&r.status==='waiting','房间不存在或已开始');check(r.seats.length<2,'房间已满');r.seats.push(u.id);u.room=code;
+      if(u.room===code){check(r?.seats.includes(u.id),'无法恢复此席位');}
+      else {check(!u.room&&!u.queued,'请先退出当前房间或匹配');r=this.rooms.get(code);check(r&&r.status==='waiting','房间不存在或已开始');check(r.seats.length<2,'房间已满');r.seats.push(u.id);u.room=code;}
     } else if(op==='queue') {
       check(!u.room,'请先离开房间');
       if(!u.queued){const other=this.queue.find(id=>id!==u.id&&this.connected(id)&&!this.userById(id)?.room);

@@ -17,7 +17,7 @@ export function handPreview(state, selected, owner, hand) {
       return {
         text: state.players[owner].locks[hand] ? "已被封印" : "封印此手",
         note: state.players[owner].locks[hand]
-          ? "仍会消耗道具"
+          ? "不能重复封印"
           : "到其回合结束",
         number: null,
       };
@@ -33,7 +33,7 @@ export function handPreview(state, selected, owner, hand) {
       selected.kind === "hand"
         ? `碰这里 → ${number}`
         : `${state.players[owner].hands[hand]} → ${number}`,
-    note: (selected.kind==="hand" ? state.players[state.active].mirror?"镜像：改变对手目标手 · ":state.players[state.active].echo?"回响：己方双手同值 · ":"" : "") + (weapon ? `${selected.kind === "prop" && affected === state.active ? "本回合可合成" : "留到下回合合成"}${matchingWeapons([number,other]).length>1?`${matchingWeapons([number,other]).length} 种技能`:weapon.name}` : number === 5 ? "获得护盾" : ""),
+    note: (selected.kind==="hand" ? state.players[state.active].mirror?"镜像：改变对手目标手 · ":state.players[state.active].echo?"回响：己方双手同值 · ":"" : "") + (weapon ? `${affected === state.active ? "本回合可合成 · " : "对手回合可合成 · "}${matchingWeapons([number,other]).length>1?`${matchingWeapons([number,other]).length} 种技能`:weapon.name}` : number === 5 ? "获得护盾" : ""),
   };
 }
 
@@ -66,7 +66,7 @@ export function guidance(state, selected, human, busy) {
     };
   }
   if (state.phase === "start") return {title:state.skipping?"本回合无法行动":"回合开始",detail:state.skipping?"补给与持续伤害照常，随后交给对手。":"",step:"start",canTouch};
-  if (state.phase === "synthesis") return {title:"选择要合成的技能",detail:"选招后立即释放；放弃则结束回合。",step:"synthesis",canTouch};
+  if (state.phase === "synthesis") return {title:"选择要合成的技能",detail:state.calculated?"已计算；合成并使用，或结束回合。":"选招后仍可计算一次；也可放弃当前组合。",step:"synthesis",canTouch};
   if (state.phase === "planning")
     return {
       title: p.silenced ? "本回合被沉默，准备行动" : p.weapon
@@ -104,7 +104,7 @@ export function comboHint(state) {
   const p=state.players[state.active];
   if(p.weapon) return `${weaponById(p.weapon).name} · ${weaponById(p.weapon).detail}`;
   const options=matchingWeapons(p.hands);
-  return options.length ? `配方已满足 · ${state.phase === "planning" || state.phase === "synthesis" ? "行动时可选" : "留待下回合"}` : "行动时选择技能或计算";
+  return options.length ? `配方已满足 · ${state.phase === "planning" || state.phase === "synthesis" ? "行动时可选" : "本回合可用"}` : "行动时选择技能或计算";
 }
 export function comboRoutes(state, owner, hand) {
   const p=state.players[owner], enemy=state.players[1-owner];
@@ -116,7 +116,7 @@ export function comboRoutes(state, owner, hand) {
       return matchingWeapons(hands).some(w=>w.id===weapon.id);
     });
     const ready=targets.length>0&&state.phase==="action"&&!p.weapon&&state.active===owner&&state.winner===null;
-    return {weapon,ready,status:p.mirror?"镜像不会改变己方配方":ready?`回响：碰${targets.map(i=>i?"右手":"左手").join(" / ")} · 下回合`:"当前无可用触碰组合"};
+    return {weapon,ready,status:p.mirror?"镜像不会改变己方配方":ready?`回响：碰${targets.map(i=>i?"右手":"左手").join(" / ")} · 本回合`:"当前无可用触碰组合"};
   });
   return WEAPONS.map(weapon => {
     const recipe=weapon.recipe;
@@ -126,7 +126,7 @@ export function comboRoutes(state, owner, hand) {
     const targets=enemy.hands.flatMap((n,i)=> n===needed && !enemy.locks[i] ? [i ? "右手":"左手"] : []);
     const ready=desired !== null && !p.locks[hand] && targets.length>0 && state.phase==="action" && !p.weapon && state.active===owner && state.winner===null;
     const satisfied=matchingWeapons(p.hands).some(w=>w.id===weapon.id);
-    return {weapon,ready,status:satisfied ? "配方已满足" : desired === null ? `另一手需 ${[...new Set(recipe)].join(" / ")}` : p.locks[hand] ? "此手已封印" : ready ? `碰${targets.join(" / ")} · 下回合` : `需碰数字 ${needed}`};
+    return {weapon,ready,status:satisfied ? "配方已满足" : desired === null ? `另一手需 ${[...new Set(recipe)].join(" / ")}` : p.locks[hand] ? "此手已封印" : ready ? `碰${targets.join(" / ")} · 本回合` : `需碰数字 ${needed}`};
   });
 }
 export function forgeEvents(old, next, command) {

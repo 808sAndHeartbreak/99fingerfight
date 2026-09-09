@@ -11,9 +11,10 @@ test('all practice steps execute real rules and reach both victory conditions',a
     assert.ok(s.done);
     const result=s.getSnapshot();
     if(chapter===0){assert.equal(result.players[0].hands[0],2);assert.equal(result.active,1);}
-    else assert.equal(result.winner,0);
+    else if(chapter!==2)assert.equal(result.winner,0);
+    if(chapter===2){assert.equal(result.players[1].hp,84);assert.equal(result.active,1);}
     if(chapter===1)assert.equal(result.players[1].hp,0);
-    if(chapter===2){assert.equal(result.players[0].nine,2);assert.equal(result.winReason,'九九归一');assert.equal(result.players[1].hp,99);}
+    if(chapter===3){assert.equal(result.players[0].nine,2);assert.equal(result.winReason,'九九归一');assert.equal(result.players[1].hp,99);}
   }
 });
 test('wrong actions and stale duplicate clicks never advance a practice checkpoint',async()=>{
@@ -32,7 +33,7 @@ test('retries are fresh, snapshots isolated, disposed sessions reject and normal
   await assert.rejects(send(first,{type:'forge',weapon:'unify'}));
   assert.equal(fresh.step,0);assert.equal(fresh.getSnapshot().players[0].hp,99);
   assert.deepEqual(createGame().players[0].hands,[1,1]);assert.equal(createGame().players[0].nine,0);
-  assert.match(menuMarkup('play'),/data-mode="tutorial"/);
+  assert.match(menuMarkup('home'),/data-tutorial/);
   assert.match(menuMarkup('play'),/本地对战/);assert.match(menuMarkup('play'),/联机对战/);
 });
 

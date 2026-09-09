@@ -22,7 +22,7 @@ test("hand target previews agree with the authoritative reducer, including rollo
         });
         assert.equal(next.players[actor].weapon,null);
         assert.equal(next.players[actor].hands[0], preview.number);
-        if(preview.weapon) assert.match(preview.note,/下回合/);
+        if(preview.weapon) assert.match(preview.note,/本回合/);
         assert.equal(next.players[1 - actor].hands[0], b);
         assert.equal(handPreview(s, { kind: "hand", hand: 0 }, actor, 0), null);
       }

@@ -42,7 +42,7 @@ test("synthesis checks only the actor, can be declined, and no recipe skips dire
   assert.equal(s.players[1].weapon,null);
   s=planning(); s.players[0].hands=[9,9]; s=run(s,{type:"advance"});
   assert.throws(()=>run(s,{type:"forge",weapon:"serious"}));
-  s=run(s,{type:"decline"}); assert.equal(s.phase,"start"); assert.equal(s.active,1);
+  s=run(s,{type:"decline"}); assert.equal(s.phase,"action"); assert.equal(s.active,0);
   assert.deepEqual(s.players[0].hands,[9,9]); assert.equal(s.players[0].weapon,null);
 });
 test("no legal touch automatically ends turn, while locked hands may still synthesize",()=>{

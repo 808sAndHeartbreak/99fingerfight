@@ -16,7 +16,7 @@ test('departed opponents cannot be invited into a rematch; pending lobby actions
 });
 test('initial menus do not expose a resume action before the player starts',()=>{
  for(const page of ['home','play','local'])assert.ok(!menuMarkup(page).includes('data-close'));
- assert.ok(menuMarkup('home',{started:true}).includes('data-close'));
+ assert.ok(!menuMarkup('home',{started:true}).includes('data-close'));assert.ok(menuMarkup('local',{resumable:true}).includes('data-resume-pve'));
 });
 
 test('nickname draft survives server profile refresh including an intentionally empty field',()=>{

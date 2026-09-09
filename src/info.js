@@ -12,7 +12,7 @@ export function describe(key, state, participants) {
   if(kind === "recipe" || kind === "combo") {
     const options=WEAPONS.filter(w=>w.recipe.every(n=>n===Number(id)));
     if(!options.length)return null;
-    return {title:`${id} + ${id}`,tag:"配方选项",stats:[],body:(kind==="combo"?`组合已满足，行动时可合成。${id==="5"?"55：免疫普通伤害，不消耗数字；真实伤害仍可生效。":""}<br><br>`:"")+options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:"行动时选择其中一种，双手归 1 并自动释放；放弃则结束回合。"};
+    return {title:`${id} + ${id}`,tag:"配方选项",stats:[],body:(kind==="combo"?`组合已满足，行动时可合成。${id==="5"?"55：免疫普通伤害，不消耗数字；真实伤害仍可生效。":""}<br><br>`:"")+options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:"行动时选择其中一种，双手归 1 并自动释放；每回合可计算一次，计算前后均可合成。"};
   }
   if (kind === "weapon") {
     const w = weaponById(id);
@@ -26,7 +26,7 @@ export function describe(key, state, participants) {
         ["使用", "行动阶段"],
       ],
       body: w.detail,
-      note: "行动时可以选择此武器，双手归 1 并自动释放；放弃合成则结束回合。",
+      note: "合成后双手归 1 并自动释放；每回合计算一次，计算前后均可合成。",
     };
   }
   if (kind === "prop") {
@@ -70,7 +70,7 @@ export function describe(key, state, participants) {
   if(kind==="supply") {
     const p=state.players[Number(id)];
     const rounds=p.turns===0?1:supplyIn(p);
-    return {title:"道具补给",tag:"",stats:[],body:`道具补给：将在 ${rounds} 回合后的开始阶段获得一个随机道具。`,note:"按该玩家自己的回合计数；背包满时跳过本次补给。"};
+    return {title:"道具补给",tag:"",stats:[],body:`将在 ${rounds} 回合后的开始阶段获得一个随机道具。`,note:"按该玩家自己的回合计数；背包满时跳过本次补给。"};
   }
   if (kind === "hand") {
     const owner = Number(id),
@@ -95,7 +95,7 @@ export function describe(key, state, participants) {
   }
   if (kind === "shield")
     return {
-      title: "五指护盾",
+      title: "护盾",
       image: "ink-mono/foam.webp",
       tag: "被动效果",
       stats: [
@@ -115,7 +115,7 @@ export function describe(key, state, participants) {
         ["道具", `${p.props.length} / 3`],
       ],
       body: "生命先降为 0 的一方失败；获得两枚九标记立即获胜。双方开局 99 生命。悬停或点击状态、道具可查看详细规则。",
-      note: `当前武器：${p.weapon ? weaponById(p.weapon).name : "尚未合成"}。${p.hands.includes(5) ? "五指护盾生效中。" : ""}`,
+      note: `当前武器：${p.weapon ? weaponById(p.weapon).name : "尚未合成"}。${p.hands.includes(5) ? "护盾生效中。" : ""}`,
     };
   }
   if (kind === "phase")
@@ -123,11 +123,11 @@ export function describe(key, state, participants) {
       title: "回合流程",
       tag: "行动规则",
       stats: [
-        ["道具 / 选招 / 计算", "30 秒"],
+        ["道具 / 选招 / 计算", "20 秒"],
         ["技能", "合成后自动释放"],
       ],
-      body: "道具 → 行动（选择技能或触碰计算）。有配方时选招自动释放或放弃结束；无配方时触碰计算，行动完成后交给对手。",
-      note: "超时自动推进、选择合成或执行合法行动。除强欲、肾上腺素效果外不能手动跳过；无合法计算时自动结束。本地对局在查看菜单、说明或切到后台时暂停，触碰演出期间不扣操作时间。",
+      body: "道具 → 行动。每回合计算一次，可在计算前后合成并使用技能；放弃只针对当前组合，数字改变后重新询问。",
+      note: "超时自动推进、选择合成或执行合法行动。计算已用或无法计算，且没有待选组合时结束回合。本地对局在查看菜单、说明或切到后台时暂停，触碰演出期间不扣操作时间。",
     };
   return null;
 }

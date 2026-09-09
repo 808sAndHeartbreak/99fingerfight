@@ -15,6 +15,12 @@ export class LocalSession {
     this.seed = seed;
     this.#state = createGame(seed);
   }
+  static restore(replay) {
+    if(replay?.rulesVersion!==RULES_VERSION||!Array.isArray(replay.commands))throw new Error('存档版本不兼容');
+    const session=new LocalSession(replay.seed,{participants:replay.participants});
+    for(const command of replay.commands){session.#state=applyCommand(session.#state,command);session.#commands.push(structuredClone(command));}
+    return session;
+  }
   getParticipants() {
     return structuredClone(this.#participants);
   }
@@ -36,6 +42,7 @@ export class LocalSession {
     for (const listener of this.#listeners) listener(this.getSnapshot());
     return this.getSnapshot();
   }
+  exportSave(){return {...this.exportReplay(),participants:this.getParticipants()};}
   exportReplay() {
     return {
       rulesVersion: RULES_VERSION,

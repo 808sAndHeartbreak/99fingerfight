@@ -10,7 +10,7 @@ export function actionBeats(old,next,command) {
  if(command.type==='attack'){
   const id=old.players[old.active].weapon,p=next.players[old.active],e=next.players[1-old.active];
   if(next.winner===null||id==='unify') {
-   const labels={serious:old.players[old.active].resilience?'对手双手归一 · 破盾 · 坚韧免疫跳过':'对手双手归一 · 破盾 · 自己下回合无法行动',seven:`七伤已施加 · 剩余 ${e.seven} 次`,scissors:`对手双手 → ${e.hands.join(' / ')}`,fan:'花蝶扇 · 道具已结算',buddha:old.players[1-old.active].resilience?'双手归一 · 坚韧免疫跳过':'双手归一 · 跳过三回合',dark:'玄冥 · 永久侵蚀',foam:`盾墙 → ${p.foam} 次`,knuckles:`指虎 ${p.knuckles} 层 · 每段技能 +${p.knuckles*10}`,peace:'双方和平 · 各自接下来三回合免疫伤害',serpent:'虚弱与中毒 · 五回合',steal:'道具与增益已转移',dual:`道具补充 → ${p.props.length}/3`,taser:old.players[1-old.active].resilience?'坚韧：免疫跳过':'对手跳过三回合',unify:p.nine===2?'九九归一':'减益已清除 · 九印 1 / 2'};
+   const labels={serious:old.players[old.active].resilience?'双手归一 · 破盾 · 本回合结束 · 坚韧免疫下回合跳过':'双手归一 · 破盾 · 本回合结束 · 下回合无法行动',seven:`七伤已施加 · 剩余 ${e.seven} 次`,scissors:`对手双手 → ${e.hands.join(' / ')}`,fan:'花蝶扇 · 道具已结算',buddha:old.players[1-old.active].resilience?'双手归一 · 坚韧免疫跳过':'双手归一 · 跳过三回合',dark:'玄冥 · 永久侵蚀',foam:`盾墙 → ${p.foam} 次`,knuckles:`指虎 ${p.knuckles} 层 · 每段技能 +${p.knuckles*10}`,peace:'双方和平 · 各自接下来三回合免疫伤害',serpent:'虚弱与中毒 · 五回合',steal:'道具与增益已转移',dual:`道具补充 → ${p.props.length}/3`,taser:old.players[1-old.active].resilience?'坚韧：免疫跳过':'对手跳过三回合',unify:p.nine===2?'九九归一':'减益已清除 · 九印 1 / 2'};
    if(labels[id])beats.push({type:'effect',owner:old.active,label:labels[id]});
   }
  }

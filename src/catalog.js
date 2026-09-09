@@ -1,5 +1,5 @@
 export const WEAPONS = Object.freeze([
-  {"id": "serious", "recipe": [0, 0], "name": "认真一拳", "damage": 30, "detail": "对手双手归 1、清除盾墙，造成 30 点真实伤害；跳过自己下个回合"},
+  {"id": "serious", "recipe": [0, 0], "name": "认真一拳", "damage": 30, "detail": "对手双手归 1、清除盾墙，造成 30 点真实伤害；立即结束本回合，并跳过自己下个回合"},
   {"id": "drunken", "recipe": [0, 0], "name": "醉拳", "damage": 5, "detail": "随机攻击 5～10 次，每次造成 5 点普通伤害"},
   {"id": "seven", "recipe": [0, 0], "name": "七伤拳", "damage": 0, "detail": "对手每回合开始受到 7 点真实伤害，持续 7 回合"},
   {"id": "scissors", "recipe": [2, 2], "name": "剪刀", "damage": 5, "detail": "造成 5 点普通伤害，对手双手各减 1（0 变 9）"},

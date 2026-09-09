@@ -1,6 +1,6 @@
 import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
-export const RULES_VERSION = 7;
+export const RULES_VERSION = 8;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -34,6 +34,7 @@ function begin(s) {
   }
   s.phase = "start";
   s.synthesis = "pending";
+  s.calculated=false;s.declinedHands=null;
   if(p.resilience>0)p.skip=0;
   s.skipping = p.skip > 0;
   if (s.skipping) { p.skip--; log(s, `${name(s.active)}本回合无法行动，之后还需跳过 ${p.skip} 回合。`); }
@@ -74,6 +75,15 @@ export const synthesisOptions = s => matchingWeapons(s.players[s.active].hands);
 export function touchCommands(s) {
   return [0,1].flatMap(hand => [0,1].flatMap(targetHand => !s.players[s.active].locks[hand] && !s.players[1-s.active].locks[targetHand] ? [{type:"add",hand,targetHand}] : []));
 }
+function continueAction(s) {
+  if(s.winner!==null)return;
+  const key=s.players[s.active].hands.join(',');
+  if(synthesisOptions(s).length && s.declinedHands!==key){s.phase='synthesis';s.synthesis='pending';return;}
+  if(s.calculated){endTurn(s);return;}
+  if(!touchCommands(s).length){log(s,`${name(s.active)}无合法计算目标，自动结束回合。`);endTurn(s);return;}
+  if(s.synthesis!=="declined")s.synthesis="skipped";
+  enterAction(s);
+}
 function enterAction(s) {
   s.phase = "action";
   if (!s.players[s.active].weapon && !touchCommands(s).length) {
@@ -105,7 +115,7 @@ function damage(s, owner, amount, trueDamage, source) {
   else if(value>0 && !trueDamage) {
     if(target.hands.every(n=>n===5)) {value=0;blocked="绝对防御";}
     else if(target.foam>0) {target.foam--;value=0;blocked="盾墙";}
-    else if(target.hands.includes(5)) {target.hands[target.hands.indexOf(5)]=1;value=Math.ceil(value/2);blocked="五指护盾";}
+    else if(target.hands.includes(5)) {target.hands[target.hands.indexOf(5)]=1;value=Math.ceil(value/2);blocked="护盾";}
   }
   const actual=Math.min(target.hp,value);
   target.hp-=actual;
@@ -155,14 +165,14 @@ export function applyCommand(state, command) {
     case "advance":
       assert(s.phase === "start" || s.phase === "planning", "当前不能进入下一阶段");
       if (s.phase === "start") { if(s.skipping) endTurn(s,true); else s.phase = "planning"; }
-      else if (synthesisOptions(s).length) s.phase = "synthesis";
-      else { s.synthesis = "skipped"; log(s, `${name(s.active)}无合法组合，略过合成。`); enterAction(s); }
+      else continueAction(s);
       break;
     case "decline":
       assert(s.phase === "synthesis", "当前不能放弃合成");
       s.synthesis = "declined";
-      log(s, `${name(s.active)}放弃合成，结束回合。`);
-      endTurn(s);
+      s.declinedHands=p.hands.join(',');
+      log(s, `${name(s.active)}放弃当前组合。`);
+      continueAction(s);
       break;
     case "forge": {
       assert(s.phase === "synthesis", "只能在行动阶段的技能选择中合成");
@@ -176,7 +186,7 @@ export function applyCommand(state, command) {
       break;
     }
     case "add": {
-      assert(s.phase === "action" && !p.weapon, "当前不能计算");
+      assert(s.phase === "action" && !p.weapon && !s.calculated, "当前不能计算：每回合仅一次");
       handIndex(command.hand);
       handIndex(command.targetHand);
       assert(
@@ -187,7 +197,8 @@ export function applyCommand(state, command) {
       for(const write of result.writes)s.players[write.owner].hands[write.hand]=write.value;
       s.events.push({type:"calculate",actor:s.active,hand:command.hand,targetHand:command.targetHand,...result});
       log(s,`${name(s.active)}计算：${a} + ${b} → ${result.value}${result.mirror?"（镜像：写入对手目标手）":result.echo?"（回响：写入己方双手）":""}。`);
-      endTurn(s);
+      s.calculated=true;
+      continueAction(s);
       break;
     }
     case "prop": {
@@ -262,7 +273,7 @@ export function applyCommand(state, command) {
         }
       }
       p.weapon = null;
-      endTurn(s);
+      if(id==='serious')endTurn(s);else continueAction(s);
       break;
     }
     case "surrender":

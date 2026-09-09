@@ -4,8 +4,9 @@ import {createGame,applyCommand} from '../src/engine.js';
 import {describe} from '../src/info.js';
 const run=(s,c)=>applyCommand(s,{actor:s.active,revision:s.revision,...c});
 const fixture=id=>{const s=createGame(42);s.phase='action';s.players[0].weapon=id;s.players.forEach(p=>{p.props=[];p.turns=1;});return s;};
-const attack=s=>run(s,{type:'attack'});
-const touch=s=>{s.phase='action';s.players[s.active].weapon=null;return run(s,{type:'add',hand:0,targetHand:0});};
+// These duration tests resolve skills after the turn's calculation.
+const attack=s=>run({...s,calculated:true},{type:'attack'});
+const touch=s=>{s.phase='action';s.calculated=false;s.players[s.active].weapon=null;const n=run(s,{type:'add',hand:0,targetHand:0});return n.phase==='synthesis'?run(n,{type:'decline'}):n;};
 
 test('peace covers exactly each next three own turns, including DOT and skipped turns',()=>{
  let s=attack(fixture('peace'));assert.deepEqual(s.players.map(p=>p.peace),[3,3]);

@@ -6,7 +6,8 @@ import {phaseCue,turnSteps} from '../src/phase-cue.js';
 import {describe} from '../src/info.js';
 const run=(s,c)=>applyCommand(s,{actor:s.active,revision:s.revision,...c});
 const fixture=(id)=>{const s=createGame(27);s.phase='action';s.players[0].weapon=id;s.players.forEach(p=>p.props=[]);return s;};
-const attack=s=>run(s,{type:'attack'});
+// These duration tests resolve skills after the turn's calculation.
+const attack=s=>run({...s,calculated:true},{type:'attack'});
 const damageEvents=s=>s.events.filter(e=>e.type==='damage');
 const cycle=s=>{while(s.active===1&&s.winner===null){const cs=legalCommands(s);s=run(s,cs.find(c=>c.type==='advance')||cs.find(c=>c.type==='decline')||cs.find(c=>c.type==='add')||cs[0]);}return s;};
 test('20 skills are explicitly selectable only for their recipe, with dedicated image assets',()=>{

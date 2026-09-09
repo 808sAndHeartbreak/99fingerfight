@@ -113,9 +113,10 @@ export function createFeedback() {
       document.body.classList.add('introducing');
       const names=root.querySelectorAll('.intro-name');
       names.forEach((el,i)=>{
-        const target=document.querySelector(`#player-${i} .player-identity`).getBoundingClientRect();
+        const identity=document.querySelector(`#player-${i} .player-identity`);const target=identity.getBoundingClientRect();
+        animate(identity,[{opacity:0},{opacity:0,offset:.88},{opacity:1}],{duration:1400,fill:'both'});
         const box=el.getBoundingClientRect();
-        animate(el,[{opacity:0,transform:`translateX(${i?100:-100}px) scale(1.15)`},{opacity:1,transform:'none',offset:.2},{opacity:1,transform:'none',offset:.7},{opacity:0,transform:`translate(${target.x-box.x}px,${target.y-box.y}px) scale(.55)`}],{duration:1400,fill:'both',easing:'cubic-bezier(.2,.8,.2,1)'});
+        animate(el,[{opacity:0,transform:`translateX(${i?100:-100}px) scale(1.15)`},{opacity:1,transform:'none',offset:.2},{opacity:1,transform:'none',offset:.7},{opacity:1,transform:`translate(${target.x-box.x}px,${target.y-box.y}px) scale(.55)`,offset:.9},{opacity:0,transform:`translate(${target.x-box.x}px,${target.y-box.y}px) scale(.55)`}],{duration:1400,fill:'both',easing:'cubic-bezier(.2,.8,.2,1)'});
       });
       try {await animate(root,[{backgroundColor:'#111827f5'},{backgroundColor:'#111827f5',offset:.7},{backgroundColor:'#11182700'}],{duration:1400,fill:'both'},true).finished.catch(()=>{});}
       finally {document.body.classList.remove('introducing');}
