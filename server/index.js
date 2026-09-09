@@ -11,7 +11,7 @@ export function createServer({file=process.env.STATE_FILE||resolve('data/rooms.j
  const hub=new MatchHub({file,graceMs,...hubOptions});
  const server=http.createServer(async(req,res)=>{
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','DENY');
-  if(req.url==='/health'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify({ok:true,rulesVersion:RULES_VERSION,protocolVersion:1}));return;}
+  if(req.url==='/health'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify({ok:true,rulesVersion:RULES_VERSION,protocolVersion:2}));return;}
   if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);res.end();return;}
   try{
    const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);

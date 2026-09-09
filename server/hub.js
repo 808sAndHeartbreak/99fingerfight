@@ -8,7 +8,7 @@ import { presentationDuration } from '../src/presentation.js';
 import { normalizeParticipants } from '../src/identity.js';
 const hash = token => createHash('sha256').update(token).digest('hex');
 const check = (ok, message) => { if (!ok) throw new Error(message); };
-const cleanName = value => normalizeParticipants([{displayName:value}])[0].displayName;
+const cleanName = value => typeof value==='string' && value.trim() ? normalizeParticipants([{displayName:value}])[0].displayName : '';
 export class MatchHub {
   constructor({file=null, now=Date.now, graceMs=60000, animationMs=null}={}) {
     this.file=file; this.now=now; this.graceMs=graceMs; this.animationMs=animationMs;
@@ -35,7 +35,7 @@ export class MatchHub {
     const r=this.rooms.get(u.room);
     return {type:'snapshot',serverNow:this.now(),profile:{displayName:u.name},queued:!!u.queued,
       room:r ? {code:r.code,matchId:r.matchId,status:r.status,seat:r.seats.indexOf(u.id),ready:r.ready,rematch:r.rematch,
-        participants:r.seats.map((id,seat)=> {const p=this.userById(id);return {seat,departed:!p,displayName:p?.name || r.seatNames?.[seat] || `玩家${seat+1}`,connected:!!p&&this.connected(id),reconnectUntil:p&&!this.connected(id)&&r.status==='playing'?p.disconnectedAt+this.graceMs:null};}),
+        participants:r.seats.map((id,seat)=> {const p=this.userById(id);return {seat,departed:!p,displayName:p?.name || r.seatNames?.[seat] || (seat===0?'玩家一':'玩家二'),connected:!!p&&this.connected(id),reconnectUntil:p&&!this.connected(id)&&r.status==='playing'?p.disconnectedAt+this.graceMs:null};}),
         state:r.state ? this.publicState(r.state):null,deadlineAt:r.deadlineAt,readyAt:r.readyAt,event,
         finishReason:r.finishReason || null} : null};
   }
@@ -44,16 +44,17 @@ export class MatchHub {
   emit(u,event=null) {this.clients.get(u.id)?.send(JSON.stringify(this.packet(u,event)));}
   broadcast(r,event=null) {for(const id of r.seats) {const u=this.userById(id);if(u)this.emit(u,event);}}
   hello(ws,{token,displayName,protocolVersion,rulesVersion}) {
-    check(protocolVersion===1,'客户端版本已更新，请刷新');
+    if(protocolVersion!==2){ws.close(4004,'Client updated; reload');throw new Error('客户端版本已更新，请刷新');}
     if(rulesVersion!==RULES_VERSION){ws.close(4004,'Rules updated; reload');throw new Error('规则已更新，请刷新页面');}
     let u=typeof token==='string'&&token.length<200?this.users.get(hash(token)):null;
     if(!u) {
       check(this.users.size<10000,'服务繁忙，请稍后重试');
       token=randomBytes(32).toString('hex');u={id:randomUUID(),name:cleanName(displayName),room:null,queued:false,lastSeen:this.now(),disconnectedAt:null};this.users.set(hash(token),u);
     }
+    if(displayName===''&&u.name==='玩家一')u.name='';
     const previous=this.clients.get(u.id);if(previous&&previous!==ws)previous.close(4001,'Session opened elsewhere');
     this.clients.set(u.id,ws);ws.userId=u.id;u.disconnectedAt=null;u.lastSeen=this.now();
-    ws.send(JSON.stringify({type:'welcome',token,protocolVersion:1}));
+    ws.send(JSON.stringify({type:'welcome',token,protocolVersion:2}));
     this.save();const r=this.rooms.get(u.room);if(r)this.broadcast(r);else this.emit(u);
     return u;
   }
@@ -67,7 +68,7 @@ export class MatchHub {
   begin(r) {
     check(r.seats.length===2&&r.seats.every(id=>this.connected(id)),'需要两位在线玩家');
     r.state=createGame(randomBytes(4).readUInt32LE());r.matchId=randomUUID();r.status='playing';r.ready=[false,false];r.rematch=[false,false];r.seatNames=r.seats.map(id=>this.userById(id).name);r.cache={};r.finishReason=null;
-    r.readyAt=this.now()+(this.animationMs===null ? phaseCue(null,r.state).duration+180 : 0);r.deadlineAt=r.readyAt+1000;
+    r.readyAt=this.now()+(this.animationMs===null ? phaseCue(null,r.state).duration : 0);r.deadlineAt=r.readyAt+(this.animationMs===null?0:1000);
   }
   create(u) {
     check(!u.room&&!u.queued,'请先离开当前房间或取消匹配');check(this.rooms.size<1000,'房间已满，请稍后重试');
@@ -97,7 +98,7 @@ export class MatchHub {
     else {
       const buffer=this.animationMs===null?presentationDuration(old,next,command):( ['add','forge','attack'].includes(command.type)?this.animationMs:1000);
       r.readyAt=this.now()+buffer;
-      if(next.turn!==old.turn||next.phase!==old.phase)r.deadlineAt=r.readyAt+(next.phase==='start'?900:phaseSeconds(next)*1000);
+      if(next.turn!==old.turn||next.phase!==old.phase)r.deadlineAt=r.readyAt+(next.phase==='start'?0:phaseSeconds(next)*1000);
       else r.deadlineAt+=buffer;
     }
     return {command,revision:next.revision,matchId:r.matchId};

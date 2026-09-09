@@ -11,7 +11,7 @@ export class OnlineClient {
   this.closed=false;this.status='connecting';this.onStatus?.();
   const url=new URL('/ws',location.href);url.protocol=location.protocol==='https:'?'wss:':'ws:';
   const socket=this.socket=new WebSocket(url);
-  socket.onopen=()=>this.socket===socket&&socket.send(JSON.stringify({type:'hello',protocolVersion:1,rulesVersion:RULES_VERSION,token:read('ff-token'),displayName:read('ff-name','localStorage')||'玩家一'}));
+  socket.onopen=()=>this.socket===socket&&socket.send(JSON.stringify({type:'hello',protocolVersion:2,rulesVersion:RULES_VERSION,token:read('ff-token'),displayName:read('ff-name','localStorage')||''}));
   socket.onmessage=e=>{
    if(this.socket!==socket)return;
    let m;try{m=JSON.parse(e.data);}catch{return;}
@@ -31,7 +31,8 @@ export class OnlineClient {
   const id=crypto.randomUUID();
   return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{this.pending.delete(id);reject(new Error('请求未确认，正在刷新状态'));this.socket.close();},8000);this.pending.set(id,{resolve,reject,timer});this.socket.send(JSON.stringify({type:'request',id,op,...fields}));});
  }
- async rename(name){await this.request('name',{name});write('ff-name',normalizeParticipants([{displayName:name}])[0].displayName,'localStorage');if(this.nameDraft===name)this.nameDraft=null;}
+ async saveDraft(){if(this.nameDraft!=null)await this.rename(this.nameDraft);}
+ async rename(name){await this.request('name',{name});write('ff-name',name.trim()?normalizeParticipants([{displayName:name}])[0].displayName:'','localStorage');if(this.nameDraft===name)this.nameDraft=null;}
  serverNow(){return Date.now()-(this.offset||0);}
  getParticipants(){return this.packet?.room?.participants||[];}
  getSnapshot(){return this.packet?.room?.state;}
@@ -52,5 +53,5 @@ export function onlineMarkup(net){
  } else if(p?.queued)body=`<div class="match-search" role="status"><div class="search-orbit" aria-hidden="true">VS</div><b>正在寻找对手</b><span>匹配成功后自动开始</span></div><button id="online-cancel" class="secondary" ${disabled}>取消匹配</button>`;
  else if(net.view==='join'||invite)body=`<form id="join-form"><label for="room-code">输入好友的房间码</label><div class="name-entry"><input id="room-code" name="code" maxlength="6" value="${e(net.joinCode||invite)}" placeholder="六位房间码" autocomplete="off" autocapitalize="characters" spellcheck="false" required><button class="secondary" ${disabled}>加入房间</button></div></form><button id="online-options" class="text-button">← 联机选项</button>`;
  else body=`<div class="online-options"><button id="online-queue" class="menu-choice" ${disabled}><span>开始匹配<small>寻找一位在线对手</small></span><b>↗</b></button><button id="online-create" class="menu-choice" ${disabled}><span>创建房间<small>邀请好友，准备后开局</small></span><b>＋</b></button><button id="online-join" class="menu-choice" ${disabled}><span>加入房间<small>输入好友的房间码</small></span><b>→</b></button></div>`;
- return `<div class="dialog-body online-lobby">${!p?.queued&&r?.status!=="waiting"?`<button class="dialog-close" data-close aria-label="${r?.state?'返回对局':'返回菜单'}">×</button>`:""}<small class="kicker">FINGER FIGHT / ONLINE</small><h2>${r?'对战房间':p?.queued?'寻找下一位对手。':net.view==='join'||invite?'加入房间':'联机对战。'}</h2><p class="network-state" role="status"><i class="status-dot ${connected?'connected':''}"></i>${connected?'已连接':net.status==='outdated'?'规则已更新，请刷新页面':net.status==='replaced'?'此身份已在其他页面打开':'连接中 · 自动重试'}${net.status==='replaced'?'<button id="online-reconnect">重新连接</button>':''}</p><form id="name-form"><label for="online-name">你的名字 <small>随时可修改</small></label><div class="name-entry"><input id="online-name" name="name" maxlength="48" value="${e(net.nameDraft ?? (p?.profile?.displayName||read('ff-name','localStorage')||'玩家一'))}" autocomplete="nickname"><button class="secondary" ${disabled}>保存</button></div></form>${body}<p class="online-error" id="online-error" role="status">${e(net.error||'')}</p>${!r&&!p?.queued?'<button id="online-back" class="text-button">← 返回模式选择</button>':''}</div>`;
+ return `<div class="dialog-body online-lobby">${!p?.queued&&r?.status!=="waiting"?`<button class="dialog-close" data-close aria-label="${r?.state?'返回对局':'返回菜单'}">×</button>`:""}<small class="kicker">FINGER FIGHT / ONLINE</small><h2>${r?'对战房间':p?.queued?'寻找下一位对手。':net.view==='join'||invite?'加入房间':'联机对战。'}</h2><p class="network-state" role="status"><i class="status-dot ${connected?'connected':''}"></i>${connected?'已连接':net.status==='outdated'?'版本已更新，请刷新页面':net.status==='replaced'?'此身份已在其他页面打开':'连接中 · 自动重试'}${net.status==='replaced'?'<button id="online-reconnect">重新连接</button>':''}</p><form id="name-form"><label for="online-name">你的名字 <small>随时可修改</small></label><div class="name-entry"><input id="online-name" name="name" maxlength="48" value="${e(net.nameDraft ?? (p?.profile?.displayName||read('ff-name','localStorage')||''))}" placeholder="输入昵称（可选）" autocomplete="nickname"><button class="secondary" ${disabled}>保存</button></div></form>${body}<p class="online-error" id="online-error" role="status">${e(net.error||'')}</p>${!r&&!p?.queued?'<button id="online-back" class="text-button">← 返回模式选择</button>':''}</div>`;
 }

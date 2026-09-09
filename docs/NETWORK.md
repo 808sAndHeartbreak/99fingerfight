@@ -10,7 +10,7 @@
 
 ## 消息
 
-同源 /ws，HTTPS 使用 WSS。hello 携带 protocolVersion:1、rulesVersion:4、displayName 和可选 token；welcome 返回 token。snapshot 包含 profile、queued、serverNow 和 room。room 包含 code、matchId、seat、participants、ready、rematch、status、state、readyAt、deadlineAt。
+同源 /ws，HTTPS 使用 WSS。hello 携带 protocolVersion:2、rulesVersion:4、displayName 和可选 token；welcome 返回 token。snapshot 包含 profile、queued、serverNow 和 room。room 包含 code、matchId、seat、participants、ready、rematch、status、state、readyAt、deadlineAt。
 
 请求格式：{type:'request', id:唯一请求ID, op:操作, ...参数}。操作包括 name、create、join、queue、cancel、leave、ready、rematch、sync、command。command 请求另带 matchId 和 command；command 含 type、revision、操作参数。服务器覆盖 actor，不接受客户端血量或数字结果。返回 ack/error 与权威快照。
 
@@ -35,3 +35,5 @@ WebSocket 校验来源，消息上限 16KB，每连接每 5 秒 40 请求，有�
 规则升级：加载存档时，不兼容的旧对局回到等待准备状态，保留房间码和身份。旧客户端需刷新页面。服务器与 dist、src 必须一起发布。
 
 实战教学是独立本地会话，不进入匹配或联机存档。
+
+2026-09-09：协议版本升级为 2，要求刷新旧页面，以同步新的演出时序。规则仍为 4，房间与对局数据不重置。

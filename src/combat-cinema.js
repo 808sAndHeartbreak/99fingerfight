@@ -15,7 +15,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,impa
     el.innerHTML=`<div class="cinema-ink"></div><div class="cinema-portrait"><img src="${asset(`manga/${old.active?'red':'blue'}.webp`)}" alt=""></div><div class="cinema-heading"><small>${escapeHtml(playerName(participants(),old.active))} / ${skill?'SKILL ACTIVATED':'ITEM ACTIVATED'}</small><h2>${art.name}</h2><span>${skill?SKILL_MOTION[id][1]:'道具生效'}</span></div><img class="cinema-icon" src="${asset(art.image)}" alt=""><div class="cinema-impact" aria-hidden="true"><i></i><i></i><i></i><i></i></div><small class="cinema-hit" aria-hidden="true"></small><div class="cinema-result" aria-live="polite"></div>${nine?`<div class="nine-ritual"><span><img src="${asset('ink-mono/nine-seal.webp')}" alt="九"></span><span class="${won?'complete':'empty'}"><img src="${asset('ink-mono/nine-seal.webp')}" alt="九"></span><b>${won?'九九归一':'九印 · 一之刻'}</b><small>${won?'强制胜利':'再获得一枚九印即可获胜'}</small></div>`:''}`;
     document.querySelector('.duel').append(el);register(el);
     const duration=actionDuration(old,next,command),beats=actionBeats(old,next,command);
-    const intro=skill?1500:300,tail=nine?1400:900;
+    const intro=skill?250:120,tail=nine?650:250;
     const beatDuration=(duration-intro-tail)/Math.max(1,beats.length);
     const live=()=>generation()===epoch;
     const wait=async(ms)=>{await animate(el,[{opacity:1},{opacity:1}],{duration:ms,fill:'both'}).finished.catch(()=>{});return live();};

@@ -27,12 +27,13 @@ export function actionBeats(old,next,command) {
 }
 export function actionDuration(old,next,c) {
  if(c.type==='add')return TOUCH_DURATION_MS * (old.players[old.active].echo?2:1);
- if(c.type==='forge')return 3000;
- if(c.type==='attack')return old.players[old.active].weapon==='unify'?(next.winReason==='九九归一'?6500:4500):4000+Math.max(0,actionBeats(old,next,c).length-1)*500;
- if(c.type==='prop')return 1250+Math.max(0,actionBeats(old,next,c).length-1)*300;
+ if(c.type==='forge')return 0;
+ if(c.type==='attack')return old.players[old.active].weapon==='unify'?(next.winReason==='九九归一'?3200:1800):1400+Math.max(0,actionBeats(old,next,c).length-1)*220;
+ if(c.type==='prop')return 650+Math.max(0,actionBeats(old,next,c).length-1)*150;
  return actionBeats(old,next,c).length?900:0;
 }
 export function presentationDuration(old,next,c) {
- return actionDuration(old,next,c)+(phaseCue(old,next)?.duration||0)+180;
+ const cue=phaseCue(old,next);
+ return actionDuration(old,next,c)+(['start','finish'].includes(cue?.kind)?cue.duration:0);
 }
 export const commandArt=(old,c)=>c.type==='attack'?weaponById(old.players[old.active].weapon):c.type==='prop'?PROPS[old.players[old.active].props[c.slot]]:null;

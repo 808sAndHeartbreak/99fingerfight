@@ -1,4 +1,3 @@
-import {actionDuration} from "./presentation.js";
 import { MAX_HP } from "./catalog.js";
 import { escapeHtml, playerName } from "./identity.js";
 /** Ephemeral visual feedback, independently paused and cancelled with the match. */
@@ -109,6 +108,7 @@ export function createFeedback() {
     animate, register:el=>nodes.add(el), generation:()=>epoch,
     async phase(cue, asset) {
       if (!cue) return;
+      document.querySelectorAll(".phase-cut:not(.finish)").forEach(node=>node.remove());
       const el = document.createElement("div");
       el.className = `phase-cut ${cue.kind}`;
       el.dataset.team = cue.owner;
@@ -121,20 +121,11 @@ export function createFeedback() {
       const duration = cue.duration;
       if(!cinematic) el.querySelector(".phase-ribbon").innerHTML=`<div class="phase-type"><strong>${escapeHtml(cue.title)}</strong></div>`;
       animate(el.querySelector(".phase-ribbon"), !cinematic || reduced.matches ? [{opacity:0},{opacity:1,offset:.2},{opacity:1,offset:.8},{opacity:0}] : [{transform:"translateX(-110%) rotate(-6deg)"},{transform:"translateX(2%) rotate(-6deg)",offset:.2},{transform:"translateX(0) rotate(-6deg)",offset:.3},{transform:"translateX(0) rotate(-6deg)",offset:.78},{transform:"translateX(115%) rotate(-6deg)"}], {duration,fill:"both",easing:"cubic-bezier(.16,1,.3,1)"});
-      await animate(el,[{opacity:0},{opacity:1,offset:.1},{opacity:1,offset:.85},{opacity:0}],{duration,fill:"both"},true).finished.catch(()=>{});
+      const completion=animate(el,[{opacity:0},{opacity:1,offset:.1},{opacity:1,offset:.85},{opacity:0}],{duration,fill:"both"},true).finished.catch(()=>{});
+      if(cinematic) await completion;
     },
     async forge({owner, weapon}, asset, next, participants) {
-      const el = document.createElement("div");
-      el.className = "forge-reveal";
-      el.dataset.team = owner;
-      el.setAttribute("role", "status");
-      el.innerHTML = `<div class="forge-pair">${weapon.recipe.map(n=>`<b>${n}</b>`).join("")}</div><img class="forge-art" src="${asset(weapon.image)}" alt=""><small>${escapeHtml(playerName(participants, owner))}合成</small><strong>${weapon.name}</strong><p>${weapon.detail}</p><footer>双手归 1 · 本回合发动技能</footer>`;
-      document.querySelector(".duel").append(el);
-      nodes.add(el);
-      const duration = actionDuration(null,null,{type:"forge"});
-      for(const node of el.querySelectorAll(".forge-art, strong"))animate(node,[{opacity:0,transform:"scale(1.8) rotate(8deg)"},{opacity:0,offset:.22},{opacity:1,transform:"scale(1) rotate(0)",offset:.4},{opacity:1}],{duration,fill:"both",easing:"cubic-bezier(.16,1,.3,1)"});
-      el.querySelectorAll(".forge-pair b").forEach((b,i) => animate(b, [{transform:`translateX(${i ? 70 : -70}px)`,opacity:0},{transform:"translateX(0)",opacity:1,offset:.2},{transform:"scale(1.15)",opacity:1,offset:.28},{transform:"scale(.4)",opacity:0,offset:.4},{opacity:0}], {duration,fill:"both"}));
-      await animate(el, [{opacity:0,transform:"scale(.96)"},{opacity:1,transform:"scale(1)",offset:.1},{opacity:1,offset:.85},{opacity:0}], {duration,fill:"both"}, true).finished.catch(() => {});
+      notice(`${weapon.name} · 已合成`, owner, "forge");
     },
     notice,
     contact,

@@ -7,7 +7,7 @@ import {MatchHub} from '../server/hub.js';
 const run=(s,c)=>applyCommand(s,{actor:s.active,revision:s.revision,...c});
 test('every skill and item has dedicated art and readable authoritative beats',()=>{
  assert.equal(Object.keys(SKILL_MOTION).length,18);
- for(const w of WEAPONS){const s=createGame();s.phase='action';s.players[0].weapon=w.id;const c={type:'attack'},n=run(s,c);assert.equal(w.image,`ink-mono/${w.id}.webp`);assert.ok(actionBeats(s,n,c).length);assert.ok(actionDuration(s,n,c)>=2200);assert.ok(presentationDuration(s,n,c)>actionDuration(s,n,c));}
+ for(const w of WEAPONS){const s=createGame();s.phase='action';s.players[0].weapon=w.id;const c={type:'attack'},n=run(s,c);assert.equal(w.image,`ink-mono/${w.id}.webp`);assert.ok(actionBeats(s,n,c).length);assert.ok(actionDuration(s,n,c)>=1400);assert.ok(presentationDuration(s,n,c)>actionDuration(s,n,c));}
  for(const [id,p] of Object.entries(PROPS))assert.equal(p.image,`ink-mono/${id}.webp`);
 });
 test('dual-gun presentation preserves per-hit shield resolution and never invents extra bullets after lethal damage',()=>{
@@ -16,8 +16,8 @@ test('dual-gun presentation preserves per-hit shield resolution and never invent
  s.players[1].hands=[1,1];s.players[1].foam=0;s.players[1].hp=4;n=run(s,{type:'attack'});assert.equal(actionBeats(s,n,{type:'attack'}).length,1);
 });
 test('nine mark acquisition and forced win have separate pacing and outcomes',()=>{
- const s=createGame();s.phase='action';s.players[0].weapon='unify';const first=run(s,{type:'attack'});assert.equal(actionDuration(s,first,{type:'attack'}),4500);assert.equal(first.winner,null);
- s.players[0].nine=1;const last=run(s,{type:'attack'});assert.equal(actionDuration(s,last,{type:'attack'}),6500);assert.equal(actionBeats(s,last,{type:'attack'}).at(-1).label,'九九归一');
+ const s=createGame();s.phase='action';s.players[0].weapon='unify';const first=run(s,{type:'attack'});assert.equal(actionDuration(s,first,{type:'attack'}),1800);assert.equal(first.winner,null);
+ s.players[0].nine=1;const last=run(s,{type:'attack'});assert.equal(actionDuration(s,last,{type:'attack'}),3200);assert.equal(actionBeats(s,last,{type:'attack'}).at(-1).label,'九九归一');
 });
 test('server protects same-phase item presentation without granting a fresh planning clock',()=>{
  let now=10000;const h=new MatchHub({now:()=>now});const s=run(createGame(),{type:'advance'});s.players[0].props=['double','add'];

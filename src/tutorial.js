@@ -6,7 +6,7 @@ export const LESSONS = [
     {title:'用自己的 8 碰对手任意一只手', detail:'先点自己的 8，再点对手的 4。结果只保留个位。', command:{type:'add',hand:0,targetHand:0}, target:'#hand-0-0', selectedTarget:'#hand-1-0, #hand-1-1'},
   ]},
   {title:'道具与合成', setup:'练习场：你的双手为 1 / 2，背包有增幅；对手剩余 5 生命。', result:'合成后双手归 1，行动阶段发动技能。对手生命归零，你就获胜！', steps:[
-    {title:'使用增幅，把蓝方左手变成 2', detail:'点下方「增幅」，再点自己的左手。悬停道具或点击 i 可查看完整效果。', command:{type:'prop',slot:0,target:0,targetHand:0}, target:'[data-prop="0"]', selectedTarget:'#hand-0-0'},
+    {title:'使用增幅，把蓝方左手变成 2', detail:'点左侧「增幅」，再点自己的左手。悬停道具或点击 i 可查看完整效果。', command:{type:'prop',slot:0,target:0,targetHand:0}, target:'[data-prop="0"]', selectedTarget:'#hand-0-0'},
     {title:'结束规划，检查组合', detail:'现在是 2 / 2，可以合成剪刀。道具只改变数字，不会立即合成。', command:{type:'advance'}, target:'#advance'},
     {title:'确认合成「剪刀」', detail:'只有合成阶段可以选择技能。正式对局也可以放弃合成，改为计算。', command:{type:'forge',weapon:'scissors'}, target:'[data-forge="scissors"]'},
     {title:'发动剪刀，拿下这场练习', detail:'行动不能跳过：已合成就发动技能；未合成就计算一次。', command:{type:'attack'}, target:'#attack'},

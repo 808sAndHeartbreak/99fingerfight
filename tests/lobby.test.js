@@ -35,3 +35,11 @@ test('nickname persistence follows successful acknowledgement, preserves newer d
   client.nameDraft='更新的草稿';await client.rename('先前已提交');assert.equal(client.nameDraft,'更新的草稿');
  } finally {globalThis.window=saved;}
 });
+
+
+test('entry saves a pending name before matchmaking and leaves newer edits intact',async()=>{
+ const {OnlineClient}=await import('../src/online.js');
+ const c=new OnlineClient();const calls=[];c.nameDraft='阿青';c.request=async(op,fields)=>calls.push([op,fields]);
+ await c.saveDraft();await c.request('queue');
+ assert.equal(calls[0][0],'name');assert.equal(calls[0][1].name,'阿青');assert.equal(calls[1][0],'queue');assert.equal(c.nameDraft,null);
+});
