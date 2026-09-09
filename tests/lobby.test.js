@@ -22,7 +22,7 @@ test('initial menus do not expose a resume action before the player starts',()=>
 test('nickname draft survives server profile refresh including an intentionally empty field',()=>{
  const n=net();n.nameDraft='未保存的名字';assert.match(onlineMarkup(n),/value="未保存的名字"/);
  n.packet.profile.displayName='服务器旧名字';assert.match(onlineMarkup(n),/value="未保存的名字"/);
- n.nameDraft='';assert.match(onlineMarkup(n),/name="name" maxlength="48" value=""/);
+ n.nameDraft='';assert.match(onlineMarkup(n),/name="name" maxlength="200" value=""/);
 });
 import {OnlineClient} from '../src/online.js';
 

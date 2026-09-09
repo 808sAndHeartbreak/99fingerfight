@@ -1,20 +1,24 @@
 import { createCombatCinema } from "./combat-cinema.js";
+import { createAudioSettings } from "./audio-settings.js";
+import { historyMarkup } from "./match-history.js";
+
 import { createBattleSound } from "./battle-sound.js";
 import { TutorialSession, LESSONS } from "./tutorial.js";
 import { menuMarkup } from "./menu.js";
 import { OnlineClient, onlineMarkup } from "./online.js";
 import { synthesisOptions, supplyIn } from "./engine.js";
-import { playerName, escapeHtml } from "./identity.js";
+import { playerName, escapeHtml, shortName } from "./identity.js";
 import { phaseCue, turnSteps, phaseSeconds, autoItemPhase } from "./phase-cue.js";
 import "./style.css";
 import "./comfort.css";
 import "./menu.css";
 import "./battle-layout.css";
+import "./visual-polish.css";
 import { WEAPONS, PROPS, MAX_HP, weaponById } from "./catalog.js";
 import { LocalSession } from "./session.js";
 import { chooseCommand } from "./ai.js";
 import { touchResult, touchVisualSteps } from "./motion.js";
-import { guidance, handPreview, comboRoutes, forgeEvents } from "./guidance.js";
+import { guidance, handPreview } from "./guidance.js";
 import { createFeedback } from "./feedback.js";
 import { setupInfo, describe } from "./info.js";
 
@@ -37,7 +41,7 @@ let session,
   remotePending = false,
   busy = false,
   paused = false,
-  sound = false,
+  sound = true,
   aiTimer,
   deadline,
   remaining = 30,
@@ -53,21 +57,22 @@ let online, remoteMatch = null, remoteQueue = [], remoteApplying = false;
 const humanTurn = () => mode === "online" ? online?.packet?.room?.seat === state.active : mode === "local" || state.active === 0;
 const team = (id) => (id === 0 ? "蓝方" : "红方");
 const audioCache = new Map();
-const battleSound=createBattleSound(()=>sound);
+const audioSettings=createAudioSettings(asset("music/finger-fight.mp3"));
+const battleSound=createBattleSound(()=>sound,audioSettings);
 let cinema;
 function play(id) {
   if (!sound) return;
   if (!audioCache.has(id)) audioCache.set(id, new Audio(asset(`${id}.wav`)));
   const a = audioCache.get(id);
   a.currentTime = 0;
-  a.volume = 0.35;
+  a.volume = audioSettings.values.effects * 0.3;
   a.play().catch(() => {});
 }
 
 app.innerHTML = `<main class="game-shell">
   <div class="paper-grain" aria-hidden="true"></div>
-  <header class="topbar"><a class="brand" href="./"><span class="brand-symbol">FF<span>!</span></span><div><b>FINGER FIGHT</b></div></a><div class="match-label"><span id="mode-label">人机练习</span></div><nav><button id="online">联机</button><button id="sound" aria-pressed="false">音效 <span>关</span></button><button id="help">规则 <b>?</b></button><button id="menu">菜单 <span>☰</span></button></nav></header>
-  <div id="network-notice" class="network-notice" role="status" hidden></div><section id="tutorial-guide" class="tutorial-guide" hidden aria-label="实战教学"></section><section class="battle-banner" aria-label="当前操作"><div class="turn-overview"><div class="round-inline">回合 <b id="round-number">01</b><span id="phase-label"></span><div class="phase-time" id="phase-time" role="timer" aria-live="off" aria-label="剩余时间"><span id="clock">30</span><small>SEC</small></div></div><nav id="phase-steps" class="phase-steps turn-track" aria-label="回合流程"></nav></div><div class="turn-instruction"><h1 id="instruction"></h1><p id="instruction-detail"></p></div><div id="primary-actions" class="primary-actions"></div></section><section class="duel" aria-label="指尖对战场">
+
+  <div id="network-notice" class="network-notice" role="status" hidden></div><section id="tutorial-guide" class="tutorial-guide" hidden aria-label="实战教学"></section><section class="battle-banner" aria-label="当前操作"><div class="turn-overview"><div class="round-inline">回合 <b id="round-number">01</b><span id="phase-label"></span><div class="phase-time" id="phase-time" role="timer" aria-live="off" aria-label="剩余时间"><span id="clock">30</span><small>SEC</small></div></div><nav id="phase-steps" class="phase-steps turn-track" aria-label="回合流程"></nav></div><div class="turn-instruction"><h1 id="instruction"></h1><p id="instruction-detail"></p></div><div id="primary-actions" class="primary-actions"></div><nav class="hud-tools" aria-label="游戏工具"><button id="history">对局记录</button><button id="menu">菜单 ☰</button></nav><span id="mode-label" hidden></span></section><section class="duel" aria-label="指尖对战场">
     <div class="scoreboard"><div id="player-0" class="player blue"></div><div class="round-block"></div><div id="player-1" class="player red"></div></div>
     <div id="stage" class="stage" data-motion="idle"><div class="hand-layer" id="hand-layer">${[0, 1].map((owner) => [0, 1].map((hand) => `<button id="hand-${owner}-${hand}" class="hand-hotspot ${owner ? "red" : "blue"}" data-owner="${owner}" data-hand="${hand}" aria-pressed="false"><span class="hand-corner"></span>${img("hand-1.webp", "fallback-hand")}<b class="hand-value">1</b><span class="hand-status"></span><span class="hand-shield" data-info="shield" data-info-only hidden></span><span class="sum-preview"></span></button>`).join("")).join("")}</div><div class="contact-fx" id="contact-fx" aria-hidden="true">${img("manga/contact.webp")}<b>碰!</b></div></div>
     <div id="combat-callout" class="combat-callout" aria-live="polite"></div>
@@ -75,8 +80,8 @@ app.innerHTML = `<main class="game-shell">
     <div id="items-0" class="field-items blue" aria-label="蓝方道具"></div><div id="items-1" class="field-items red" aria-label="红方道具"></div>
     <section id="forge-options" class="forge-options" hidden aria-label="合成选项"></section>
   </section>
-  <section class="reference-deck" aria-label="常驻组合图鉴"><header><strong>组合图鉴</strong><small>悬停查看招式</small><button id="history">历史 ↗</button><span id="render-status"></span></header><div id="recipe-shelf" class="recipe-shelf" tabindex="0" aria-label="横向滚动查看组合"></div></section>
-</main><dialog id="dialog"></dialog><aside id="info-popover" role="tooltip" hidden></aside><div id="toast" class="toast" role="status"></div>`;
+  <section class="reference-deck" aria-label="常驻组合图鉴"><header><strong>组合图鉴</strong><small>悬停查看招式</small><span id="render-status"></span></header><div id="recipe-shelf" class="recipe-shelf" tabindex="0" aria-label="横向滚动查看组合"></div></section>
+</main><div id="menu-backdrop" class="game-menu menu-backdrop" aria-hidden="true" inert>${menuMarkup("home")}</div><dialog id="dialog"></dialog><aside id="info-popover" role="tooltip" hidden></aside><div id="toast" class="toast" role="status"></div>`;
 
 document.querySelector('#recipe-shelf').addEventListener('wheel',event=>{
   const shelf=event.currentTarget;
@@ -100,19 +105,29 @@ function toast(message, duration=2400) {
   toast.timer = setTimeout(() => el.classList.remove("visible"), duration);
 }
 const announcedGains=new Set();
+const arrivingSlots=new Map();
 function announceSupply(next) {
   if(mode === "tutorial") return;
   const key=`${actionSerial}:${mode==='online'?remoteMatch:''}:${next.revision}`;
   if(!announcedGains.has(key)) {
     announcedGains.add(key);if(announcedGains.size>100)announcedGains.delete(announcedGains.values().next().value);
     for(const owner of [0,1]) {
+      if((next.events||[]).some(e=>e.type==="resilience"&&e.owner===owner))feedback.notice(`${playerName(participants(),owner)} · 坚韧 5 回合`,owner,"forge");
       const gains=(next.events||[]).filter(e=>e.type==='draw'&&e.owner===owner);
       if(!gains.length)continue;
-      document.querySelector(`.gain-receipt[data-owner="${owner}"]`)?.remove();
-      const el=document.createElement('aside');el.className='gain-receipt';el.dataset.owner=owner;el.setAttribute('role','status');
-      el.innerHTML=`<small>${name(owner)} · 获得道具</small><div>${gains.map(e=>`<span>${propArt(e.item)}<b>${PROPS[e.item].name}</b></span>`).join('')}</div>`;
-      document.querySelector('.duel').append(el);feedback.register(el);
-      feedback.animate(el,[{opacity:0},{opacity:1,offset:.04},{opacity:1,offset:.94},{opacity:0}],{duration:6500,fill:'both'},true);
+      const used=new Set();
+      gains.forEach((gain,index)=>{
+        const slots=next.players[owner].props;
+        const slot=slots.findLastIndex((id,i)=>id===gain.item&&!used.has(i));if(slot<0)return;used.add(slot);
+        const target=document.querySelector(`#items-${owner} .prop-slot:nth-of-type(${slot+2})`);if(!target)return;
+        const arrivalKey=`${owner}:${slot}`,arrivalUntil=Date.now()+800+index*100;arrivingSlots.set(arrivalKey,arrivalUntil);target.classList.add("item-arriving");
+        setTimeout(()=>{if(arrivingSlots.get(arrivalKey)!==arrivalUntil)return;arrivingSlots.delete(arrivalKey);document.querySelector(`#items-${owner} .prop-slot:nth-of-type(${slot+2})`)?.classList.remove("item-arriving");},800+index*100);
+        const r=target.getBoundingClientRect();
+        const el=document.createElement('div');el.className='item-flight';el.setAttribute('aria-label',`获得${PROPS[gain.item].name}`);el.innerHTML=propArt(gain.item);
+        el.style.left=`${r.left+r.width/2-28}px`;el.style.top=`${r.top+r.height/2-28}px`;document.body.append(el);feedback.register(el);
+        feedback.animate(el,[{opacity:0,transform:`translate(${owner?-85:85}px,-80px) scale(1.4)`},{opacity:1,offset:.2},{opacity:1,transform:'translate(0,0) scale(.75)',offset:.85},{opacity:0,transform:'scale(.7)'}],{duration:800,delay:index*100,easing:'ease-out',fill:'both'},true);
+        feedback.animate(target,[{boxShadow:'0 0 0 0 transparent'},{boxShadow:'0 0 24px 4px currentColor',offset:.5},{boxShadow:'0 0 0 0 transparent'}],{duration:1300,delay:550+index*100});
+      });
     }
   }
   const notes=[0,1].flatMap(owner=>{
@@ -130,23 +145,24 @@ function canTarget(owner, hand) {
       hand !== undefined &&
       !state.players[owner].locks[hand]
     );
-  return !state.players[state.active].silenced && hand !== undefined && PROPS[state.players[state.active].props[selected.slot]]?.target === "hand";
+  const id=state.players[state.active].props[selected.slot];
+  return !state.players[state.active].silenced && hand !== undefined && PROPS[id]?.target === "hand" && (id!=="lock" || !state.players[owner].locks.some(Boolean));
 }
 function renderPlayer(owner) {
   const p = state.players[owner],
-    w = weaponById(p.weapon),
     active = state.active === owner && state.winner === null;
   const presence=mode==="online" ? participants().find(x=>x.seat===owner) : null;
   const presenceText=presence ? presence.departed?"已离开":online.status!=="connected"?(owner===online.packet.room.seat?"重连中":"待同步"):presence.connected?"在线":"已断线" : "";
-  const statusIcons={echo:'echo',mirror:'mirror',silenced:'silence',skip:'taser',seven:'seven',dark:'dark',foam:'foam',knuckles:'knuckles',peace:'peace',weak:'serpent',poison:'serpent',wine:'wine',adrenaline:'adrenaline',nine:'nine-seal'};
+  const statusIcons={echo:'echo',mirror:'mirror',silenced:'silence',skip:'taser',seven:'seven',dark:'dark',foam:'foam',knuckles:'knuckles',peace:'peace',weak:'serpent',poison:'serpent',wine:'wine',adrenaline:'adrenaline',resilience:'resilience',nine:'nine-seal'};
   const statuses=Object.keys(statusIcons).filter(key=>p[key]).map(key=>{
     const d=describe(`status:${key}:${owner}`,state);
-    const count=({skip:p.skip,seven:p.seven,dark:'∞',foam:p.foam,knuckles:`+${p.knuckles*10}`,peace:p.peace,weak:`弱${p.weak}`,poison:`毒${p.poison}`,wine:`+${p.wine*10}`,adrenaline:p.adrenaline,nine:`${p.nine}/2`})[key];
+    const count=({skip:p.skip,seven:p.seven,dark:'∞',foam:p.foam,knuckles:`+${p.knuckles*10}`,peace:p.peace,weak:`弱${p.weak}`,poison:`毒${p.poison}`,wine:`+${p.wine*10}`,adrenaline:p.adrenaline,resilience:p.resilience,nine:`${p.nine}/2`})[key];
     return `<button class="status-icon" data-info="status:${key}:${owner}" data-info-only aria-label="${d.title}，${d.stats[0][1]}">${img(`ink-mono/${statusIcons[key]}.webp`)}${count!==undefined?`<b class="status-count">${count}</b>`:''}</button>`;
   }).join('');
-  const identity=mode==='online'&&owner===online.packet.room.seat?'你':mode==='ai'&&owner===1?'陪练':'';
+  const mine=mode==='online'?owner===online.packet.room.seat:mode==='local'?owner===state.active:owner===0;
+  const identity=mine?'（我）':mode==='ai'&&owner===1?'陪练':'';
   document.querySelector(`#player-${owner}`).innerHTML =
-    `<div class="player-head"><div class="player-identity"><strong title="${name(owner)}">${name(owner)}</strong>${identity?`<small class="seat-label">${identity}</small>`:''}${presence?`<small class="player-presence ${presenceText==='在线'?'connected':''}" aria-label="${presenceText}"><i class="status-dot"></i>${presenceText==='在线'?'':presenceText}</small>`:''}</div><div class="health-number"><b>${p.hp}</b><small>/ ${MAX_HP}</small></div></div><div class="hp-bar" role="meter" aria-label="${team(owner)}生命" aria-valuenow="${p.hp}" aria-valuemin="0" aria-valuemax="${MAX_HP}"><i style="width:${(p.hp/MAX_HP)*100}%"></i></div><div class="status-strip">${statuses}</div><div class="player-loadout">${w?`<button class="weapon-ready" data-info="weapon:${w.id}" data-info-only aria-label="已合成${w.name}">${img(w.image)}<b>${w.name}</b></button>`:''}</div>`;
+    `<div class="player-head"><div class="player-identity">${mine&&mode!=="tutorial"?`<button class="player-name" data-edit-name="${owner}" aria-label="修改昵称：${name(owner)}">${name(owner)}</button>`:`<strong title="${name(owner)}">${name(owner)}</strong>`}${identity?`<small class="seat-label">${identity}</small>`:''}${presence?`<small class="player-presence ${presenceText==='在线'?'connected':''}" aria-label="${presenceText}"><i class="status-dot"></i>${presenceText==='在线'?'':presenceText}</small>`:''}</div><div class="health-number"><b>${p.hp}</b><small>/ ${MAX_HP}</small></div></div><div class="hp-bar" role="meter" aria-label="${team(owner)}生命" aria-valuenow="${p.hp}" aria-valuemin="0" aria-valuemax="${MAX_HP}"><i style="width:${(p.hp/MAX_HP)*100}%"></i></div><div class="status-strip">${statuses}</div><div class="player-loadout"></div>`;
   document.querySelector(`#player-${owner}`).classList.toggle("active", active);
 }
 function renderHandShield(el,p,h) {
@@ -181,7 +197,9 @@ function renderHands() {
       el.classList.toggle("available", selectable);
       el.querySelector(".hand-value").textContent = n;
       renderHandShield(el,p,h);
-      if(n===5)el.dataset.info="shield";else delete el.dataset.info;
+      const combo=WEAPONS.some(w=>w.recipe.every((value,index)=>value===p.hands[index]));
+      el.classList.toggle("combo-ready",combo);
+      if(combo)el.dataset.info=`combo:${n}`;else if(n===5)el.dataset.info="shield";else delete el.dataset.info;
       el.querySelector(".fallback-hand").src = asset(`hand-${n}.webp`);
       el.querySelector(".hand-status").textContent = p.locks[h]
         ? "封印"
@@ -210,7 +228,7 @@ function render() {
   }
   renderedRemoteReady = mode === "online" && online.status === "connected" && online.serverNow() >= (online.packet?.room?.readyAt || 0);
   info?.hide();
-  document.querySelector("#phase-time").hidden = mode === "tutorial" || state.winner !== null || state.phase === "start" || autoItemPhase(state);
+  document.querySelector("#phase-time").hidden = mode === "tutorial" || state.winner !== null || state.phase === "start" || (state.phase==="action" && state.players[state.active].weapon) || autoItemPhase(state);
   document.querySelector("#clock").textContent = mode==="online"&&(online.status!=="connected"||busy)?"—":remaining;
   document
     .querySelector("#phase-time")
@@ -243,25 +261,27 @@ function render() {
   document.querySelector("#phase-steps").innerHTML = turnSteps(state).map((step,i)=>`<div class="${step.current ? "current" : step.done ? "done" : ""}" ${step.current ? 'aria-current="step"' : ""}><b>${step.done ? (step.id==="synthesis" && state.synthesis==="skipped" ? "—" : "✓") : `0${i+1}`}</b><span>${step.label}<small>${step.note}</small></span></div>`).join("");
   const forgePanel=document.querySelector("#forge-options");
   forgePanel.hidden=busy || remotePending || state.phase !== "synthesis";
-  forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><h2>${humanTurn()?"选择你的技能":"对手正在选择技能"}</h2><p>当前双手 ${p.hands.join(" · ")}</p></div><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${enabled ? "" : "disabled"}><span class="forge-recipe">${w.recipe.join(" · ")}</span>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span><b>${humanTurn()?"确认合成 →":"等待对手确认"}</b></button>`).join("")}</div>`;
+  forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><h2>${humanTurn()?"合成并使用":"对手正在选招"}</h2><p>${p.hands.join(" + ")}</p></div><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${enabled ? "" : "disabled"}><span class="forge-recipe">${w.recipe.join(" · ")}</span>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span><b>${humanTurn()?"释放 ":"等待对手"}</b></button>`).join("")}</div>`;
   for(const owner of [0,1]) {
     const player=state.players[owner], usable=owner===state.active && enabled && state.phase==="planning" && !player.silenced;
     const supply=player.turns===0?1:supplyIn(player);
+    document.querySelector(`#items-${owner}`).classList.toggle("items-usable",usable&&player.props.length>0);
     document.querySelector(`#items-${owner}`).innerHTML=`<div class="supply-dots" data-info="supply:${owner}" tabindex="0" aria-label="道具补给：${supply} 回合后">${[1,2,3].map(n=>`<i class="${n<=3-supply?'filled':''}"></i>`).join('')}</div>`+[0,1,2].map(slot=>{
       const id=player.props[slot], mine=owner===state.active && humanTurn();
       return id ? `<div class="prop-slot ${mine&&selected?.kind==='prop'&&selected.slot===slot?'selected':''}"><button class="prop-use" ${mine?`data-prop="${slot}"`:'data-info-only'} data-info="prop:${id}:${owner}" aria-disabled="${!usable}" aria-label="${mine?'使用':'查看'}${PROPS[id].name}">${propArt(id)}<b>${PROPS[id].name}</b></button>${mine&&selected?.kind==='prop'&&selected.slot===slot&&PROPS[id].target!=='hand'?`<button class="prop-confirm" id="use-prop" ${usable?'':'disabled'}>确认使用</button>`:''}</div>` : '<div class="prop-slot empty" aria-label="空道具位"><span>＋</span></div>';
-    }).join('');
+    }).join('')+`<button class="item-advance" ${owner===state.active?'id="advance"':''} data-advance-owner="${owner}" ${owner===state.active&&enabled&&state.phase==='planning'&&!autoItemPhase(state)?'':'disabled'}>进入行动 </button>`;
   }
   const shelf=document.querySelector('#recipe-shelf');
   if(!shelf.children.length)shelf.innerHTML=[5,0,2,4,6,7,8,9].map(n=>{
     return `<div class="reference-recipe" tabindex="0" data-number="${n}" data-info="recipe:${n}" aria-label="${n} 加 ${n} 配方"><b>${n} + ${n}</b></div>`;
   }).join('');
-  for(const el of shelf.children){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',selected?.kind==='hand'&&p.hands[selected.hand]===n);}
-  document.querySelector("#primary-actions").innerHTML = `${selected ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"} →</button>` : state.phase === "planning" && !autoItemPhase(state) && selected?.kind !== "prop" ? `<button class="primary" id="advance" ${enabled ? "" : "disabled"}>不使用道具 <span>→</span></button>` : state.phase === "synthesis" ? `<button class="secondary" id="decline" ${enabled ? "" : "disabled"}>改用触碰 →</button>` : state.phase === "action" && p.weapon ? `<button class="primary red-button" id="attack" ${enabled ? "" : "disabled"}>发动技能 <span>↗</span></button>` : ""}`;
+  for(const el of shelf.children){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',!p.hands.every(v=>v===n)&&p.hands.includes(n));}
+  document.querySelector("#primary-actions").innerHTML = `${selected ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"} </button>` : state.phase === "synthesis" ? `<button class="secondary" id="decline" ${enabled ? "" : "disabled"}>放弃合成，结束回合 </button>` : ""}`;
   document.querySelector(".game-shell").classList.toggle("is-busy", busy);
   document.querySelectorAll("#menu,#help").forEach((b) => (b.disabled = busy));
-  document.querySelector("#online").textContent = mode === "online" ? online.status === "connected" ? "房间 / 改名" : "正在重连…" : "联机";
+
   renderTutorial();
+  for(const [key,until] of arrivingSlots){const [owner,slot]=key.split(":");if(until>Date.now())document.querySelector(`#items-${owner} .prop-slot:nth-of-type(${Number(slot)+2})`)?.classList.add("item-arriving");}
   stage?.sync(state, selected, enabled);
 }
 function renderTutorial() {
@@ -271,10 +291,11 @@ function renderTutorial() {
   document.querySelectorAll('.tutorial-target').forEach(el=>el.classList.remove('tutorial-target'));
   if(mode!=="tutorial")return;
   host.innerHTML=`<div><small>实战教学 ${session.chapter+1} / ${LESSONS.length} · ${session.done?'已完成':`第 ${session.step+1} 步`}</small><strong>${busy?"看清这一手":session.done?"本节完成":session.guide.title}</strong><p>${busy?"演出结束后继续，不用赶时间。":session.done?session.lesson.result:session.guide.detail}</p><details><summary>${session.lesson.title} · 练习设置</summary><p>${session.lesson.setup}</p></details></div><div class="tutorial-controls"><button id="tutorial-retry">重试本节</button><button id="tutorial-exit">退出教学</button></div>`;
-  if(session.done)document.querySelector('#primary-actions').innerHTML=`<button class="primary" id="tutorial-next" ${busy?"disabled":""}>${session.chapter===LESSONS.length-1?'完成教学 · 选择对战':'下一节'} →</button>`;
+  if(session.done)document.querySelector('#primary-actions').innerHTML=`<button class="primary" id="tutorial-next" ${busy?"disabled":""}>${session.chapter===LESSONS.length-1?'完成教学 · 选择对战':'下一节'} </button>`;
   if(!busy&&!session.done){
     const g=session.guide;
-    document.querySelectorAll(selected&&g.selectedTarget?g.selectedTarget:g.target).forEach(el=>el.classList.add('tutorial-target'));
+    const target=selected&&g.selectedTarget?g.selectedTarget:g.target;
+    if(target)document.querySelectorAll(target).forEach(el=>el.classList.add('tutorial-target'));
   }
 }
 function nextTutorial(chapter) {
@@ -365,17 +386,6 @@ async function send(command) {
     if (old.phase !== next.phase || old.turn !== next.turn || autoItemPhase(next))
       remaining = phaseSeconds(next);
     deadline = Date.now() + remaining * 1000;
-    const events = forgeEvents(old, next, full);
-    if (events.length) {
-      document.querySelector("#combat-callout").classList.remove("visible");
-      document.querySelector("#combat-callout").textContent = "";
-      document.querySelector("#contact-fx").classList.remove("visible");
-      for (const event of events) {
-        play("forge");
-        await feedback.forge(event, asset, next, participants());
-        if (current !== session || serial !== actionSerial) return;
-      }
-    }
     document.querySelector("#combat-callout").classList.remove("visible");
       document.querySelector("#combat-callout").textContent = "";
     document.querySelector("#contact-fx").classList.remove("visible");
@@ -417,6 +427,7 @@ async function send(command) {
 function scheduleAI() {
   clearTimeout(aiTimer);
   if (mode === "online") return;
+  if(state.phase==="action" && state.players[state.active].weapon && !paused && !busy && started && state.winner===null){aiTimer=setTimeout(()=>send({type:"attack"}),0);return;}
   if(autoItemPhase(state) && !paused && !busy && started && state.winner===null && (mode!=="tutorial" || !session.done && session.guide.command.type==="advance")){
     aiTimer=setTimeout(()=>send({type:"advance"}),1000);return;
   }
@@ -446,6 +457,7 @@ function startGame(newMode = mode, chapter = 0) {
   session?.dispose();
   clearTimeout(aiTimer);
   feedback.reset();
+  arrivingSlots.clear();
   clearTimeout(toast.timer);
   document.querySelector("#toast").classList.remove("visible");
   document.querySelector("#combat-callout").textContent="";
@@ -473,7 +485,7 @@ async function introPhase() {
   const serial = actionSerial;
   busy = true;
   render();
-  await feedback.phase(phaseCue(null, state, participants()), asset);
+  await feedback.intro(participants(),mode==="local"?state.active:0);
   if (serial !== actionSerial) return;
   busy = false;
   deadline = Date.now() + remaining * 1000;
@@ -488,12 +500,14 @@ function openDialog(content, cls = "") {
   feedback.pause(paused);
   clearTimeout(aiTimer);
   dialog.dataset.view = "";
+  document.body.classList.toggle("menu-scene",!started || cls.includes("game-menu") || cls==="online-dialog");
   dialog.className = cls;
   dialog.innerHTML = content;
   if (!dialog.open) dialog.showModal();
 }
 function closeDialog() {
   dialog.close();
+  document.body.classList.remove("menu-scene");
   paused = false;
   stage?.setPaused(false);
   feedback.pause(false);
@@ -516,37 +530,25 @@ function dismissDialog() {
   if(!started){showMenu(dialog.dataset.page==="local"?"play":"home");return;}
   closeDialog();
 }
-function relevantRoutes(owner, hand) {
-  return comboRoutes(state,owner,hand).filter(r=>r.weapon.recipe.includes(state.players[owner].hands[hand]) || r.ready);
+function showNameEditor(seat) {
+  openDialog(`<form id="player-name-form" class="dialog-body" data-seat="${seat}"><button type="button" class="dialog-close" data-close aria-label="取消改名">×</button><h2>你的名字</h2><label for="player-name-input">最多 10 个字符</label><input id="player-name-input" name="name" maxlength="200" value="${name(seat)}" autocomplete="nickname"><p class="name-error" role="status"></p><button class="primary" type="submit">保存</button></form>`);
+  document.querySelector('#player-name-input').focus();
 }
-function recipeRoutes(owner, hand) {
-  return `<div class="combo-context">${state.players[owner].hands[hand]}<span>组合表</span></div><div class="combo-routes">${relevantRoutes(owner, hand).filter((r,i,all)=>all.findIndex(x=>x.weapon.recipe.join()===r.weapon.recipe.join())===i).map(({weapon:w, status, ready}) => `<button class="combo-route ${ready ? "reachable" : ""}" data-info="recipe:${w.recipe[0]}" data-info-only><b>${w.recipe.join(" · ")}</b><span>${WEAPONS.filter(x=>x.recipe.join()===w.recipe.join()).map(x=>x.name).join(" / ")}</span><small>${status}</small></button>`).join("")}</div>`;
+function showBattleMenu() {
+  openDialog(`<div class="dialog-body battle-menu"><button class="dialog-close" data-close aria-label="继续游戏">×</button><h2>暂停一下。</h2><button data-close>继续游戏 </button><button data-battle-online>房间 / 改名 </button><button data-menu-settings>设置 </button><button data-menu-help>规则说明 </button>${mode==='online'?'':'<button data-menu="home">主菜单 </button>'}<small>${mode==='online'?'联机对局继续计时':''}</small></div>`);
 }
-function showRecipes(owner, hand) {
-  const scoped=Number.isInteger(owner);
-  const weapons=(scoped ? relevantRoutes(owner,hand).map(r=>r.weapon) : [...WEAPONS]).sort((a,b)=>Number(b.recipe[0]===5)-Number(a.recipe[0]===5));
-  openDialog(
-    `<div class="dialog-body"><button class="dialog-close" data-close aria-label="关闭组合图鉴">×</button><h2>数字组合</h2>${Number.isInteger(owner) ? recipeRoutes(owner, hand).replaceAll("<button", "<div").replaceAll("</button>", "</div>") : ""}<p class="recipe-intro">行动时选择技能；确认后双手归 1。</p><div class="recipe-library">${weapons.map(
-      (w) => {
-        const d = describe(`weapon:${w.id}`, state);
-        return `<article>${img(w.image)}<div><h3>${w.recipe.join(" · ")} <span>${w.name}</span></h3><p>${d.body}</p></div></article>`;
-      },
-    ).join(
-      "",
-    )}${!scoped || state.players[owner].hands[hand]===5 ? `<article>${img("shield.webp")}<div><h3>单手 5 <span>护盾</span></h3><p>${describe("shield", state).body} ${describe("shield", state).note}</p></div></article>` : ""}${!weapons.length ? "<p>当前数字没有可形成的组合</p>" : ""}</div><p class="recipe-intro">合成后本回合必须发动技能；放弃合成则计算。计算凑出的配方保留到下回合合成，期间可能被对手改变。</p></div>`,
-    "recipes-dialog",
-  );
-  dialog.dataset.view="recipes";
+function showSettings() {
+  openDialog(`<div class="dialog-body settings-body"><button class="dialog-close" data-close aria-label="关闭设置">×</button><h2>声音设置</h2>${['music','effects'].map(k=>`<label class="volume-row">${k==='music'?'背景音乐':'游戏音效'}<output id="volume-${k}">${Math.round(audioSettings.values[k]*100)}%</output><input aria-label="${k==='music'?'背景音乐':'游戏音效'}" type="range" min="0" max="100" value="${Math.round(audioSettings.values[k]*100)}" data-volume="${k}"></label>`).join('')}<button class="primary" data-close>返回</button></div>`);
 }
 function showHelp() {
-  openDialog(`<div class="dialog-body concise-help"><button class="dialog-close" data-close aria-label="关闭玩法说明">×</button><small class="kicker">HOW TO PLAY</small><h2>借数字，出绝招。</h2><p class="help-goal">打空对手的 <b>99</b> 点生命，<br>或用 <b>9 + 9</b> 发动两次归一获胜。</p><ol class="rules"><li><b>道具</b><p>点击道具，选择目标使用。也可不使用；没有道具或被沉默时自动继续。</p></li><li><b>行动</b><p>有配方可选择技能，双手归 1 后发动；或放弃合成，选自己的手触碰对手。必须行动。</p></li></ol><div class="help-example"><b>8 + 4 → 2</b><span>只改主动手，结果留个位。<br>计算凑出的组合，下个回合才能合成。</span></div><details><summary>防御、计时与详细查询</summary><p>单个 5 减半普通伤害后变为 1；55 免疫普通伤害且不消耗。真实伤害无视护盾；肾上腺素减伤仍有效，和平免疫所有伤害。认真一拳重置对手数字并清除盾墙。</p><p>道具、选招、计算各 30 秒，技能 10 秒；超时自动行动。无合法计算才自动结束。${mode==='online'?'联机查看菜单或切后台不暂停。':'本地打开菜单或切后台暂停；教学没有倒计时。'}</p><p>「组合图鉴」随时查询全部技能；悬停道具、状态查看详情。</p></details><button class="primary" data-close>${started?'继续对局':'返回主菜单'} →</button></div>`);
+  openDialog(`<div class="dialog-body concise-help"><button class="dialog-close" data-close aria-label="关闭玩法说明">×</button><h2>借数字，出绝招。</h2><p class="help-goal">打空对手的 <b>99</b> 点生命，<br>或用 <b>9 + 9</b> 发动两次归一获胜。</p><ol class="rules"><li><b>道具</b><p>点击道具，选择目标使用。也可不使用；没有道具或被沉默时自动继续。</p></li><li><b>行动</b><p>有配方：选招后自动释放，或放弃并结束回合。无配方：选自己的手，触碰对手完成计算。</p></li></ol><div class="help-example"><b>8 + 4 → 2</b><span>只改主动手，结果留个位。<br>计算凑出的组合，下个回合才能合成。</span></div><details><summary>防御、计时与详细查询</summary><p>单个 5 减半普通伤害后变为 1；55 免疫普通伤害且不消耗。真实伤害无视护盾；肾上腺素减伤仍有效，和平免疫所有伤害。认真一拳重置对手数字并清除盾墙。</p><p>道具、选招、计算各 30 秒，技能自动释放；超时自动行动。连续两个己方回合被跳过后获得坚韧，后续 5 个己方回合免疫跳过。放弃合成不计入；无合法计算自动结束。${mode==='online'?'联机查看菜单或切后台不暂停。':'本地打开菜单或切后台暂停；教学没有倒计时。'}</p><p>「组合图鉴」随时查询全部技能；悬停道具、状态查看详情。</p></details><button class="primary" data-close>${started?'继续对局':'返回主菜单'} </button></div>`);
 }
 
 function showResult() {
   const winner = state.winner;
   const lost = mode === "online" ? winner !== online.packet.room.seat : mode === "ai" && winner !== 0;
   openDialog(
-    `<div class="result-art">${img(`manga/${winner ? "red" : "blue"}.webp`)}<span aria-hidden="true">${lost ? "DEFEAT" : "VICTORY"}</span></div><div class="result-content"><small class="result-eyebrow">MATCH COMPLETE / 决着</small><div class="result-stamp">${lost ? "败北" : "胜利"}<i>!</i></div><h2>${name(winner)}<span>获胜</span></h2><div class="result-score"><div><small>${name(0)}</small><b>${state.players[0].hp}</b></div><span>:</span><div><small>${name(1)}</small><b>${state.players[1].hp}</b></div></div><p>第 ${Math.ceil(state.turn/2)} 轮 · ${state.winReason ? escapeHtml(state.winReason) : mode === "online" && online.packet.room.finishReason ? escapeHtml(online.packet.room.finishReason) : lost ? "下一手，扳回来。" : "这一局，拿下。"}</p>${mode === "online" ? '<button class="primary" id="online">返回房间 / 再战 →</button>' : `<button class="primary" data-mode="${mode}">再战一局 <span>→</span></button>`}<button class="text-button" data-close>查看战场</button></div>`,
+    `<div class="result-art">${img(`manga/${winner ? "red" : "blue"}.webp`)}<span aria-hidden="true">${lost ? "DEFEAT" : "VICTORY"}</span></div><div class="result-content"><div class="result-stamp">${lost ? "败北" : "胜利"}<i>!</i></div><h2>${name(winner)}<span>获胜</span></h2><p>第 ${Math.ceil(state.turn/2)} 轮 · ${state.winReason ? escapeHtml(state.winReason) : mode === "online" && online.packet.room.finishReason ? escapeHtml(online.packet.room.finishReason) : lost ? "下一手，扳回来。" : "这一局，拿下。"}</p>${mode === "online" ? '<button class="primary" id="online">返回房间 / 再战 </button>' : `<button class="primary" data-mode="${mode}">再战一局 </button>`}<button class="text-button" data-close>查看战场</button></div>`,
     `result-dialog manga-result ${lost ? "defeat" : "victory"} winner-${winner}`,
   );
 }
@@ -585,8 +587,13 @@ async function onlineAction(id) {
   } catch(error){online.error=error.message;if(dialog.dataset.view!=="online")toast(error.message);}
   finally {if(online){online.busy=false;refreshLobby();}}
 }
-listen(dialog,"input",e=>{if(e.target.id==="room-code")online.joinCode=e.target.value;if(e.target.id==="online-name")online.nameDraft=e.target.value;});
+listen(dialog,"input",e=>{if(e.target.dataset.volume){const k=e.target.dataset.volume;audioSettings.set(k,Number(e.target.value)/100);dialog.querySelector(`#volume-${k}`).textContent=`${e.target.value}%`;return;}if(e.target.id==="room-code")online.joinCode=e.target.value;if(e.target.id==="online-name")online.nameDraft=e.target.value;});
 listen(dialog,"submit",async e=>{
+  if(e.target.id==="player-name-form") {
+    e.preventDefault();const form=e.target,button=form.querySelector('[type="submit"]');if(button.disabled)return;button.disabled=true;
+    try{const value=shortName(new FormData(form).get('name'));if(mode==='online')await online.rename(value);else session.rename(Number(form.dataset.seat),value);if(dialog.contains(form)){closeDialog();render();}}
+    catch(error){if(dialog.contains(form)){form.querySelector('.name-error').textContent=error.message;button.disabled=false;}}return;
+  }
   if(!["name-form","join-form"].includes(e.target.id))return;
   e.preventDefault();if(online.busy)return;
   const form=e.target, value=new FormData(form).get(form.id==="name-form"?"name":"code");
@@ -611,7 +618,7 @@ function receiveRemote(packet) {
 }
 async function introRemote() {
   const serial=actionSerial;busy=true;remoteApplying=true;render();
-  await feedback.phase(phaseCue(null,state,participants()),asset);
+  await feedback.intro(participants(),online.packet.room.seat);
   if(serial!==actionSerial)return;
   busy=false;remoteApplying=false;render();announceSupply(state);drainRemote();
 }
@@ -626,7 +633,7 @@ async function drainRemote() {
       if(!document.hidden&&!dialog.open&&remoteQueue.length<2&&event&&next.revision===old.revision+1&&online.serverNow()<=(room.readyAt||0)+500) {
         await animateCommand(event.command,old,next,visual=>{if(serial===actionSerial)showContact(visual,old,next);});
         if(serial!==actionSerial)return;
-        for(const f of forgeEvents(old,next,event.command))await feedback.forge(f,asset,next,participants());
+
       }
       if(serial!==actionSerial)return;
       state=next;document.querySelector('#combat-callout').textContent='';document.querySelector('#combat-callout').classList.remove('visible');document.querySelector('#contact-fx').classList.remove('visible');render();
@@ -651,18 +658,14 @@ listen(app, "click", (e) => {
   const detail=e.target.closest('.hand-shield');
   if(detail){info.show(detail,true);return;}
   const button = e.target.closest("button");
-  if (!button) {
-    if (selected && !busy && e.target.closest("#stage")) {
-      selected = null;
-      render();
-    }
-    return;
-  }
+  if (!button) return;
   if (button.disabled) return;
   if (button.hasAttribute("data-info-only")) {
     info.show(button, true);
     return;
   }
+  if(button.dataset.editName!==undefined){showNameEditor(Number(button.dataset.editName));return;}
+  if(button.dataset.advanceOwner!==undefined){send({type:"advance"});return;}
   if (button.dataset.forge) { send({type:"forge",weapon:button.dataset.forge}); return; }
   if (button.dataset.hand !== undefined) {
     const owner = Number(button.dataset.owner),
@@ -673,7 +676,7 @@ listen(app, "click", (e) => {
       if (canTarget(owner, hand)) send({type:"prop",slot:selected.slot,target:owner,targetHand:hand});
       return;
     }
-    if (!computing) { if(mode !== "tutorial") showRecipes(owner,hand); return; }
+    if (!computing) return;
     if (state.players[owner].locks[hand]) return;
     if (owner === state.active) {
       selected =
@@ -717,18 +720,16 @@ listen(app, "click", (e) => {
     },
     again: () => mode === "online" ? showOnline() : startGame(),
     online: showOnline,
-    menu: () => showMenu(),
+    menu: showBattleMenu,
     help: showHelp,
+    settings: showSettings,
     sound: () => {
       sound = !sound;
       button.setAttribute("aria-pressed", String(sound));
       button.innerHTML = `音效 <span>${sound ? "开" : "关"}</span>`;
       play("click");
     },
-    history: () =>
-      openDialog(
-        `<div class="dialog-body history-body"><button class="dialog-close" data-close aria-label="关闭历史">×</button><ol class="history-list">${state.log.map(x=>{const match=x.match(/^\[回合 (\d+)\] (.*)$/);return `<li><b>${match?`回合 ${match[1]}`:"开局"}</b><span>${escapeHtml(match?match[2]:x)}</span></li>`;}).join("")}</ol></div>`,
-      ),
+    history: () => openDialog(historyMarkup(state.log,participants())),
     replay: () => {
       const url = URL.createObjectURL(
         new Blob([JSON.stringify(session.exportReplay(), null, 2)], {
@@ -752,7 +753,10 @@ listen(dialog, "click", (e) => {
   const b = e.target.closest("button");
   if (!b || b.disabled) return;
   if (b.dataset.menu) {showMenu(b.dataset.menu);return;}
+  if(b.hasAttribute("data-battle-online")){mode==="online"?showOnline():showNameEditor(mode==="local"?state.active:0);return;}
   if (b.hasAttribute("data-menu-help")) {showHelp();return;}
+  if (b.hasAttribute("data-menu-settings")) {showSettings();return;}
+  if(b.id==="sound"){sound=!sound;b.setAttribute("aria-pressed",String(sound));b.innerHTML=`音效 <b>${sound?"开":"关"}</b>`;play("click");return;}
   if (b.id?.startsWith("online") || b.id === "copy-room") {onlineAction(b.id);return;}
   if (b.hasAttribute("data-info-only")) { info.show(b, true); return; }
   if (b.dataset.mode) {
@@ -779,7 +783,7 @@ listen(document, "visibilitychange", () => {
     return;
   }
   if (document.hidden && started && !dialog.open && state.winner === null)
-    openDialog('<div class="dialog-body"><div class="kicker">PAUSED</div><h2>下一手，等你。</h2><p>对局已暂停，回到战场继续出手。</p><button class="primary" data-close>继续对局 →</button></div>');
+    openDialog('<div class="dialog-body"><div class="kicker">PAUSED</div><h2>下一手，等你。</h2><button class="primary" data-close>继续对局 </button></div>');
 });
 const ticker = setInterval(() => {
   if(mode === "online") {
@@ -801,6 +805,8 @@ const ticker = setInterval(() => {
 }, 200);
 
 startGame();
+showMenu("home");
+document.body.classList.remove("booting");
 try {
   const { DuelStage } = await import("./stage.js");
   stage = new DuelStage(
@@ -814,6 +820,7 @@ try {
   );
   document.querySelector("#render-status").textContent = "3D 对战场";
   stage.sync(state, selected);
+  stage.setPaused(paused);
 } catch (error) {
   console.warn("WebGL unavailable; using accessible 2D fallback.", error);
   const host = document.querySelector("#stage");
@@ -833,7 +840,6 @@ try {
   };
   document.querySelector("#render-status").textContent = "兼容模式";
 }
-showMenu(true);
 let resumeOnline = new URL(location.href).searchParams.has("room");
 try { resumeOnline ||= !!sessionStorage.getItem("ff-token"); } catch {}
 if(resumeOnline)showOnline(new URL(location.href).searchParams.has("room"));

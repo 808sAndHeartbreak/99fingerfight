@@ -17,9 +17,10 @@ export class MatchHub {
       const saved=JSON.parse(readFileSync(file,'utf8'));
       check(saved.version===1,'Unsupported room persistence format');
       this.users=new Map(saved.users); this.rooms=new Map(saved.rooms);
-      for(const u of this.users.values()) {u.disconnectedAt=now();u.queued=false;}
+      for(const u of this.users.values()) {u.name=cleanName(u.name);u.disconnectedAt=now();u.queued=false;}
       for(const r of this.rooms.values()) {
         if(r.state && r.state.rulesVersion!==RULES_VERSION) {r.state=null;r.status='waiting';r.ready=[false,false];r.seats=r.seats.filter(Boolean);r.matchId=null;r.readyAt=0;r.deadlineAt=null;r.cache={};r.finishReason=null;}
+        if(r.seatNames)r.seatNames=r.seatNames.map(cleanName);
         r.rematch=[false,false];
       }
     }

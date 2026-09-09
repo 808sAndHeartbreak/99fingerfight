@@ -39,7 +39,7 @@ export function handPreview(state, selected, owner, hand) {
 
 export function propUseDetail(state,id) {
   const p=state.players[state.active],e=state.players[1-state.active],sum=p.hands[0]+p.hands[1],enemySum=e.hands[0]+e.hands[1],ruinDamage=Math.max(0,enemySum+(p.adrenaline>0?5:0)-(e.adrenaline>0?5:0));
-  return ({wine:`下一次直接攻击首段 +${(p.wine+1)*10}，一次消耗所有酒；无回合期限`,adrenaline:`立即结束本回合；后续 ${p.adrenaline+3} 个己方回合，所有伤害 +5、受到伤害 −5`,greed:`获得 ${Math.min(2,4-p.props.length)} 个道具，立即结束回合并清除本回合状态`,balance:`自己重抽 ${p.props.length-1} 个，对手重抽 ${e.props.length} 个；先消耗制衡`,boon:`自己补 ${4-p.props.length} 个，对手补 ${3-e.props.length} 个；各自最多 3 个`,grace:`恢复 ${Math.min(MAX_HP-p.hp,sum)} 生命（己方数字 ${p.hands.join(" + ")}）`,ruin:e.peace>0?`对手处于和平，伤害被免疫（数字总和 ${enemySum}）`:`造成 ${ruinDamage} 点直接伤害（对手数字 ${e.hands.join(" + ")}），不触发护盾`,echo:p.echo?"已有回响，重复使用不会增加次数": "本回合下一次计算将同一个结果写入己方双手",mirror:p.mirror?"已有镜像，重复使用不会增加次数":"本回合下一次计算只改变对手目标手",silence:"对手下回合不能主动使用道具，正常补给不受影响"})[id] || PROPS[id].detail;
+  return ({wine:`下一次直接攻击首段 +${(p.wine+1)*10}，一次消耗所有酒；无回合期限`,adrenaline:`${p.resilience?"坚韧：本回合继续":"立即结束本回合"}；后续 ${p.adrenaline+3} 个己方回合，所有伤害 +5、受到伤害 −5`,greed:`获得 ${Math.min(2,4-p.props.length)} 个道具，${p.resilience?"坚韧：本回合继续":"立即结束回合"}`,balance:`自己重抽 ${p.props.length-1} 个，对手重抽 ${e.props.length} 个；先消耗制衡`,boon:`自己补 ${4-p.props.length} 个，对手补 ${3-e.props.length} 个；各自最多 3 个`,grace:`恢复 ${Math.min(MAX_HP-p.hp,sum)} 生命（己方数字 ${p.hands.join(" + ")}）`,ruin:e.peace>0?`对手处于和平，伤害被免疫（数字总和 ${enemySum}）`:`造成 ${ruinDamage} 点直接伤害（对手数字 ${e.hands.join(" + ")}），不触发护盾`,echo:p.echo?"已有回响，重复使用不会增加次数": "本回合下一次计算将同一个结果写入己方双手",mirror:p.mirror?"已有镜像，重复使用不会增加次数":"本回合下一次计算只改变对手目标手",silence:"对手下回合不能主动使用道具，正常补给不受影响"})[id] || PROPS[id].detail;
 }
 export function guidance(state, selected, human, busy) {
   const p = state.players[state.active];
@@ -59,14 +59,14 @@ export function guidance(state, selected, human, busy) {
   if (selected?.kind === "prop") {
     const prop = PROPS[p.props[selected.slot]];
     return {
-      title: prop.target==="hand"?"选择一只手":`确认使用「${prop.name}」`,
+      title: prop.target==="hand"?(p.props[selected.slot]==="lock" && state.players.every(p=>p.locks.some(Boolean))?"双方已有封印，请取消选择":"选择一只手"):`确认使用「${prop.name}」`,
       detail: prop.target==="hand" ? `己方、对方都可选 · 再点道具取消` : "点击道具旁的确认按钮 · 再点道具取消",
       step: "target",
       canTouch,
     };
   }
   if (state.phase === "start") return {title:state.skipping?"本回合无法行动":"回合开始",detail:state.skipping?"补给与持续伤害照常，随后交给对手。":"",step:"start",canTouch};
-  if (state.phase === "synthesis") return {title:"选择要合成的技能",detail:"选招后双手归 1；也可改用触碰。",step:"synthesis",canTouch};
+  if (state.phase === "synthesis") return {title:"选择要合成的技能",detail:"选招后立即释放；放弃则结束回合。",step:"synthesis",canTouch};
   if (state.phase === "planning")
     return {
       title: p.silenced ? "本回合被沉默，准备行动" : p.weapon
@@ -80,7 +80,7 @@ export function guidance(state, selected, human, busy) {
     };
   if (state.phase === "action" && p.weapon)
     return {
-      title: "发动技能",
+      title: "技能释放中",
       detail: weaponById(p.weapon).name,
       step: "battle",
       canTouch,

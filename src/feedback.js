@@ -106,11 +106,28 @@ export function createFeedback() {
   }
   return {
     animate, register:el=>nodes.add(el), generation:()=>epoch,
+    async intro(participants, mine) {
+      const root=document.createElement('section');root.className='match-intro';root.setAttribute('role','status');
+      root.innerHTML=`<b class="intro-vs">VS</b>${[0,1].map(i=>`<div class="intro-name team-${i}">${escapeHtml(participants[i]?.displayName||`玩家${i?'二':'一'}`)}${mine===i?'<small>（我）</small>':''}</div>`).join('')}`;
+      document.body.append(root);nodes.add(root);
+      document.body.classList.add('introducing');
+      const names=root.querySelectorAll('.intro-name');
+      names.forEach((el,i)=>{
+        const target=document.querySelector(`#player-${i} .player-identity`).getBoundingClientRect();
+        const box=el.getBoundingClientRect();
+        animate(el,[{opacity:0,transform:`translateX(${i?100:-100}px) scale(1.15)`},{opacity:1,transform:'none',offset:.2},{opacity:1,transform:'none',offset:.7},{opacity:0,transform:`translate(${target.x-box.x}px,${target.y-box.y}px) scale(.55)`}],{duration:1400,fill:'both',easing:'cubic-bezier(.2,.8,.2,1)'});
+      });
+      try {await animate(root,[{backgroundColor:'#111827f5'},{backgroundColor:'#111827f5',offset:.7},{backgroundColor:'#11182700'}],{duration:1400,fill:'both'},true).finished.catch(()=>{});}
+      finally {document.body.classList.remove('introducing');}
+      const target=document.querySelector(`#player-${mine}`);if(target)animate(target,[{filter:'brightness(1)'},{filter:'brightness(1.5)',offset:.25},{filter:'brightness(1)'}],{duration:700});
+    },
     async phase(cue, asset) {
       if (!cue) return;
       if(cue.kind!=='finish') {
         const banner=document.querySelector('.battle-banner');
-        animate(banner,[{filter:'brightness(1.4)'},{filter:'brightness(1)'}],{duration:450});
+        animate(banner,[{filter:'brightness(1.25)'},{filter:'brightness(1)'}],{duration:650});
+        const flow=document.createElement('i');flow.className='turn-colour-flow';banner.append(flow);nodes.add(flow);
+        animate(flow,[{transform:'translateX(-110%)',opacity:0},{opacity:.5,offset:.2},{transform:'translateX(110%)',opacity:0}],{duration:850,easing:'ease-out'},true);
         return;
       }
       document.querySelectorAll(".phase-cut:not(.finish)").forEach(node=>node.remove());

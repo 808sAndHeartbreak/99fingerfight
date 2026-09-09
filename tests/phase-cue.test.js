@@ -15,7 +15,7 @@ test("two visible stages, optional synthesis and terminal cues match authoritati
   s=run(createGame(),{type:"advance"}); s.players[0].hands=[9,9];
   next=run(s,{type:"advance"}); assert.equal(phaseCue(s,next).kind,"synthesis");
   s=next; next=run(s,{type:"forge",weapon:"unify"}); assert.equal(phaseCue(s,next).kind,"action");
-  assert.equal(phaseSeconds(next),10); assert.equal(turnSteps(next)[1].note,"攻击");
+  assert.equal(phaseSeconds(next),0); assert.equal(turnSteps(next)[1].note,"攻击");
   for(const actor of [0,1]) {
     s=createGame(); s.active=actor; next=run(s,{type:"surrender"});
     assert.equal(phaseCue(s,next).owner,1-actor); assert.equal(phaseCue(next,next),null);
@@ -33,6 +33,6 @@ test("session identity accepts safe bounded Unicode names without changing rules
   assert.notEqual(session.getParticipants()[0].displayName,"mutated");
   assert.deepEqual(session.getSnapshot(),new LocalSession(42).getSnapshot());
   assert.deepEqual(session.exportReplay(),new LocalSession(42).exportReplay());
-  assert.equal(Array.from(normalizeParticipants([{displayName:"😀".repeat(50)}])[0].displayName).length,24);
+  assert.equal(Array.from(normalizeParticipants([{displayName:"😀".repeat(50)}])[0].displayName).length,10);
   assert.match(phaseCue(null,session.getSnapshot(),session.getParticipants()).detail,/雪/);
 });

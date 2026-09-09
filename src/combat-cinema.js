@@ -1,4 +1,4 @@
-import { actionBeats, actionDuration, commandArt, SKILL_MOTION } from './presentation.js';
+import { actionBeats, actionDuration, commandArt, SKILL_MOTION, skillSummary } from './presentation.js';
 import { propUseDetail } from './guidance.js';
 import { playerName, escapeHtml } from './identity.js';
 
@@ -18,7 +18,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,impa
       const card=document.createElement('aside');card.className='item-receipt';card.dataset.owner=owner;card.setAttribute('role','status');
       card.innerHTML=`<img src="${asset(art.image)}" alt=""><div><small>${escapeHtml(playerName(participants(),owner))} 使用</small><strong>${art.name}</strong><p>目标：${escapeHtml(names)}</p><b>${escapeHtml(result)}</b></div>`;
       document.querySelector('.duel').append(card);register(card);
-      animate(card,[{opacity:0,transform:'translate(-50%,-40%)'},{opacity:1,transform:'translate(-50%,-50%)',offset:.04},{opacity:1,offset:.94},{opacity:0}],{duration:5000,fill:'both'},true);
+      animate(card,[{opacity:0,transform:'translate(-50%,-10px)'},{opacity:1,transform:'translate(-50%,0)',offset:.04},{opacity:1,offset:.94},{opacity:0}],{duration:5000,fill:'both'},true);
       for(const o of targets) {
         const el=document.querySelector(command.targetHand===undefined?`#player-${o}`:`#hand-${o}-${command.targetHand}`);
         animate(el,[{filter:'brightness(1)'},{filter:'brightness(1.5)',offset:.25},{filter:'brightness(1)'}],{duration:1000});
@@ -35,9 +35,10 @@ export function createCombatCinema({animate,register,generation,asset,sound,impa
     el.className=`combat-cinema ${skill?'skill':'item'} ${won?'ultimate':''}`;
     el.dataset.family=family;el.dataset.team=old.active;el.setAttribute('role','status');
     el.innerHTML=`<div class="cinema-ink"></div><div class="cinema-portrait"><img src="${asset(`manga/${old.active?'red':'blue'}.webp`)}" alt=""></div><div class="cinema-heading"><small>${escapeHtml(playerName(participants(),old.active))} / ${skill?'SKILL ACTIVATED':'ITEM ACTIVATED'}</small><h2>${art.name}</h2><span>${skill?SKILL_MOTION[id][1]:'道具生效'}</span></div><img class="cinema-icon" src="${asset(art.image)}" alt=""><div class="cinema-impact" aria-hidden="true"><i></i><i></i><i></i><i></i></div><small class="cinema-hit" aria-hidden="true"></small><div class="cinema-result" aria-live="polite"></div>${nine?`<div class="nine-ritual"><span><img src="${asset('ink-mono/nine-seal.webp')}" alt="九"></span><span class="${won?'complete':'empty'}"><img src="${asset('ink-mono/nine-seal.webp')}" alt="九"></span><b>${won?'九九归一':'九印 · 一之刻'}</b><small>${won?'强制胜利':'再获得一枚九印即可获胜'}</small></div>`:''}`;
-    document.querySelector('.duel').append(el);register(el);
+    document.body.append(el);register(el);
+    if(nine)el.classList.add('contact');
     const duration=actionDuration(old,next,command),beats=actionBeats(old,next,command);
-    const intro=skill?250:120,tail=nine?650:250;
+    const intro=skill?250:120,tail=nine?650:1300;
     const beatDuration=(duration-intro-tail)/Math.max(1,beats.length);
     const live=()=>generation()===epoch;
     const wait=async(ms)=>{await animate(el,[{opacity:1},{opacity:1}],{duration:ms,fill:'both'}).finished.catch(()=>{});return live();};
@@ -55,8 +56,8 @@ export function createCombatCinema({animate,register,generation,asset,sound,impa
       if(!live())return false;
       const beat=beats[index];
       if(beat) {
-        el.querySelector('.cinema-result').textContent=beat.type==='damage'
-          ? `${beat.trueDamage?'真实伤害':'伤害'} HP-${beat.amount}${beat.blocked?` · ${beat.blocked}`:''}` : beat.label;
+        el.querySelector('.cinema-result').innerHTML=beat.type==='damage'
+          ? `<small class="damage-kind ${beat.trueDamage?'true-damage':''}">${beat.trueDamage?'真实伤害':'伤害'}</small><strong class="damage-value">HP−${beat.amount}</strong>${beat.blocked?`<span class="effect-text">${escapeHtml(beat.blocked)}</span>`:''}` : `<strong class="effect-text">${escapeHtml(beat.label)}</strong>`;
         const hits=beats.filter(b=>b.type==='damage');
         el.querySelector('.cinema-hit').textContent=beat.type==='damage'&&hits.length>1?`第 ${hits.indexOf(beat)+1} / ${hits.length} 击`:'';
         onBeat(beat);
@@ -86,6 +87,9 @@ export function createCombatCinema({animate,register,generation,asset,sound,impa
       sound(beat?.blocked&&beat.amount===0?'guard':nine?'nine':family,skill?1:.5);
       if(!await wait(beatDuration))return false;
     }
+    const summary=skillSummary(old,next,command);
+    el.querySelector('.cinema-result').innerHTML=`${summary.hits?`<small>共 ${summary.hits} 击</small><strong class="damage-value">HP−${summary.damage}</strong><span class="damage-caption">累计实际伤害</span>`:''}${summary.effects.length?`<span class="effect-text">${summary.effects.map(escapeHtml).join(' · ')}</span>`:''}`;
+    el.querySelector('.cinema-hit').textContent='';
     if(nine){el.classList.add('sealed');sound(won?'victory':'nine',1);}
     if(!await wait(tail-200))return false;
     await animate(el,[{opacity:1,transform:'translateX(0)'},{opacity:0,transform:'translateX(6%)'}],{duration:200,fill:'both'},true).finished.catch(()=>{});

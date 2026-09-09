@@ -52,7 +52,7 @@ test('skip turns retain supply and DOT, decrement once, expire turn items; no ac
  assert.equal(s.skipping,true);assert.equal(s.players[1].skip,2);assert.deepEqual(s.players[1].hands,[1,1]);assert.equal(s.players[1].hp,92);assert.equal(s.players[1].props.length,1);assert.deepEqual(legalCommands(s).map(c=>c.type),['advance']);assert.match(phaseCue(null,s).detail,/无法行动/);assert.equal(turnSteps(s)[1].note,'本回合跳过');
  for(const c of [{type:'attack'},{type:'prop',slot:0,target:1},{type:'add',hand:0,targetHand:0}])assert.throws(()=>run(s,c));
  s=run(s,{type:'advance'});assert.equal(s.players[1].silenced,false);assert.equal(s.players[1].echo,false);assert.equal(s.players[1].mirror,false);assert.deepEqual(s.players[1].locks,[false,false]);
- for(let i=0;i<2;i++){s.phase='action';s.players[0].weapon='foam';s=attack(s);assert.equal(s.skipping,true);s=run(s,{type:'advance'});}
+ for(let i=0;i<1;i++){s.phase='action';s.players[0].weapon='foam';s=attack(s);assert.equal(s.skipping,true);s=run(s,{type:'advance'});}
  s.phase='action';s.players[0].weapon='foam';s=attack(s);assert.equal(s.skipping,false);assert.equal(run(s,{type:'advance'}).phase,'planning');
 });
 test('skip counters accumulate and blocked damage still applies digit changes, removal and skip',()=>{

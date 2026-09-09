@@ -25,7 +25,7 @@ function score(s, actor) {
     potential(e) * 0.9 +
     (p.props.length - e.props.length) * 2 +
     (p.nine-e.nine)*100+(p.foam-e.foam)*7+(Number(p.knuckles)-Number(e.knuckles))*35+(e.skip-p.skip)*12+(e.seven-p.seven)*5+(Number(e.dark)-Number(p.dark))*40+
-    (p.wine-e.wine)*12+(p.adrenaline-e.adrenaline)*14+(p.peace-e.peace)*8+(e.weak-p.weak)*6+(e.poison-p.poison)*2+(p.echo?7:0)+(p.mirror?3:0)-(p.silenced?6:0)+(e.silenced?6:0)
+    (p.resilience-e.resilience)*8+(p.wine-e.wine)*12+(p.adrenaline-e.adrenaline)*14+(p.peace-e.peace)*8+(e.weak-p.weak)*6+(e.poison-p.poison)*2+(p.echo?7:0)+(p.mirror?3:0)-(p.silenced?6:0)+(e.silenced?6:0)
   );
 }
 export function chooseCommand(s) {

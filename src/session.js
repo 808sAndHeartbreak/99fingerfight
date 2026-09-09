@@ -18,6 +18,9 @@ export class LocalSession {
   getParticipants() {
     return structuredClone(this.#participants);
   }
+  rename(seat,displayName) {
+    this.#participants=normalizeParticipants(this.#participants.map((p,i)=>i===seat?{displayName}:p));
+  }
   getSnapshot() {
     return structuredClone(this.#state);
   }

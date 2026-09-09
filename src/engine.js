@@ -1,6 +1,6 @@
 import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
-export const RULES_VERSION = 6;
+export const RULES_VERSION = 7;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -34,6 +34,7 @@ function begin(s) {
   }
   s.phase = "start";
   s.synthesis = "pending";
+  if(p.resilience>0)p.skip=0;
   s.skipping = p.skip > 0;
   if (s.skipping) { p.skip--; log(s, `${name(s.active)}本回合无法行动，之后还需跳过 ${p.skip} 回合。`); }
   if (p.seven > 0) { p.seven--; damage(s,s.active,7,true,"七伤拳"); }
@@ -58,7 +59,7 @@ export function createGame(seed = 1) {
       echo:false,
       mirror:false,
       silenced:false,
-      skip:0, seven:0, dark:false, foam:0, knuckles:0, peace:0, peaceSince:0, wine:0, adrenaline:0, adrenalineSince:0, weak:0, poison:0, nine:0,
+      skip:0, skippedTurns:0, resilience:0, resilienceSince:0, seven:0, dark:false, foam:0, knuckles:0, peace:0, peaceSince:0, wine:0, adrenaline:0, adrenalineSince:0, weak:0, poison:0, nine:0,
       hands: [1, 1],
       locks: [false, false],
       props: [],
@@ -112,8 +113,15 @@ function damage(s, owner, amount, trueDamage, source) {
   log(s,`${source}对${name(owner)}造成 ${actual} 点${trueDamage?"真实":"普通"}伤害${blocked?`（${blocked}）`:""}。`);
   checkWinner(s);
 }
-function endTurn(s) {
+function endTurn(s, skipped=false) {
   const ending=s.players[s.active];
+  if(ending.resilience>0 && ending.turns>ending.resilienceSince) ending.resilience--;
+  ending.skippedTurns=skipped ? ending.skippedTurns+1 : 0;
+  if(ending.skippedTurns>=2) {
+    ending.resilience=5;ending.resilienceSince=ending.turns;ending.skippedTurns=0;ending.skip=0;
+    s.events.push({type:"resilience",owner:s.active});
+    log(s,`${name(s.active)}连续两回合未能行动，获得坚韧：后续 5 个己方回合免疫跳过。`);
+  }
   if(ending.peace>0 && ending.turns>ending.peaceSince) ending.peace--;
   if(ending.weak>0) ending.weak--;
   if(ending.adrenaline>0 && ending.turns>ending.adrenalineSince) ending.adrenaline--;
@@ -146,15 +154,15 @@ export function applyCommand(state, command) {
   switch (command.type) {
     case "advance":
       assert(s.phase === "start" || s.phase === "planning", "当前不能进入下一阶段");
-      if (s.phase === "start") { if(s.skipping) endTurn(s); else s.phase = "planning"; }
+      if (s.phase === "start") { if(s.skipping) endTurn(s,true); else s.phase = "planning"; }
       else if (synthesisOptions(s).length) s.phase = "synthesis";
       else { s.synthesis = "skipped"; log(s, `${name(s.active)}无合法组合，略过合成。`); enterAction(s); }
       break;
     case "decline":
       assert(s.phase === "synthesis", "当前不能放弃合成");
       s.synthesis = "declined";
-      log(s, `${name(s.active)}放弃合成，进入计算。`);
-      enterAction(s);
+      log(s, `${name(s.active)}放弃合成，结束回合。`);
+      endTurn(s);
       break;
     case "forge": {
       assert(s.phase === "synthesis", "只能在行动阶段的技能选择中合成");
@@ -193,6 +201,7 @@ export function applyCommand(state, command) {
       if(prop.target==="enemy")assert(command.target===1-s.active,"该道具只能对对手使用");
       const target=s.players[command.target];
       if(prop.target==="hand")handIndex(command.targetHand);
+      if(id==="lock")assert(!target.locks.some(Boolean),"该玩家已有一只手被封印");
       p.props.splice(command.slot,1);
       s.events.push({type:"prop",actor:s.active,item:id,target:command.target,targetHand:command.targetHand});
       log(s,`${name(s.active)}使用「${prop.name}」${prop.target==="hand"?`：${name(command.target)}${command.targetHand?"右":"左"}手`:""}。`);
@@ -203,13 +212,13 @@ export function applyCommand(state, command) {
       else if(id==="mirror")p.mirror=true;
       else if(id==="silence")enemy.silenced=true;
       else if(id==="wine")p.wine++;
-      else if(id==="adrenaline"){if(!p.adrenaline)p.adrenalineSince=p.turns;p.adrenaline+=3;endTurn(s);}
+      else if(id==="adrenaline"){if(!p.adrenaline)p.adrenalineSince=p.turns;p.adrenaline+=3;if(!p.resilience)endTurn(s,true);}
       else if(id==="balance") {
         const counts=s.players.map(player=>player.props.length);
         s.players.forEach(player=>player.props=[]);
         s.players.forEach((player,i)=>{for(let n=0;n<counts[i];n++)draw(s,player,"制衡");});
       } else if(id==="boon")s.players.forEach(player=>{while(player.props.length<3)draw(s,player,"天降的宝札");});
-      else if(id==="greed"){draw(s,p,"强欲");draw(s,p,"强欲");log(s,`${name(s.active)}强欲生效，立即结束回合。`);endTurn(s);}
+      else if(id==="greed"){draw(s,p,"强欲");draw(s,p,"强欲");log(s,`${name(s.active)}强欲生效${p.resilience?"，坚韧使本回合继续":"，立即结束回合"}。`);if(!p.resilience)endTurn(s,true);}
       else if(id==="grace"){const amount=Math.min(MAX_HP-p.hp,p.hands[0]+p.hands[1]);p.hp+=amount;log(s,`${name(s.active)}恩惠恢复 ${amount} 生命。`);}
       else if(id==="ruin")damage(s,1-s.active,enemy.hands[0]+enemy.hands[1],true,"破坏");
       checkWinner(s);
@@ -221,7 +230,7 @@ export function applyCommand(state, command) {
       assert(w,"无效技能");
       log(s,`${name(s.active)}发动「${w.name}」。`);
       const id=w.id, target=1-s.active;
-      if(id==="serious") { enemy.hands=[1,1];enemy.foam=0;p.skip++; }
+      if(id==="serious") { enemy.hands=[1,1];enemy.foam=0;if(!p.resilience)p.skip++; }
       const direct=["serious","drunken","scissors","fan","claw","buddha","dragon","sorrow","frag","dual","sniper","taser"];
       if(direct.includes(id)) {
         const base=id==="sorrow"?MAX_HP-p.hp:w.damage;
@@ -234,7 +243,7 @@ export function applyCommand(state, command) {
         if(id==="scissors")enemy.hands=enemy.hands.map(n=>mod10(n-1));
         if(id==="fan"&&enemy.props.length) {const item=enemy.props.splice(randomInt(s,enemy.props.length),1)[0];log(s,`${name(target)}失去「${PROPS[item].name}」。`);}
         if(id==="buddha")enemy.hands=[1,1];
-        if(id==="buddha"||id==="taser")enemy.skip+=3;
+        if((id==="buddha"||id==="taser") && !enemy.resilience)enemy.skip+=3;
         if(id==="dark")enemy.dark=true;
         if(id==="foam")p.foam+=2;
         if(id==="knuckles")p.knuckles=Number(p.knuckles)+1;
@@ -244,6 +253,7 @@ export function applyCommand(state, command) {
         if(id==="steal") {p.props.push(...enemy.props.slice(0,3-p.props.length));enemy.props=[];p.knuckles=Number(p.knuckles)+Number(enemy.knuckles);enemy.knuckles=0;
           if(enemy.peace>0){if(!p.peace)p.peaceSince=p.turns;p.peace+=enemy.peace;enemy.peace=0;}
           p.wine+=enemy.wine;enemy.wine=0;
+          if(enemy.resilience>0){if(!p.resilience)p.resilienceSince=p.turns;p.resilience+=enemy.resilience;enemy.resilience=0;p.skip=0;p.skippedTurns=0;}
           if(enemy.adrenaline>0){if(!p.adrenaline)p.adrenalineSince=p.turns;p.adrenaline+=enemy.adrenaline;enemy.adrenaline=0;}}
         if(id==="unify") {
           p.hands=[1,1];enemy.hands=[1,1];p.nine++;
@@ -277,7 +287,7 @@ export function legalCommands(s) {
     commands.push({type:"advance"});
     if(!p.silenced)p.props.forEach((id,slot)=>{
       const prop=PROPS[id];
-      if(prop.target==="hand")[0,1].forEach(target=>[0,1].forEach(targetHand=>commands.push({type:"prop",slot,target,targetHand})));
+      if(prop.target==="hand")[0,1].forEach(target=>[0,1].forEach(targetHand=>{if(id!=="lock" || !s.players[target].locks.some(Boolean))commands.push({type:"prop",slot,target,targetHand});}));
       else commands.push({type:"prop",slot,target:prop.target==="enemy"?1-s.active:s.active});
     });
   } else if (s.phase === "synthesis") {

@@ -28,3 +28,33 @@
  .game-menu .menu-wordmark>strong { display:block; margin-left:0; font-size:68px; }
  .game-menu .menu-choice { padding:13px 18px; }
 }
+/* One poster, floating controls: no empty sidebar or duplicate title. */
+.booting .game-shell { visibility:hidden; }
+.menu-backdrop { display:none; }
+body.menu-scene .menu-backdrop { display:block; position:fixed; inset:0; z-index:20; background:var(--ink); }
+body.menu-scene .game-shell { visibility:hidden; }
+.game-menu[open] { display:block; }
+.game-menu .menu-keyart { position:absolute; inset:0; width:100%; height:100%; z-index:0; }
+.game-menu .menu-keyart img { width:100%; height:100%; object-fit:cover; object-position:70% center; }
+.game-menu .menu-keyart::after { inset:0; background:linear-gradient(90deg,#111b2e8c,transparent 70%); }
+.game-menu .menu-body { position:absolute; left:6%; top:50%; transform:translateY(-50%); width:36%; max-width:440px; z-index:2; padding:0; border:0; background:none; min-height:0; color:var(--paper); }
+.game-menu .menu-body h2 { font-size:clamp(30px,4vw,54px); text-shadow:3px 4px 0 var(--ink); margin:0 0 22px; }
+.game-menu .menu-choice { background:var(--ink); color:var(--paper); border:2px solid var(--paper); transform:skew(-5deg); box-shadow:5px 5px 0 #12182890; padding:18px 22px; }
+.game-menu .menu-choice>span { transform:skew(5deg); font-size:clamp(20px,2.5vw,30px); font-weight:900; }
+.game-menu .menu-choice small { font-size:12px; }
+.game-menu .menu-body[data-menu-page="home"] .menu-choice:first-child { min-height:106px; background:var(--red); border-color:var(--paper); }
+.game-menu .menu-body[data-menu-page="home"] .menu-choice:first-child>span { font-size:clamp(30px,4vw,48px); }
+.game-menu .menu-wordmark { inset:auto 3% 8% auto; width:46%; }
+.game-menu .menu-wordmark>span { font-size:clamp(64px,9vw,150px); }
+.game-menu .menu-wordmark>strong { font-size:clamp(96px,14vw,230px); }
+.game-menu .menu-footnote { font-size:11px; text-shadow:1px 1px var(--ink); }
+body.menu-scene dialog:not(.game-menu)::backdrop { background:#0a132bad; backdrop-filter:blur(4px); }
+@media(max-width:650px) {
+ .game-menu .menu-body { top:auto; bottom:7%; transform:none; left:7%; width:86%; max-width:none; }
+ .game-menu .menu-wordmark { inset:8% 6% auto auto; width:65%; }
+ .game-menu .menu-wordmark>span { font-size:54px; }
+ .game-menu .menu-wordmark>strong { font-size:90px; }
+ .game-menu .menu-choice { padding:13px 18px; }
+ .game-menu .menu-body[data-menu-page="home"] .menu-choice:first-child { min-height:80px; }
+ .game-menu .menu-body h2 { font-size:28px; }
+}

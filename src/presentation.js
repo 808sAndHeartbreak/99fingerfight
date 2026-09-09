@@ -10,7 +10,7 @@ export function actionBeats(old,next,command) {
  if(command.type==='attack'){
   const id=old.players[old.active].weapon,p=next.players[old.active],e=next.players[1-old.active];
   if(next.winner===null||id==='unify') {
-   const labels={serious:'对手双手归一 · 破盾 · 自己下回合无法行动',seven:`七伤已施加 · 剩余 ${e.seven} 次`,scissors:`对手双手 → ${e.hands.join(' / ')}`,fan:'花蝶扇 · 道具已结算',buddha:'双手归一 · 跳过三回合',dark:'玄冥 · 永久侵蚀',foam:`盾墙 → ${p.foam} 次`,knuckles:`指虎 ${p.knuckles} 层 · 每段技能 +${p.knuckles*10}`,peace:'双方和平 · 各自接下来三回合免疫伤害',serpent:'虚弱与中毒 · 五回合',steal:'道具与增益已转移',dual:`道具补充 → ${p.props.length}/3`,taser:'对手跳过三回合',unify:p.nine===2?'九九归一':'减益已清除 · 九印 1 / 2'};
+   const labels={serious:old.players[old.active].resilience?'对手双手归一 · 破盾 · 坚韧免疫跳过':'对手双手归一 · 破盾 · 自己下回合无法行动',seven:`七伤已施加 · 剩余 ${e.seven} 次`,scissors:`对手双手 → ${e.hands.join(' / ')}`,fan:'花蝶扇 · 道具已结算',buddha:old.players[1-old.active].resilience?'双手归一 · 坚韧免疫跳过':'双手归一 · 跳过三回合',dark:'玄冥 · 永久侵蚀',foam:`盾墙 → ${p.foam} 次`,knuckles:`指虎 ${p.knuckles} 层 · 每段技能 +${p.knuckles*10}`,peace:'双方和平 · 各自接下来三回合免疫伤害',serpent:'虚弱与中毒 · 五回合',steal:'道具与增益已转移',dual:`道具补充 → ${p.props.length}/3`,taser:old.players[1-old.active].resilience?'坚韧：免疫跳过':'对手跳过三回合',unify:p.nine===2?'九九归一':'减益已清除 · 九印 1 / 2'};
    if(labels[id])beats.push({type:'effect',owner:old.active,label:labels[id]});
   }
  }
@@ -20,8 +20,8 @@ export function actionBeats(old,next,command) {
   if(command.targetHand!==undefined)label=id==='lock'?'封印至该玩家回合结束':`数字 ${old.players[command.target].hands[command.targetHand]} → ${p.hands[command.targetHand]}`;
   if(id==='grace')label=`回复 ${p.hp-old.players[command.target].hp} 生命`;
   if(id==='wine')label=`首段伤害 +${next.players[old.active].wine*10} · 下次直接攻击消耗`;
-  if(id==='adrenaline')label='本回合结束 · 接下来三回合伤害 +5、减伤 5';
-  if(id==='greed')label='获得道具 · 立即结束回合';
+  if(id==='adrenaline')label=`${old.players[old.active].resilience?'坚韧：本回合继续':'本回合结束'} · 三回合伤害 +5、减伤 5`;
+  if(id==='greed')label=old.players[old.active].resilience?'获得道具 · 坚韧：本回合继续':'获得道具 · 立即结束回合';
   if(id==='echo'||id==='mirror')label=PROPS[id].name+' · 本回合计算生效';
   beats.unshift({type:'effect',owner:command.target,label});
  }
@@ -30,7 +30,7 @@ export function actionBeats(old,next,command) {
 export function actionDuration(old,next,c) {
  if(c.type==='add')return TOUCH_DURATION_MS * (old.players[old.active].echo?2:1);
  if(c.type==='forge')return 0;
- if(c.type==='attack')return old.players[old.active].weapon==='unify'?(next.winReason==='九九归一'?3200:1800):1400+Math.max(0,actionBeats(old,next,c).length-1)*220;
+ if(c.type==='attack')return old.players[old.active].weapon==='unify'?(next.winReason==='九九归一'?3200:1800):2450+Math.max(0,actionBeats(old,next,c).length-1)*220;
  if(c.type==='prop')return 350;
  return actionBeats(old,next,c).length?900:0;
 }
@@ -39,3 +39,9 @@ export function presentationDuration(old,next,c) {
  return actionDuration(old,next,c)+(['start','finish'].includes(cue?.kind)?cue.duration:0);
 }
 export const commandArt=(old,c)=>c.type==='attack'?weaponById(old.players[old.active].weapon):c.type==='prop'?PROPS[old.players[old.active].props[c.slot]]:null;
+
+export function skillSummary(old,next,command) {
+ const weapon=weaponById(old.players[old.active].weapon);
+ const hits=(next.events||[]).filter(e=>e.type==='damage'&&e.owner===1-old.active&&e.source===weapon?.name);
+ return {hits:hits.length,damage:hits.reduce((sum,e)=>sum+e.amount,0),effects:actionBeats(old,next,command).filter(e=>e.type==='effect').map(e=>e.label)};
+}

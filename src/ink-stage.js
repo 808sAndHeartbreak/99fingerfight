@@ -50,7 +50,13 @@ export function createInkStage() {
         float skillShape=uSkill<1.5?wave:uSkill<2.5?cut:uSkill<3.5?bolt:wave*teeth;
         float skillInk=skillShape*uPulse*step(.001,uPulse);
         col=mix(col,team,skillInk);
-        float alpha=max(max(dots,uFocus*.96),skillInk*.85);
+        float drift=sin(uTime*.16)*.016;
+        float panel=step(vUv.x*.36+.69+drift,vUv.y)+step(vUv.y,vUv.x*.3-.15+drift);
+        float screenDots=(1.-smoothstep(.16,.24,length(fract(gl_FragCoord.xy/7.)-.5)));
+        float band=step(.965,fract(vUv.y*2.+vUv.x*.7+uTime*.012));
+        float printMask=clamp(panel*.14+screenDots*panel*.2+band*.055,0.,.35);
+        col=mix(col,ink,printMask);
+        float alpha=max(max(max(dots,uFocus*.96),skillInk*.85),printMask);
         gl_FragColor=vec4(col,alpha);
       }`,
   });

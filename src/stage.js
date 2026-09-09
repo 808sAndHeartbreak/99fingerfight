@@ -1,4 +1,4 @@
-import { PROPS } from "./catalog.js";
+import { PROPS, WEAPONS } from "./catalog.js";
 import { calculationOutcome } from "./engine.js";
 import { propContactNumber } from "./guidance.js";
 import * as THREE from "three";
@@ -86,15 +86,21 @@ export class DuelStage {
         halo.position.copy(base);
         halo.position.z = -0.7;
         this.scene.add(halo);
+        const shieldShape = new THREE.Shape();
+        shieldShape.moveTo(0, 1.3);
+        shieldShape.quadraticCurveTo(.7, 1.1, 1.1, .9);
+        shieldShape.lineTo(1, -.3);
+        shieldShape.quadraticCurveTo(.7, -1, 0, -1.35);
+        shieldShape.quadraticCurveTo(-.7, -1, -1, -.3);
+        shieldShape.lineTo(-1.1, .9);
+        shieldShape.quadraticCurveTo(-.7, 1.1, 0, 1.3);
         const shield = new THREE.Mesh(
-          new THREE.IcosahedronGeometry(1.43, 1),
-          new THREE.MeshBasicMaterial({
-            color: COLORS[owner],
-            wireframe: true,
-            transparent: true,
-            opacity: 0.17,
-          }),
+          new THREE.ShapeGeometry(shieldShape),
+          new THREE.MeshBasicMaterial({color:COLORS[owner], transparent:true, opacity:.07, depthWrite:false, side:THREE.DoubleSide}),
         );
+        const outline = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(shieldShape.getPoints(32)),
+          new THREE.LineBasicMaterial({color:COLORS[owner], transparent:true, opacity:.18, depthWrite:false}));
+        shield.add(outline);
         shield.position.copy(base);
         this.scene.add(shield);
         shield.visible = false;
@@ -144,6 +150,7 @@ export class DuelStage {
     this.hands.forEach((h) => {
       const p = state.players[h.owner];
       h.setNumber(p.hands[h.hand]);
+      const combo = WEAPONS.some(w=>w.recipe[0]===p.hands[0] && w.recipe[1]===p.hands[1]);
       const chosen =
         selected?.kind === "hand" &&
         selected.hand === h.hand &&
@@ -151,7 +158,8 @@ export class DuelStage {
       h.trim.emissiveIntensity = p.locks[h.hand] ? 0 : chosen ? 0.15 : 0;
       const propTarget =
         selected?.kind === "prop" &&
-        PROPS[state.players[state.active].props[selected.slot]]?.target === "hand";
+        PROPS[state.players[state.active].props[selected.slot]]?.target === "hand" &&
+        (state.players[state.active].props[selected.slot]!=="lock" || !p.locks.some(Boolean));
       const canSelect =
         enabled &&
         !p.locks[h.hand] &&
@@ -162,7 +170,7 @@ export class DuelStage {
         ? 0.85
         : canSelect || (enabled && propTarget)
           ? 0.48
-          : 0.04;
+          : combo ? 0.34 : 0.04;
       h.actionable = canSelect || (enabled && propTarget);
       h.halo.scale.setScalar(chosen ? 1.15 : 1);
       h.shield.visible = p.hands[h.hand] === 5;
@@ -398,7 +406,8 @@ export class DuelStage {
         h.halo.position.copy(h.base);
         h.halo.position.z = -0.65;
         h.shield.position.copy(h.root.position);
-        h.shield.rotation.z = this.time * 0.15;
+        h.shield.position.z = -.45;
+        h.shield.scale.setScalar(h.restScale * (this.reduced.matches ? 1 : 1 + Math.sin(this.time * 1.5) * .015));
       });
       if (!this.reduced.matches) {
         this.ink.uniforms.uTime.value = this.time;

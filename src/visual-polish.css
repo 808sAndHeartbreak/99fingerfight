@@ -1,0 +1,48 @@
+.game-shell .duel {background:linear-gradient(165deg,#d0cbbb 0 9%,#f0eadb 9% 83%,#d9d1bd 83%);isolation:isolate}
+.game-shell .battle-banner{border-bottom:4px solid var(--active)}
+.game-shell #clock,.game-shell #instruction{font-style:italic;text-shadow:2px 2px 0 #ffffff15}
+.game-shell .hud-tools button{font-size:14px;padding:12px;border:1px solid #ffffff40;background:#ffffff08;transform:skew(-7deg)}
+.game-shell .hud-tools #menu{background:var(--paper);color:var(--ink);font-weight:900}
+.battle-menu h2,.settings-body h2,.match-history h2{font-size:clamp(30px,5vw,52px);transform:rotate(-3deg);font-style:italic;letter-spacing:-.05em}
+.battle-menu>button:not(.dialog-close){display:block;width:100%;padding:18px;margin:8px 0;background:var(--ink);color:var(--paper);font-size:20px;font-weight:900;text-align:left;clip-path:polygon(2% 0,100% 0,98% 100%,0 100%)}
+.volume-row{display:block;margin:30px 0;font-size:20px;font-weight:800}.volume-row output{float:right;font:700 28px Teko,sans-serif}.volume-row input{display:block;width:100%;margin-top:18px;accent-color:#315eda;cursor:pointer}
+.match-history section{border-top:2px solid var(--ink);padding:14px 0}.match-history h3{font-size:24px;margin:0 0 12px}.history-phase{display:grid;grid-template-columns:78px 1fr;margin:8px 0;gap:12px}.history-phase>b{color:#3457a1;font-size:13px}.history-phase ul{margin:0;padding-left:16px;font-size:15px;line-height:1.8}
+.game-shell .item-receipt{top:105px;background:#fff9e9f2;border-left:6px solid var(--active);box-shadow:6px 6px 0 #18203520;clip-path:polygon(2% 0,100% 0,98% 100%,0 100%)}
+.item-arriving>img,.item-arriving>span{visibility:hidden}
+body.introducing .player-identity,body.introducing .field-items{visibility:hidden}
+.match-intro{position:fixed;inset:0;z-index:210;display:flex;align-items:center;justify-content:center;gap:10vw;overflow:hidden}
+.intro-name{color:#fff8e5;background:#2c61e0;padding:22px 36px;max-width:40%;font-size:clamp(24px,4vw,62px);font-weight:900;font-style:italic;box-shadow:8px 8px 0 #080d18;text-wrap:balance}.intro-name.team-1{background:#dc352a}.intro-name small{font-size:.45em;white-space:nowrap}.intro-vs{position:absolute;color:#fff8e5;font:900 italic 70px Teko,sans-serif;text-shadow:5px 5px #000}
+.game-shell:has(#forge-options:not([hidden])) .duel::after{content:'';position:absolute;inset:0;background:#10182c77;z-index:5;pointer-events:none;backdrop-filter:blur(2px)}
+.game-shell #forge-options{z-index:10;border:0;background:#121a2bf2;box-shadow:10px 10px 0 #11182755;padding:22px}
+.game-shell .forge-heading h2{color:var(--paper);font-size:32px;font-style:italic;transform:rotate(-3deg);text-shadow:3px 3px 0 var(--active)}.game-shell .forge-heading p{color:var(--paper)}
+.game-shell .forge-choices button{border:2px solid #fff9db;background:#fff9e9;box-shadow:4px 5px 0 var(--active);transition:transform .15s,background .15s}.game-shell .forge-choices button:hover{transform:translateY(-5px) rotate(-1deg);background:#fff}
+.result-dialog.manga-result{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;margin:0;border:0;background:#101727;overflow:auto}
+.result-dialog.manga-result .result-art{width:48%;transform:skew(-7deg);background:var(--winner)}
+.result-dialog.manga-result .result-content{position:relative;z-index:2;padding:8vh 5vw;color:#fff4d8}
+.result-dialog.manga-result .result-stamp{font-size:clamp(70px,11vw,170px);color:#fff4d8;transform:rotate(-8deg);text-shadow:7px 8px 0 var(--winner),12px 14px 0 #000;animation:result-slam .55s cubic-bezier(.16,1,.3,1) both}
+.result-dialog.manga-result h2{font-size:clamp(24px,4vw,50px);color:#fff4d8;margin-top:24px}.result-dialog.manga-result .result-content p{color:#c7c9d1}.result-dialog.manga-result .text-button{color:#fff4d8}
+.result-dialog.manga-result.winner-0{--winner:#3268ed}.result-dialog.manga-result.winner-1{--winner:#e13e30}
+@keyframes result-slam{from{opacity:0;transform:scale(1.8) rotate(-12deg)}to{opacity:1;transform:scale(1) rotate(-8deg)}}
+@media(max-width:650px){.game-shell .hud-tools button{font-size:12px;padding:8px}.intro-name{padding:16px;max-width:43%;font-size:22px}.intro-vs{font-size:40px}.game-shell #forge-options{padding:12px}.result-dialog.manga-result .result-art{width:100%;opacity:.3}.result-dialog.manga-result .result-content{width:100%}}
+@media(prefers-reduced-motion:reduce){.result-dialog.manga-result .result-stamp{animation:none}}
+.item-arriving .prop-use { visibility:hidden; pointer-events:none; } .result-dialog.manga-result .primary { background:var(--winner); }
+.game-shell .forge-choices button,.game-shell .forge-choices button strong,.game-shell .forge-choices button>span { color:#151c2d; } .game-shell .forge-choices button>b { color:#244cad; } .game-shell:not(.is-tutorial) .forge-heading { display:block; }
+.game-shell #forge-options { top:50%; bottom:auto; min-height:180px; transform:translateY(-50%) rotate(-1deg); } .game-shell.is-tutorial #forge-options { padding:32px; }
+/* Final print treatment: navigation moves on hover, information stays still. */
+button:not(:disabled){transition:transform .16s ease,filter .16s ease,box-shadow .16s ease}
+button:not(:disabled):hover{filter:brightness(1.08)}
+.menu-choice:not(:disabled):hover,.battle-menu>button:not(:disabled):hover{translate:5px -2px}
+.hud-tools button:not(:disabled):hover,.item-advance:not(:disabled):hover{translate:0 -2px;box-shadow:3px 4px 0 #0005}
+button:focus-visible{outline:3px solid #eab94b;outline-offset:4px}
+.game-shell #instruction{display:inline-block;padding:5px 10px;background:var(--paper);color:#151c2d;box-shadow:3px 3px 0 var(--active);transform:rotate(-1deg);font-size:clamp(16px,1.7vw,23px)}
+.game-shell #instruction-detail{padding-left:10px}
+.match-history{max-width:760px}.match-history h2{font-size:30px;margin:0 0 20px}.match-history section{display:grid;grid-template-columns:74px 1fr;gap:8px 16px}.match-history section>h3{font-size:18px;grid-column:1;grid-row:1 / span 20;background:var(--ink);color:var(--paper);height:fit-content;padding:7px 5px;transform:rotate(-3deg);text-align:center}.match-history .history-phase{grid-column:2;grid-template-columns:64px 1fr;gap:8px;margin:0 0 6px}.history-phase>b{font-size:11px;background:#ddd7c6;height:fit-content;padding:3px 5px}.history-phase ul{list-style:none;padding:0;font-size:13px;line-height:1.65}.history-phase li{border-bottom:1px solid #16203913;padding:3px 0}.record-damage{color:#b42d26;font-style:normal;font-weight:900}.record-heal{color:#187b62;font-style:normal;font-weight:900}
+.result-dialog.manga-result{background:radial-gradient(circle at 78% 78%,#ffffff0e 0 1px,transparent 1.5px) 0 0/8px 8px,#101727}
+.result-dialog.manga-result::after{content:'FIGHT';position:absolute;right:-3%;bottom:-7%;font:900 italic clamp(130px,26vw,440px)/1 Teko,sans-serif;color:var(--winner);opacity:.16;transform:rotate(-9deg);pointer-events:none;z-index:0}
+.result-dialog.manga-result .result-content{align-self:center;margin-block:auto}
+.result-dialog.manga-result h2{width:fit-content;max-width:100%;padding:8px 15px;background:#fff4d8;color:#151c2d;transform:rotate(-2deg);box-shadow:5px 5px 0 var(--winner)}
+.result-dialog.manga-result h2 span{color:#151c2d}
+.result-dialog.manga-result .result-art{animation:winner-drift 9s ease-in-out infinite alternate}
+@keyframes winner-drift{from{translate:0 0}to{translate:0 -10px}}
+@media(max-width:650px){.match-history section{grid-template-columns:55px 1fr;gap:8px}.match-history .history-phase{grid-template-columns:1fr}.match-history section>h3{font-size:14px}.game-shell #instruction{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.result-dialog.manga-result .result-art{animation:none}button{transition:none!important}.menu-choice:hover,.battle-menu>button:hover,.hud-tools button:hover,.item-advance:hover{translate:none}}

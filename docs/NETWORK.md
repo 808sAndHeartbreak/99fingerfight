@@ -1,16 +1,16 @@
-# 联机实现（协议 2 / 规则 6）
+# 联机实现（协议 2 / 规则 7）
 
 已部署 https://fingerfight.run.ingarena.net/ 。客户端 src/online.js；服务端 server/index.js 与 server/hub.js；前后端共享 engine.js。
 
 ## 大厅与身份
 
-昵称随时修改，Unicode 最多 24 码点，可重名。游客凭证保存在当前标签页 sessionStorage，刷新恢复；关闭标签页后不保证恢复，不支持跨设备账号。禁止存储时只能维持当前连接身份。
+昵称随时修改，最多 10 个可见字符（emoji 按完整字素计数，超长截短），可重名。游客凭证保存在当前标签页 sessionStorage，刷新恢复；关闭标签页后不保证恢复，不支持跨设备账号。禁止存储时只能维持当前连接身份。
 
 快速匹配直接开始，私人房间通过六位房间码或邀请链接加入，双方准备后开始。进行中退出需确认并判负；双方同意才重赛。同身份新连接替换旧连接，服务器绑定席位。
 
 ## 消息
 
-同源 /ws，HTTPS 使用 WSS。hello 携带 protocolVersion:2、rulesVersion:6、displayName 和可选 token；welcome 返回 token。snapshot 包含 profile、queued、serverNow 和 room。room 包含 code、matchId、seat、participants、ready、rematch、status、state、readyAt、deadlineAt。
+同源 /ws，HTTPS 使用 WSS。hello 携带 protocolVersion:2、rulesVersion:7、displayName 和可选 token；welcome 返回 token。snapshot 包含 profile、queued、serverNow 和 room。room 包含 code、matchId、seat、participants、ready、rematch、status、state、readyAt、deadlineAt。
 
 请求格式：{type:'request', id:唯一请求ID, op:操作, ...参数}。操作包括 name、create、join、queue、cancel、leave、ready、rematch、sync、command。command 请求另带 matchId 和 command；command 含 type、revision、操作参数。服务器覆盖 actor，不接受客户端血量或数字结果。返回 ack/error 与权威快照。
 
@@ -18,7 +18,7 @@
 
 ## 时间与恢复
 
-规划、合成、计算 30 秒，攻击 10 秒。开始、超时由服务器推进，统一保留短演出缓冲。仅合成阶段确认 forge 形成武器，允许 decline 后计算；无合法计算自动结束，没有 pass。
+道具、选招、计算 30 秒，攻击在合成后自动执行。开始、超时由服务器推进，统一保留短演出缓冲。仅合成阶段确认 forge 形成武器，decline 直接结束回合；无合法计算自动结束，没有 pass。
 
 客户端按 readyAt 解锁操作、deadlineAt 显示时间，按确认 revision 排队演出。遗漏快照或重连时取消旧动画并同步最新状态。未确认操作不自动重发。菜单和后台不会暂停线上时间。
 
@@ -41,3 +41,5 @@ WebSocket 校验来源，消息上限 16KB，每连接每 5 秒 40 请求，有�
 本轮技能规则升级为 6，协议仍为 2。旧规则客户端须刷新；旧房间中的对局回到等待准备，保留昵称与房间码。部署前后不能混用两个版本的引擎。
 
 规则 6：服务器统一控制无可用道具的 1 秒自动推进；酒层数、肾上腺素时限随权威快照同步。计算演出改为 1 秒，服务器和客户端共用时长。
+
+规则 7：技能准备态 deadlineAt=readyAt，由服务器 tick 自动 attack；客户端不再要求再次点击。坚韧、连续跳过次数和单手封印限制均由共享引擎校验。旧规则 6 对局迁移到等待准备，保留身份与房间码；本轮先在本地验收，线上仍是规则 6。
