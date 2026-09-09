@@ -60,13 +60,13 @@ export function guidance(state, selected, human, busy) {
     const prop = PROPS[p.props[selected.slot]];
     return {
       title: prop.target==="hand"?"选择一只手":`确认使用「${prop.name}」`,
-      detail: `${propUseDetail(state,state.players[state.active].props[selected.slot])}。再次点道具可取消。`,
+      detail: prop.target==="hand" ? `己方、对方都可选 · 再点道具取消` : "点击道具旁的确认按钮 · 再点道具取消",
       step: "target",
       canTouch,
     };
   }
   if (state.phase === "start") return {title:state.skipping?"本回合无法行动":"回合开始",detail:state.skipping?"补给与持续伤害照常，随后交给对手。":"",step:"start",canTouch};
-  if (state.phase === "synthesis") return {title:"选择要合成的技能",detail:"也可放弃合成，进入计算。",step:"synthesis",canTouch};
+  if (state.phase === "synthesis") return {title:"选择要合成的技能",detail:"选招后双手归 1；也可改用触碰。",step:"synthesis",canTouch};
   if (state.phase === "planning")
     return {
       title: p.silenced ? "本回合被沉默，准备行动" : p.weapon
@@ -74,14 +74,14 @@ export function guidance(state, selected, human, busy) {
         : p.props.length
           ? "点击道具，选择目标使用"
           : "没有道具，准备行动",
-      detail: matchingWeapons(p.hands).length ? "行动时选择技能或触碰计算" : "行动时触碰计算",
+      detail: "",
       step: "planning",
       canTouch,
     };
   if (state.phase === "action" && p.weapon)
     return {
       title: "发动技能",
-      detail: `${weaponById(p.weapon).name} · 发动后交给对手`,
+      detail: weaponById(p.weapon).name,
       step: "battle",
       canTouch,
     };
@@ -94,7 +94,7 @@ export function guidance(state, selected, human, busy) {
     };
   return {
     title: selected ? "选对手的一只手" : "选自己的一只手",
-    detail: "",
+    detail: selected ? p.mirror ? "镜像：相加取个位，改变对手目标手" : p.echo ? "回响：相加取个位，写入自己的双手" : "两数相加取个位，改变主动手" : "选好后，再碰对手的手",
     step: selected ? "target" : "source",
     canTouch,
   };

@@ -67,7 +67,7 @@ button:not(:disabled):active {
 .paper-grain {
   position: absolute;
   inset: 0;
-  background: url("/assets/manga/paper.webp") center/100% 180%;
+  background: radial-gradient(ellipse at 50% 40%, #fffaf0, var(--paper) 75%);
   opacity: 0.38;
   z-index: -1;
   pointer-events: none;

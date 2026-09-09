@@ -97,9 +97,17 @@ test("item contact shows pre-forge pair before hands reset", () => {
 
 test('planning guidance follows actual synthesis eligibility and respects silence and opponent turns',()=>{
  const s=createGame();s.phase='planning';s.players[0].props=['add'];
- s.players[0].hands=[1,2];assert.match(guidance(s,null,true,false).detail,/触碰计算/);
- s.players[0].hands=[2,2];assert.match(guidance(s,null,true,false).detail,/选择技能/);
+ s.players[0].hands=[1,2];assert.equal(guidance(s,null,true,false).detail,'');
+ s.players[0].hands=[2,2];assert.equal(guidance(s,null,true,false).title,'点击道具，选择目标使用');
  s.players[0].silenced=true;assert.match(guidance(s,null,true,false).title,/沉默/);
  assert.equal(guidance(s,null,false,false).title,'对手正在使用道具');
  assert.equal(guidance(s,null,false,false).detail,'');
+});
+
+test('touch instruction identifies the actual recipient under echo and mirror',()=>{
+ const s=createGame();s.phase='action';const selected={kind:'hand',hand:0};
+ assert.match(guidance(s,selected,true,false).detail,/主动手/);
+ s.players[0].echo=true;assert.match(guidance(s,selected,true,false).detail,/自己的双手/);
+ s.players[0].mirror=true;assert.match(guidance(s,selected,true,false).detail,/对手目标手/);
+ assert.equal(guidance(s,selected,false,false).step,'waiting');
 });

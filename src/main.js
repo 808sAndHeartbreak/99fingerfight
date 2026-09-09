@@ -66,12 +66,9 @@ function play(id) {
 
 app.innerHTML = `<main class="game-shell">
   <div class="paper-grain" aria-hidden="true"></div>
-  <header class="topbar"><a class="brand" href="./"><span class="brand-symbol">FF<span>!</span></span><div><b>指尖对决</b><small>FINGER FIGHT</small></div></a><div class="match-label"><span class="live-dot"></span><span id="mode-label">人机练习</span><span class="match-divider">/</span><span id="connection-label">本地对局</span></div><nav><button id="online">联机</button><button id="sound" aria-pressed="false">音效 <span>关</span></button><button id="help">玩法说明 <b>?</b></button><button id="menu">菜单 <span>☰</span></button></nav></header>
+  <header class="topbar"><a class="brand" href="./"><span class="brand-symbol">FF<span>!</span></span><div><b>FINGER FIGHT</b></div></a><div class="match-label"><span id="mode-label">人机练习</span></div><nav><button id="online">联机</button><button id="sound" aria-pressed="false">音效 <span>关</span></button><button id="help">规则 <b>?</b></button><button id="menu">菜单 <span>☰</span></button></nav></header>
   <div id="network-notice" class="network-notice" role="status" hidden></div><section id="tutorial-guide" class="tutorial-guide" hidden aria-label="实战教学"></section><section class="battle-banner" aria-label="当前操作"><div class="turn-overview"><div class="round-inline">回合 <b id="round-number">01</b><span id="phase-label"></span><div class="phase-time" id="phase-time" role="timer" aria-live="off" aria-label="剩余时间"><span id="clock">30</span><small>SEC</small></div></div><nav id="phase-steps" class="phase-steps turn-track" aria-label="回合流程"></nav></div><div class="turn-instruction"><h1 id="instruction"></h1><p id="instruction-detail"></p></div><div id="primary-actions" class="primary-actions"></div></section><section class="duel" aria-label="指尖对战场">
-    <div class="character-art character-blue" aria-hidden="true">${img("manga/blue.webp")}<span class="character-ink">一</span></div>
-    <div class="character-art character-red" aria-hidden="true">${img("manga/red.webp")}<span class="character-ink">二</span></div>
     <div class="scoreboard"><div id="player-0" class="player blue"></div><div class="round-block"></div><div id="player-1" class="player red"></div></div>
-    <div class="stage-caption" aria-hidden="true"><span>一 触</span><b>即 发</b><small>MAKE YOUR MOVE.</small></div>
     <div id="stage" class="stage" data-motion="idle"><div class="hand-layer" id="hand-layer">${[0, 1].map((owner) => [0, 1].map((hand) => `<button id="hand-${owner}-${hand}" class="hand-hotspot ${owner ? "red" : "blue"}" data-owner="${owner}" data-hand="${hand}" aria-pressed="false"><span class="hand-corner"></span>${img("hand-1.webp", "fallback-hand")}<b class="hand-value">1</b><span class="hand-status"></span><span class="hand-shield" data-info="shield" data-info-only hidden></span><span class="sum-preview"></span></button>`).join("")).join("")}</div><div class="contact-fx" id="contact-fx" aria-hidden="true">${img("manga/contact.webp")}<b>碰!</b></div></div>
     <div id="combat-callout" class="combat-callout" aria-live="polite"></div>
     <div class="field-note" aria-hidden="true"></div>
@@ -207,6 +204,10 @@ function updateNetworkNotice() {
   document.querySelector("#network-notice").textContent=online.status==="outdated"?"版本已更新 · 请刷新页面后重新准备":online.status==="replaced"?"此身份已在其他页面打开 · 请刷新恢复":online.status!=="connected"?"连接中断 · 正在自动重连，请稍候":`对手已断线 · 重连剩余 ${seconds} 秒 · 对局计时继续`;
 }
 function render() {
+  if(mode === "online") {
+    const until=online.packet?.room?.deadlineAt;
+    remaining=until ? Math.max(0,Math.ceil((until-online.serverNow())/1000)) : 0;
+  }
   renderedRemoteReady = mode === "online" && online.status === "connected" && online.serverNow() >= (online.packet?.room?.readyAt || 0);
   info?.hide();
   document.querySelector("#phase-time").hidden = mode === "tutorial" || state.winner !== null || state.phase === "start" || autoItemPhase(state);
@@ -218,8 +219,7 @@ function render() {
   renderPlayer(1);
   renderHands();
   document.querySelector("#mode-label").textContent =
-    mode === "online" ? state.winner!==null ? "联机 · 对局结束" : `联机 · ${humanTurn() ? "轮到你" : "对手回合"}` : mode === "tutorial" ? "游戏教学 · 无倒计时" : mode === "ai" ? "人机练习" : "同屏双人";
-  document.querySelector("#connection-label").textContent = mode === "online" ? "服务器对局" : "本地对局";
+    mode === "online" ? "联机对战" : mode === "tutorial" ? "游戏教学" : mode === "ai" ? "人机练习" : "同屏双人";
   const notice=document.querySelector("#network-notice"), peer=online?.packet?.room?.participants?.find(p=>p.seat!==online.packet.room.seat);
   notice.hidden=mode!=="online" || (online.status==="connected" && peer?.connected!==false) || state.winner!==null;
   updateNetworkNotice();
@@ -233,6 +233,7 @@ function render() {
     : `${humanTurn() ? (mode !== "local" ? "你的回合" : `${team(state.active)}回合`) : "对手回合"}`;
   const guide = mode==="online"&&online.status!=="connected"&&state.winner===null ? {title:"正在恢复对局",detail:"连接恢复后继续操作",step:"waiting"} : guidance(state, selected, humanTurn(), busy);
   if(mode==="online" && online.status==="connected" && !busy && !renderedRemoteReady && state.winner===null) Object.assign(guide,{title:"正在交接",detail:"演出结束后即可操作",step:"waiting"});
+  if(remotePending && !busy && mode==="online" && online.status==="connected") Object.assign(guide,{title:"操作已发送",detail:"等待服务器确认",step:"waiting"});
   if(mode==="tutorial") Object.assign(guide, {step:"tutorial"}, busy ? {title:"看清这一手",detail:"演出结束后继续，不用赶时间。"} : session.done ? {title:"本节完成",detail:session.lesson.result} : session.guide);
   feedback.reveal(document.querySelector("#instruction"), guide.title);
   document.querySelector("#instruction-detail").textContent = guide.detail;
@@ -256,7 +257,7 @@ function render() {
     return `<div class="reference-recipe" tabindex="0" data-number="${n}" data-info="recipe:${n}" aria-label="${n} 加 ${n} 配方"><b>${n} + ${n}</b></div>`;
   }).join('');
   for(const el of shelf.children){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',selected?.kind==='hand'&&p.hands[selected.hand]===n);}
-  document.querySelector("#primary-actions").innerHTML = `${selected ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"} →</button>` : state.phase === "planning" && !autoItemPhase(state) && selected?.kind !== "prop" ? `<button class="primary" id="advance" ${enabled ? "" : "disabled"}>不使用道具 <span>→</span></button>` : state.phase === "synthesis" ? `<button class="secondary" id="decline" ${enabled ? "" : "disabled"}>放弃合成，进入计算 →</button>` : state.phase === "action" && p.weapon ? `<button class="primary red-button" id="attack" ${enabled ? "" : "disabled"}>发动技能 <span>↗</span></button>` : ""}`;
+  document.querySelector("#primary-actions").innerHTML = `${selected ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"} →</button>` : state.phase === "planning" && !autoItemPhase(state) && selected?.kind !== "prop" ? `<button class="primary" id="advance" ${enabled ? "" : "disabled"}>不使用道具 <span>→</span></button>` : state.phase === "synthesis" ? `<button class="secondary" id="decline" ${enabled ? "" : "disabled"}>改用触碰 →</button>` : state.phase === "action" && p.weapon ? `<button class="primary red-button" id="attack" ${enabled ? "" : "disabled"}>发动技能 <span>↗</span></button>` : ""}`;
   document.querySelector(".game-shell").classList.toggle("is-busy", busy);
   document.querySelectorAll("#menu,#help").forEach((b) => (b.disabled = busy));
   document.querySelector("#online").textContent = mode === "online" ? online.status === "connected" ? "房间 / 改名" : "正在重连…" : "联机";

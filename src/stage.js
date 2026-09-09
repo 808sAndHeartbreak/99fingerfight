@@ -125,13 +125,15 @@ export class DuelStage {
     this.camera.position.z = this.mobile ? 9.2 : 10.2;
     this.camera.fov = this.mobile ? 42 : 34;
     this.camera.updateProjectionMatrix();
+    const viewHeight = 2 * this.camera.position.z * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+    const viewWidth = viewHeight * this.camera.aspect;
     this.hands.forEach((h) => {
       h.base.set(
-        (h.owner ? 1 : -1) * (this.mobile ? 1.75 : 4.1),
-        (h.owner === 0 ? 1-h.hand : h.hand) ? -1.6 : 1.5,
+        (h.owner ? 1 : -1) * viewWidth * .21,
+        ((h.owner === 0 ? 1-h.hand : h.hand) ? -1 : 1) * viewHeight * .24,
         0,
       );
-      h.restScale = this.mobile ? 0.95 : 1.35;
+      h.restScale = Math.min(1.15, viewWidth / 13.5, viewHeight / 5.5);
       if (!this.animation) h.root.scale.setScalar(h.restScale);
       if (!this.animation) h.root.position.copy(h.base);
     });

@@ -5,14 +5,14 @@ import { PROPS, MAX_HP, WEAPONS, weaponById } from "./catalog.js";
 const PROP_INFO = {
   add: "一只手数字 +1，9 变成 0。",
   sub: "一只手数字 −1，0 变成 9。",
-  lock: "选择任意一方的一只手。被封印的手不能发起计算，也不能成为计算目标；所属玩家回合结束后解除。道具仍可改变它的数字。",
+  lock: "一只手不能参与触碰计算；所属玩家回合结束解除。道具仍能改变它的数字。",
 };
 export function describe(key, state, participants) {
   const [kind, id, hand] = key.split(":");
   if(kind === "recipe") {
     const options=WEAPONS.filter(w=>w.recipe.every(n=>n===Number(id)));
     if(!options.length)return null;
-    return {title:`${id} + ${id} 技能组合`,tag:"配方选项",stats:[["可选",`${options.length} 种技能`]],body:options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:"行动时选择其中一种，双手归 1，再发动；也可放弃合成。"};
+    return {title:`${id} + ${id}`,tag:"配方选项",stats:[],body:options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:"行动时选择其中一种，双手归 1，再发动；也可放弃合成。"};
   }
   if (kind === "weapon") {
     const w = weaponById(id);
@@ -85,7 +85,7 @@ export function describe(key, state, participants) {
       ],
       body: p.locks[h]
         ? PROP_INFO.lock
-        : "计算阶段先选择自己的一只手，再选择对方一只手。两手触碰后，通常主动手变为两数之和的个位数。回响会复制给己方双手，镜像会改为写入对手目标手。",
+        : "行动时先选自己的手，再选对方的手。两手触碰后，通常主动手变为两数之和的个位数。回响会复制给己方双手，镜像会改为写入对手目标手。",
       note:
         n === 5
           ? "单个 5：普通伤害减半并变为 1。双手 55：完全免疫普通伤害且数字不变，数字变化后立即失效。真实伤害不消耗防御。"

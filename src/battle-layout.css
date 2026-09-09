@@ -151,3 +151,32 @@
 .battle-banner .primary-actions .cancel-action { background:transparent; color:var(--paper); border:1px solid var(--paper); }
 
 .field-items .prop-confirm:not(:disabled):active { transform:translateY(calc(-50% + 2px)); }
+/* Quiet paper field; team colour is reserved for ownership and actionable controls. */
+.game-shell .topbar { height:52px; min-height:52px; padding:0 3%; gap:16px; border-bottom:1px solid #ffffff18; }
+.topbar .brand { gap:10px; }
+.topbar .brand-symbol { font-size:34px; letter-spacing:-3px; }
+.topbar .brand b { font:700 21px/1 Teko,sans-serif; letter-spacing:1px; }
+.topbar .match-label { margin-right:auto; font-size:11px; opacity:.65; }
+.topbar nav { gap:16px; }
+.topbar nav button { padding:8px 2px; min-height:40px; }
+.battle-banner { min-height:78px; border-left-width:5px; }
+.game-shell #phase-steps>div { position:relative; text-align:center; padding:5px 14px; font-size:13px; }
+.game-shell #phase-steps>div.current { clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%); box-shadow:inset 0 -2px 0 #fff8; }
+.battle-banner .turn-instruction { flex:1; min-width:0; }
+.battle-banner .turn-instruction h1 { font-size:clamp(16px,1.8vw,22px); line-height:1.4; }
+.battle-banner .turn-instruction p { color:#cbcbd0; font-size:12px; line-height:1.6; }
+.field-items .prop-slot.empty { opacity:.3; }
+.field-items .prop-slot.empty>span { font-size:18px; }
+.field-items .prop-use[aria-disabled="false"] { box-shadow:inset 0 -3px 0 currentColor; }
+.field-items .prop-use[aria-disabled="false"]:hover { box-shadow:inset 0 -3px 0 currentColor,0 0 0 2px var(--active); }
+@media(max-width:650px) {
+ .game-shell .topbar { padding:0 12px; gap:8px; }
+ .topbar .brand b { font-size:17px; }
+ .topbar .match-label { display:none; }
+ .topbar nav { gap:10px; }
+ .battle-banner .turn-instruction { flex-basis:45%; }
+ .battle-banner .turn-instruction h1 { font-size:16px; }
+}
+.stage:not([data-dueling="true"]) .hand-hotspot.red .hand-value { right:auto; left:-2px; }
+.stage:not([data-dueling="true"]) .hand-hotspot.red .hand-shield { left:auto; right:calc(100% + 32px); }
+@media(max-width:650px) { .stage:not([data-dueling="true"]) .hand-hotspot.red .hand-shield { right:calc(100% + 16px); } }
