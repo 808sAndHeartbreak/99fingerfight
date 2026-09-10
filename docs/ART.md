@@ -24,6 +24,6 @@ Teko 与 Noto Sans SC 本地字体随附 SIL OFL 许可证，必须保留。中�
 
 ## 开发者说与丝网印刷背景
 
-用户提供的原始幻灯片截图存于 `assets/story/inspiration-slide.png`。页面仅通过显示区域裁切隐藏编辑器，保留原稿。战斗背景为单次 WebGL shader：纸色、斜切墨块、青红套印、缓慢网点漂移；手势中央保持留白，沿用减少动态效果设置。
+用户提供的原始幻灯片截图存于 `assets/story/inspiration-full.png`。按用户要求完整显示原截图，包括编辑器边栏，不裁切。战斗背景为单次 WebGL shader：纸色、斜切墨块、青红套印、缓慢网点漂移；手势中央保持留白，沿用减少动态效果设置。
 
 当前 BGM 为用户提供的 `bgm_pixel.MP3`，存于 `assets/music/pixel.mp3`，替换并移除旧 BGM；沿用音乐／音效独立音量与低增益循环播放。
