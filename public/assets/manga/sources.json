@@ -1,9 +1,5 @@
 [
   {
-    "source": "User-provided dodgeball art: story\\arena_manga_paper_v3.png",
-    "output": "assets/manga/paper.webp"
-  },
-  {
     "source": "User-provided replacement cover (2026-09-09)",
     "output": "assets/manga/menu-99.webp"
   },

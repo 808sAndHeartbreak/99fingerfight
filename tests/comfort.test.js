@@ -18,9 +18,9 @@ test('reduced motion removes movement while preserving time to read phases and d
     feedback.reset();
   } finally {globalThis.matchMedia=previous;}
 });
-test('cleaned Unity runtime manifest retains only available game assets',()=>{
+test('legacy provenance manifest retains only available runtime assets',()=>{
   const manifest=JSON.parse(readFileSync(new URL('../public/assets/manifest.json',import.meta.url),'utf8'));
-  assert.equal(manifest.length,14);
+  assert.equal(manifest.length,12);
   for(const entry of manifest)assert.ok(existsSync(new URL('../public/'+entry.output,import.meta.url)),entry.output);
   assert.ok(!existsSync(new URL('../public/assets/ink/',import.meta.url)));
 });

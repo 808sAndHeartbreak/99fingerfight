@@ -60,22 +60,10 @@
     "bytes": 5888
   },
   {
-    "source": "Assets/Resources/Images/Blueprint/5+5神圣之盾.png",
-    "output": "assets/shield.webp",
-    "originalBytes": 252631,
-    "bytes": 42504
-  },
-  {
     "source": "Assets/Resources/Sound/Confirm_03.wav",
     "output": "assets/click.wav",
     "originalBytes": 102024,
     "bytes": 102024
-  },
-  {
-    "source": "Assets/Resources/Sound/Build.wav",
-    "output": "assets/forge.wav",
-    "originalBytes": 776296,
-    "bytes": 776296
   },
   {
     "source": "Assets/Resources/Sound/victory.wav",
