@@ -532,17 +532,18 @@ async function showMenu(page = "home") {
   dialog.dataset.view="menu";dialog.dataset.page=page;
   const firstEntrance=!menuLoaded,entrance=++menuEntrance,root=dialog.querySelector('.menu-body'),buttons=[...dialog.querySelectorAll('.menu-body button')];
   buttons.forEach(b=>b.disabled=true);root.classList.add('menu-entering');
-  const loader=document.createElement('div');loader.className='menu-loader';loader.setAttribute('role','status');loader.innerHTML='<b>99</b><span>LOADING</span>';if(firstEntrance)dialog.append(loader);
-  try{await dialog.querySelector('.menu-keyart img').decode();}catch{}
+  const loader=document.createElement('div');loader.className='menu-loader';loader.setAttribute('role','status');loader.innerHTML='<div class="loader-emblem" aria-hidden="true"><b>99</b></div><span>LOADING</span><p>按 <kbd>F11</kbd> 以获得更好体验</p>';if(firstEntrance)dialog.append(loader);
+  await Promise.all([dialog.querySelector('.menu-keyart img').decode().catch(()=>{}),new Promise(resolve=>setTimeout(resolve,firstEntrance?650:0))]);
   if(entrance!==menuEntrance||!root.isConnected)return;
   loader.remove();menuLoaded=true;if(firstEntrance)await new Promise(resolve=>setTimeout(resolve,500));
   if(entrance!==menuEntrance||!root.isConnected)return;
   const quiet=matchMedia('(prefers-reduced-motion: reduce)').matches;
   await Promise.all(buttons.map((b,i)=>b.animate(quiet?[{opacity:0},{opacity:1}]:[{opacity:0,transform:'translateY(18px) scale(1.12)'},{opacity:1,transform:'translateY(-2px) scale(.99)',offset:.75},{opacity:1,transform:'none'}],{duration:firstEntrance?300:160,delay:i*(firstEntrance?200:50),fill:'both',easing:'cubic-bezier(.2,.8,.2,1)'}).finished.catch(()=>{})));
   if(entrance!==menuEntrance||!root.isConnected)return;
-  root.classList.remove('menu-entering');buttons.forEach(b=>b.disabled=false);buttons[0]?.focus({preventScroll:true});
+  root.classList.remove('menu-entering');buttons.forEach(b=>b.disabled=false);dialog.setAttribute('tabindex','-1');dialog.focus({preventScroll:true});
 }
 function dismissDialog() {
+  if(dialog.dataset.view==="menu"){if(dialog.dataset.page!=="home")showMenu(dialog.dataset.page==="local"?"play":"home");return;}
   if(dialog.dataset.view==="tutorial-note"){closeDialog();render();return;}
   if(dialog.dataset.view==="developer-slide"){showDeveloper();dialog.querySelector("[data-developer-slide]").focus({preventScroll:true});return;}
   if(dialog.dataset.view==="developer"){showMenu("home");return;}
@@ -563,7 +564,7 @@ function showBattleMenu() {
   openDialog(`<div class="dialog-body battle-menu"><button class="dialog-close" data-close aria-label="继续游戏">×</button><h2>暂停一下。</h2><button data-close>继续游戏 </button>${mode==='tutorial'?'<button data-tutorial-help>本节提示</button><button data-tutorial-retry>重试本节</button><button data-tutorial-exit>退出教学</button>':''}${mode==='tutorial'?'':'<button data-battle-online>房间和玩家信息 </button>'}<button data-menu-settings>设置 </button>${mode==='online'?'':'<button data-menu="home">主菜单 </button>'}<small>${mode==='online'?'联机对局继续计时':''}</small></div>`);
 }
 function showDeveloper(){
-  openDialog(`<article class="developer-story"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><header><h2>开发者<span>说。</span></h2></header><div class="developer-copy"><p>考虑 finger fight 稍作改编就可以贴合本次“99”主题，但之前就做过了，还是不做回锅肉，就新做了个躲避球游戏。本游戏其实是 2023 年首次 minigame 设计推出的（尊重给到 <span class="developer-credit">[UI&amp;特效] 潘朱炜</span>，<span class="developer-credit">[程序] 王璨、王崴、佘壕镪</span>），可惜完成度不高，也没有拿到任何奖项。</p><p>今年响应“超级个体”的号召，solo 参赛做了。躲避球晋级后自觉内容量已足够，不太想进一步开发了。于是移植了 finger fight 到网页端，补全了玩法，实现了联网，重做了美术，打磨了交互体验。既然今年躲避球晋级决赛，就私心把这个游戏再塞进来给大家再玩玩了。</p><p>至于这个游戏的灵感来源，可以点击<button class="story-slide-link" data-developer-slide>当时的幻灯片页面</button>查看。我自己还是蛮喜欢玩的。谢谢大家。</p></div><footer>开发者：<span class="developer-signature">谭越天</span></footer></article>`,"developer-dialog");
+  openDialog(`<article class="developer-story"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><header><h2>开发者<span>说。</span></h2></header><div class="developer-copy"><p>考虑 finger fight 稍作改编就可以贴合本次“99”主题，但之前就做过了，还是不做回锅肉，就新做了个躲避球游戏。本游戏其实是 2023 年首次 minigame 设计推出的（尊重给到 [UI&amp;特效] <span class="developer-credit">潘朱炜</span>，[程序] <span class="developer-credit">王璨、王崴、佘壕镪</span>），可惜完成度不高，也没有拿到任何奖项。</p><p>今年响应“超级个体”的号召，solo 参赛做了。躲避球晋级后自觉内容量已足够，不太想进一步开发了。于是移植了 finger fight 到网页端，补全了玩法，实现了联网，重做了美术，打磨了交互体验。既然今年躲避球晋级决赛，就私心把这个游戏再塞进来给大家再玩玩了。</p><p>至于这个游戏的灵感来源，可以点击<button class="story-slide-link" data-developer-slide>当时的幻灯片页面</button>查看。大家可以按F11全屏游玩以获得更好体验。感谢体验！</p></div><footer>开发者：<span class="developer-signature">谭越天</span></footer></article>`,"developer-dialog");
   dialog.dataset.view="developer";
 }
 function showDeveloperSlide(){
@@ -808,6 +809,12 @@ listen(dialog, "click", (e) => {
 });
 listen(dialog, "cancel", (e) => { e.preventDefault(); dismissDialog(); });
 listen(document, "keydown", (e) => {
+  if(e.key === "Escape" && dialog.open){
+    e.preventDefault();
+    e.stopPropagation();
+    if(!e.repeat)dismissDialog();
+    return;
+  }
   if (e.key === "Escape" && !dialog.open && selected && !busy) {
     selected = null;
     render();

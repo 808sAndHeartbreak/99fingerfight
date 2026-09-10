@@ -42,7 +42,7 @@ body.menu-scene .game-shell { visibility:hidden; }
 .game-menu .menu-choice { background:var(--ink); color:var(--paper); border:2px solid var(--paper); transform:skew(-5deg); box-shadow:5px 5px 0 #12182890; padding:18px 22px; }
 .game-menu .menu-choice>span { transform:skew(5deg); font-size:clamp(20px,2.5vw,30px); font-weight:900; }
 .game-menu .menu-choice small { font-size:12px; }
-.game-menu .menu-body[data-menu-page="home"] .menu-choice:first-child { min-height:106px; background:var(--red); border-color:var(--paper); }
+.game-menu .menu-body[data-menu-page="home"] .menu-choice:first-child { min-height:106px; background:var(--ink); border-color:var(--paper); }
 .game-menu .menu-body[data-menu-page="home"] .menu-choice:first-child>span { font-size:clamp(30px,4vw,48px); }
 .game-menu .menu-wordmark { inset:auto 3% 8% auto; width:46%; }
 .game-menu .menu-wordmark>span { font-size:clamp(64px,9vw,150px); }
@@ -58,3 +58,9 @@ body.menu-scene dialog:not(.game-menu)::backdrop { background:#0a132bad; backdro
  .game-menu .menu-body[data-menu-page="home"] .menu-choice:first-child { min-height:80px; }
  .game-menu .menu-body h2 { font-size:28px; }
 }
+
+.game-menu .menu-body[data-menu-page="home"] .menu-choice:nth-child(2){width:94%;padding-block:16px}
+.game-menu .menu-body[data-menu-page="home"] .menu-choice:nth-child(3){width:88%;padding-block:13px}
+.game-menu .menu-body[data-menu-page="home"] .menu-choice:nth-child(4){width:82%;padding-block:11px}
+.game-menu .menu-body[data-menu-page="home"] .menu-choice:nth-child(3)>span{font-size:clamp(19px,2.2vw,27px)}
+.game-menu .menu-body[data-menu-page="home"] .menu-choice:nth-child(4)>span{font-size:clamp(18px,2vw,24px)}
