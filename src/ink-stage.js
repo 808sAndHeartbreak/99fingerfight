@@ -32,14 +32,22 @@ export function createInkStage() {
         float stroke=pow(max(0.,sin(a*137.+hash(sector)*3.)),18.);
         float dash=.5+.5*sin(r*49.-uTime*26.+hash(sector)*12.);
         float speed=stroke*smoothstep(.18,.65,r)*(.28+dash*.72)*uFocus;
-        vec2 dot=fract(gl_FragCoord.xy/5.)-.5;
-        float dots=(1.-smoothstep(.12,.21,length(dot)))*smoothstep(.2,.9,r)*.12;
+        vec2 cell=fract(gl_FragCoord.xy/5.)-.5;
+        float dots=(1.-smoothstep(.12,.21,length(cell)))*smoothstep(.2,.9,r)*.12;
         float wedge=pow(max(0.,cos(a*13.+sin(a*7.)*1.7)),18.);
         float edge=.018+(.065+.19*wedge)*uImpact;
         float burst=(1.-smoothstep(edge,edge+.009,r))*step(.001,uImpact);
         float rim=(1.-smoothstep(.002,.007,abs(r-edge)))*uImpact;
         float wash=smoothstep(.4,1.3,r)*.13*uFocus;
-        vec3 col=mix(paper,team,wash);
+        // Quiet studio paper: soft team light at the edges, no moving idle pattern.
+        float grain=fract(sin(dot(floor(gl_FragCoord.xy),vec2(12.9898,78.233)))*43758.5453)-.5;
+        float vignette=smoothstep(.22,.78,length((vUv-.5)*vec2(.85,1.)));
+        float blueGlow=exp(-length((vUv-vec2(.02,.52))*vec2(2.,1.4))*5.);
+        float redGlow=exp(-length((vUv-vec2(.98,.52))*vec2(2.,1.4))*5.);
+        vec3 surface=paper+vec3(.025)*(1.-vignette)-vec3(.035)*vignette+grain*.009;
+        surface=mix(surface,vec3(.65,.73,.88),blueGlow*.12);
+        surface=mix(surface,vec3(.89,.69,.59),redGlow*.10);
+        vec3 col=mix(surface,team,wash);
         col=mix(col,ink,clamp(dots*uFocus+speed*.8+burst,0.,1.));
         col=mix(col,paper,(1.-smoothstep(.02,.028,r))*step(.08,uImpact));
         col=mix(col,team,rim*.8);

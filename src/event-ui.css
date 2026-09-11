@@ -1,0 +1,58 @@
+/* Readable event hierarchy: ownership stays visible, changes stay at their source. */
+.game-shell .duel { background:radial-gradient(ellipse at 50% 42%,#faf6ec,#e7e1d5); }
+.game-shell .hp-bar { position:relative; overflow:hidden; border:0; border-radius:3px; transform:none; background:#24334b14; height:10px; }
+.game-shell .hp-bar i { position:absolute; left:0; top:0; height:100%; transform:none; background:currentColor; transition:none; }
+.game-shell .hp-trail { position:absolute; left:0; top:0; height:100%; background:#d7a963; }
+.game-shell .health-number b { font-variant-numeric:tabular-nums; }
+.game-shell .hp-delta { z-index:190; font-size:18px; white-space:nowrap; border-radius:5px; padding:4px 8px; background:#fff9eaf0; box-shadow:0 2px 10px #24334b14; }
+.game-shell .status-strip { min-height:26px; gap:5px; }
+.game-shell .status-icon { border-radius:5px; background:#faf6eb; border:1px solid #26334b20; }
+.game-shell .field-items { background:#e4dfd1b8; box-shadow:inset 0 1px 0 #fff9,0 4px 15px #24273a05; }
+.game-shell .item-receipt,.event-banner { position:absolute; left:50%; top:110px; width:min(440px,55%); transform:translateX(-50%); padding:15px 18px; gap:14px; border:1px solid #ffffff22; border-left:4px solid #6489ea; border-radius:9px; background:#19243af5; color:#fff8e9; box-shadow:0 8px 30px #14203325; z-index:185; pointer-events:none; }
+.game-shell .item-receipt[data-owner="1"],.event-banner[data-team="1"] { border-left-color:#ef7767; }
+.game-shell .item-receipt>img { width:64px; height:64px; flex:none; }
+.game-shell .item-receipt small,.event-banner small { display:block; font-size:11px; color:#c0cada; opacity:1; }
+.game-shell .item-receipt strong { display:block; margin:3px 0 6px; font-size:25px; }
+.game-shell .item-receipt b { display:block; font-size:14px; font-weight:500; line-height:1.55; }
+.event-banner strong { display:block; margin-top:6px; font-size:19px; }
+.released-item { position:absolute; width:64px; height:64px; object-fit:contain; z-index:190; pointer-events:none; filter:drop-shadow(0 3px 3px #11182735); }
+.change-marker { position:absolute; z-index:192; pointer-events:none; max-width:210px; display:flex; flex-direction:column; gap:2px; color:#244fba; font-size:13px; font-weight:750; text-align:center; }
+.change-marker[data-team="1"] { color:#b9362d; }
+.change-marker span { padding:4px 8px; border-radius:4px; background:#fffaf0f2; box-shadow:0 2px 10px #16213718; white-space:nowrap; }
+.hand-change { font:600 25px/1.1 Teko,sans-serif; }
+.inventory-change { font-size:11px; }
+body:has(.combat-cinema.skill) .game-shell { visibility:visible; }
+body:has(.combat-cinema.milestone) .game-shell { visibility:hidden; }
+.combat-cinema.skill.arena-skill { position:absolute; inset:calc(50% - 105px) 21% auto; height:210px; z-index:180; border:1px solid #ffffff30; border-left:4px solid var(--strike); border-radius:10px; background:#162138f5; box-shadow:0 12px 40px #17203325; overflow:hidden; pointer-events:none; }
+.combat-cinema.arena-skill .cinema-portrait { display:none; }
+.combat-cinema.arena-skill .cinema-ink { background:transparent; }
+.combat-cinema.skill.arena-skill .cinema-heading { top:18px; left:20px; right:16px; transform:none!important; }
+.combat-cinema.skill.arena-skill .cinema-heading h2 { font-size:32px; font-style:normal; letter-spacing:0; text-shadow:none; margin:5px 0; }
+.combat-cinema.arena-skill .cinema-heading small { font-size:10px; }
+.combat-cinema.arena-skill .cinema-heading>span { display:none; }
+.combat-cinema.skill.arena-skill .cinema-icon { left:4%; top:39%; width:25%; height:55%; }
+.combat-cinema.skill.arena-skill .cinema-result { left:31%; right:14px; bottom:18px; padding:8px; background:#f6f0e3; border:0; border-radius:6px; box-shadow:none; transform:none; gap:2px 8px; }
+.combat-cinema.arena-skill .cinema-result .damage-value { font-size:40px; }
+.combat-cinema.arena-skill .cinema-result .effect-text { font-size:13px; }
+.combat-cinema.arena-skill .cinema-result>small { font-size:12px; }
+.combat-cinema.skill.arena-skill .cinema-hit { right:20px; top:38px; bottom:auto; font-size:16px; }
+.combat-cinema.arena-skill .cinema-impact { opacity:.3; }
+@media(max-width:650px) {
+ .game-shell .item-receipt,.event-banner { top:110px; width:calc(100% - 32px); padding:12px; gap:10px; }
+ .game-shell .item-receipt>img,.released-item { width:48px; height:48px; }
+ .game-shell .item-receipt strong { font-size:21px; }
+ .game-shell .item-receipt b { font-size:12px; }
+ .game-shell .hp-delta { font-size:12px; padding:3px 5px; }
+ .change-marker { font-size:10px; max-width:155px; }
+ .hand-change { font-size:22px; }
+ .combat-cinema.skill.arena-skill { left:73px; right:73px; top:calc(50% - 15px); height:185px; }
+ .combat-cinema.skill.arena-skill .cinema-heading { left:12px; top:12px; }
+ .combat-cinema.skill.arena-skill .cinema-heading h2 { font-size:24px; }
+ .combat-cinema.skill.arena-skill .cinema-icon { left:0; top:47%; width:29%; height:44%; }
+ .combat-cinema.skill.arena-skill .cinema-result { left:27%; right:8px; bottom:12px; padding:6px; }
+ .combat-cinema.arena-skill .cinema-result .damage-value { font-size:30px; }
+ .combat-cinema.arena-skill .cinema-result .effect-text { font-size:11px; }
+ .combat-cinema.skill.arena-skill .cinema-hit { top:54px; right:12px; font-size:12px; }
+}
+.change-marker span img { width:22px; height:22px; vertical-align:middle; object-fit:contain; margin-right:4px; }
+.inventory-change span { display:flex; align-items:center; justify-content:center; }

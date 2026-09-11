@@ -15,9 +15,10 @@ import "./menu.css";
 import "./battle-layout.css";
 import "./visual-polish.css";
 import "./turn-ui.css";
+import "./event-ui.css";
 import { WEAPONS, PROPS, MAX_HP, weaponById } from "./catalog.js";
 import { LocalSession } from "./session.js";
-import { chooseCommand } from "./ai.js";
+import { chooseCommand, AI_LEVELS } from "./ai.js";
 import { touchResult, touchVisualSteps } from "./motion.js";
 import { guidance, handPreview } from "./guidance.js";
 import { createFeedback } from "./feedback.js";
@@ -60,7 +61,21 @@ const team = (id) => (id === 0 ? "蓝方" : "红方");
 const audioCache = new Map();
 const audioSettings=createAudioSettings(asset("music/pixel.mp3"));
 const battleSound=createBattleSound(()=>sound,audioSettings);
-let cinema;
+let cinema, aiWorker, aiJob=0, aiDifficulty='advanced';
+function stopAI(){clearTimeout(aiTimer);aiJob++;aiWorker?.terminate();aiWorker=null;}
+function requestAI(){
+ const job=++aiJob,revision=state.revision,current=session;
+ const accept=command=>{if(job!==aiJob||session!==current||state.revision!==revision||paused||busy||mode!=='ai')return;clearTimeout(aiTimer);aiWorker?.terminate();aiWorker=null;if(command)send(command);};
+ const fallback=()=>accept(chooseCommand(state,aiDifficulty));
+ try{
+  aiWorker=new Worker(new URL('./ai-worker.js',import.meta.url),{type:'module'});
+  aiWorker.onmessage=({data})=>data.error?fallback():accept(data.command);
+  aiWorker.onerror=fallback;
+  aiWorker.postMessage({id:job,state,difficulty:aiDifficulty});
+  aiTimer=setTimeout(fallback,2500);
+ }catch{fallback();}
+}
+
 function play(id) {
   if (!sound) return;
   if (!audioCache.has(id)) audioCache.set(id, new Audio(asset(`${id}.wav`)));
@@ -105,39 +120,11 @@ function toast(message, duration=2400) {
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => el.classList.remove("visible"), duration);
 }
-const announcedGains=new Set();
-const arrivingSlots=new Map();
 function announceSupply(next) {
-  if(mode === "tutorial") return;
-  const key=`${actionSerial}:${mode==='online'?remoteMatch:''}:${next.revision}`;
-  if(!announcedGains.has(key)) {
-    announcedGains.add(key);if(announcedGains.size>100)announcedGains.delete(announcedGains.values().next().value);
-    for(const owner of [0,1]) {
-      if((next.events||[]).some(e=>e.type==="resilience"&&e.owner===owner))feedback.notice(`${playerName(participants(),owner)} · 坚韧 5 回合`,owner,"forge");
-      const gains=(next.events||[]).filter(e=>e.type==='draw'&&e.owner===owner);
-      if(!gains.length)continue;
-      const used=new Set();
-      gains.forEach((gain,index)=>{
-        const slots=next.players[owner].props;
-        const slot=slots.findLastIndex((id,i)=>id===gain.item&&!used.has(i));if(slot<0)return;used.add(slot);
-        const target=document.querySelector(`#items-${owner} .prop-slot:nth-of-type(${slot+2})`);if(!target)return;
-        const arrivalKey=`${owner}:${slot}`,arrivalUntil=Date.now()+800+index*100;arrivingSlots.set(arrivalKey,arrivalUntil);target.classList.add("item-arriving");
-        setTimeout(()=>{if(arrivingSlots.get(arrivalKey)!==arrivalUntil)return;arrivingSlots.delete(arrivalKey);document.querySelector(`#items-${owner} .prop-slot:nth-of-type(${slot+2})`)?.classList.remove("item-arriving");},800+index*100);
-        const r=target.getBoundingClientRect();
-        const el=document.createElement('div');el.className='item-flight';el.setAttribute('aria-label',`获得${PROPS[gain.item].name}`);el.innerHTML=propArt(gain.item);
-        el.style.left=`${r.left+r.width/2-28}px`;el.style.top=`${r.top+r.height/2-28}px`;document.body.append(el);feedback.register(el);
-        feedback.animate(el,[{opacity:0,transform:`translate(${owner?-85:85}px,-80px) scale(1.4)`},{opacity:1,offset:.2},{opacity:1,transform:'translate(0,0) scale(.75)',offset:.85},{opacity:0,transform:'scale(.7)'}],{duration:800,delay:index*100,easing:'ease-out',fill:'both'},true);
-        feedback.animate(target,[{boxShadow:'0 0 0 0 transparent'},{boxShadow:'0 0 24px 4px currentColor',offset:.5},{boxShadow:'0 0 0 0 transparent'}],{duration:1300,delay:550+index*100});
-      });
-    }
-  }
-  const notes=[0,1].flatMap(owner=>{
-    return (next.events||[]).some(e=>e.type==="supply-full"&&e.owner===owner)?[`${playerName(participants(),owner)}背包已满，本次补给跳过`]:[];
-  });
-  const ticks=(next.events||[]).filter(e=>e.type==="damage"&&["七伤拳","玄冥神掌","中毒"].includes(e.source));
-  notes.push(...ticks.map(e=>`${playerName(participants(),e.owner)}${e.source} ${e.blocked&&e.amount===0?e.blocked:`HP-${e.amount}`}`));
-  if(notes.length)toast(notes.join("；"),5200);
+ const notes=[0,1].flatMap(owner=>(next.events||[]).some(e=>e.type==='supply-full'&&e.owner===owner)?[`${playerName(participants(),owner)}背包已满，本次补给跳过`]:[]);
+ if(notes.length)toast(notes.join('；'),3600);
 }
+
 function canTarget(owner, hand) {
   if (!selected || busy || remotePending || (mode === "online" && online.status !== "connected") || !humanTurn() || state.winner !== null) return false;
   if (selected.kind === "hand")
@@ -161,9 +148,9 @@ function renderPlayer(owner) {
     return `<button class="status-icon" data-info="status:${key}:${owner}" data-info-only aria-label="${d.title}，${d.stats[0][1]}">${img(`ink-mono/${statusIcons[key]}.webp`)}${count!==undefined?`<b class="status-count">${count}</b>`:''}</button>`;
   }).join('');
   const mine=mode==='online'?owner===online.packet.room.seat:mode==='local'?owner===state.active:owner===0;
-  const identity=mine?'（我）':mode==='ai'&&owner===1?'陪练':'';
+  const identity=mine?'（我）':mode==='ai'&&owner===1?AI_LEVELS[aiDifficulty]:'';
   document.querySelector(`#player-${owner}`).innerHTML =
-    `<div class="player-head"><div class="player-identity">${mine&&mode!=="tutorial"?`<button class="player-name" data-edit-name="${owner}" aria-label="修改昵称：${name(owner)}">${name(owner)}</button>`:`<strong title="${name(owner)}">${name(owner)}</strong>`}${identity?`<small class="seat-label">${identity}</small>`:''}${presence?`<small class="player-presence ${presenceText==='在线'?'connected':''}" aria-label="${presenceText}"><i class="status-dot"></i>${presenceText==='在线'?'':presenceText}</small>`:''}</div><div class="health-number"><b>${p.hp}</b><small>/ ${MAX_HP}</small></div></div><div class="hp-bar" role="meter" aria-label="${team(owner)}生命" aria-valuenow="${p.hp}" aria-valuemin="0" aria-valuemax="${MAX_HP}"><i style="width:${(p.hp/MAX_HP)*100}%"></i></div><div class="status-strip">${statuses}</div><div class="player-loadout"></div>`;
+    `<div class="player-head"><div class="player-identity">${mine&&mode!=="tutorial"?`<button class="player-name" data-edit-name="${owner}" aria-label="修改昵称：${name(owner)}">${name(owner)}</button>`:`<strong title="${name(owner)}">${name(owner)}</strong>`}${identity?`<small class="seat-label">${identity}</small>`:''}${presence?`<small class="player-presence ${presenceText==='在线'?'connected':''}" aria-label="${presenceText}"><i class="status-dot"></i>${presenceText==='在线'?'':presenceText}</small>`:''}</div><div class="health-number"><b>${p.hp}</b><small>/ ${MAX_HP}</small></div></div><div class="hp-bar" role="meter" aria-label="${team(owner)}生命" aria-valuenow="${p.hp}" aria-valuemin="0" aria-valuemax="${MAX_HP}"><span class="hp-trail" style="width:${(p.hp/MAX_HP)*100}%"></span><i style="width:${(p.hp/MAX_HP)*100}%"></i></div><div class="status-strip">${statuses}</div><div class="player-loadout"></div>`;
   document.querySelector(`#player-${owner}`).classList.toggle("active", active);
 }
 function renderHandShield(el,p,h) {
@@ -229,12 +216,12 @@ function render() {
   }
   renderedRemoteReady = mode === "online" && online.status === "connected" && online.serverNow() >= (online.packet?.room?.readyAt || 0);
   info?.hide();
-  document.querySelector("#phase-time").hidden = state.winner !== null || state.phase === "start" || (state.phase==="action" && state.players[state.active].weapon);
+  document.querySelector("#phase-time").hidden = state.winner !== null || state.phase === "start";
   document.querySelector("#clock").textContent = mode==="tutorial"?"∞":mode==="online"&&online.status!=="connected"?"—":Math.ceil(remaining);
   document
     .querySelector("#phase-time")
     .classList.toggle("urgent", remaining <= 5);
-  document.querySelector("#phase-time small").textContent=mode==="tutorial"?"练习":"秒";
+  document.querySelector("#phase-time small").textContent=mode==="tutorial"?"练习":busy?"暂停":"秒";
   renderPlayer(0);
   renderPlayer(1);
   renderHands();
@@ -249,7 +236,7 @@ function render() {
   const p = state.players[state.active],
     enabled = !busy && !remotePending && humanTurn() && state.winner === null && (mode !== "online" || online.status === "connected" && online.serverNow() >= (online.packet?.room?.readyAt || 0));
   document.querySelector("#phase-label").textContent = state.winner !== null ? "对局结束" : busy
-    ? "结算中"
+    ? `${team(state.active)} · 演出中`
     : `${humanTurn() ? (mode !== "local" ? "你的回合" : `${team(state.active)}回合`) : "对手回合"}`;
   const guide = mode==="online"&&online.status!=="connected"&&state.winner===null ? {title:"正在恢复对局",detail:"连接恢复后继续操作",step:"waiting"} : guidance(state, selected, humanTurn(), busy);
   if(mode==="online" && online.status==="connected" && !busy && !renderedRemoteReady && state.winner===null) Object.assign(guide,{title:"正在交接",detail:"演出结束后即可操作",step:"waiting"});
@@ -286,7 +273,6 @@ function render() {
   document.querySelectorAll("#menu,#help").forEach((b) => (b.disabled = busy));
 
   renderTutorial();
-  for(const [key,until] of arrivingSlots){const [owner,slot]=key.split(":");if(until>Date.now())document.querySelector(`#items-${owner} .prop-slot:nth-of-type(${Number(slot)+2})`)?.classList.add("item-arriving");}
   stage?.sync(state, selected, enabled);
 }
 function showTutorialNote(){
@@ -321,7 +307,7 @@ async function animateCommand(command, old, next, contact) {
     const resultOwner=old.players[command.actor].mirror?1-command.actor:command.actor;
     document.querySelector('#instruction').innerHTML=`出手！数字加和，<span class="equation-team-${command.actor}">${a}</span> + <span class="equation-team-${1-command.actor}">${b}</span> → <span class="equation-team-${resultOwner}">${(a+b)%10}</span>`;
   }
-  if(command.type==="attack"||command.type==="prop") {
+  if(command.type==="attack"||command.type==="prop"||["end","advance","forge"].includes(command.type)) {
     cinema??=createCombatCinema({animate:feedback.animate,register:feedback.register,generation:feedback.generation,asset,sound:battleSound.play,impact:(kind,owner)=>stage?.skillImpact?.(kind,owner),participants});
     let visual=structuredClone(old);
     const completed=await cinema(old,next,command,beat=>{
@@ -338,15 +324,16 @@ async function animateCommand(command, old, next, contact) {
         stage?.sync(visual,null,false);
         target.hands.forEach((n,h)=>{handElements[beat.owner][h].querySelector('.hand-value').textContent=n;});
       }
-      else {
-        visual.players.forEach((p,i)=>{p.hands=[...next.players[i].hands];p.locks=[...next.players[i].locks];});
+      else if(beat.type==='settle') {
+        visual=structuredClone(next);
         stage?.sync(visual,null,false);
         visual.players.forEach((p,owner)=>p.hands.forEach((n,h)=>{handElements[owner][h].querySelector('.hand-value').textContent=n;}));
       }
+      feedback.changes(before,visual);
       visual.players.forEach((p,o)=>p.hands.forEach((n,h)=>renderHandShield(handElements[o][h],p,h)));
       feedback.contact({type:'beat'},before,visual);
     });
-    if(completed)feedback.contact({type:'beat'},visual,next);
+    if(completed){feedback.contact({type:'beat'},visual,next);}
     return completed;
   }
   if(command.type!=="add"){feedback.contact(command,old,next);return true;}
@@ -356,6 +343,9 @@ async function animateCommand(command, old, next, contact) {
 }
 function showContact(command, old, next) {
   feedback.contact(command, old, next);
+  const localized=structuredClone(old);
+  for(const w of command.visualWrites||[])localized.players[w.owner].hands[w.hand]=w.value;
+  feedback.changes(old,localized,450);
   const n=command.visualResult ?? touchResult(old,command),
     [a,b]=command.visualOperands || [old.players[old.active].hands[command.hand],old.players[1-old.active].hands[command.targetHand]];
   for(const write of command.visualWrites||[{owner:old.active,hand:command.hand,value:n}])handElements[write.owner][write.hand].querySelector('.hand-value').textContent=write.value;
@@ -377,10 +367,11 @@ async function send(command) {
     return;
   }
   remaining=Math.max(0,(deadline-Date.now())/1000);
+  if(mode!=="tutorial" && remaining===0 && state.phase==="action" && !state.players[state.active].weapon && !["end","surrender"].includes(command.type))command={type:"end"};
   feedback.clearNotices();
   busy = true;
   selected = null;
-  clearTimeout(aiTimer);
+  stopAI();
   info.hide();
   const old = state,
     current = session,
@@ -405,7 +396,7 @@ async function send(command) {
     announceSupply(next);
     const cue = phaseCue(old, next, participants());
     if (cue) {
-      if (cue.kind === "finish") play("victory");
+      if (cue.kind === "finish") play("victory");else battleSound.play("turn",.35);
       await feedback.phase(cue, asset);
       if (current !== session || serial !== actionSerial) return;
     }
@@ -437,7 +428,7 @@ async function send(command) {
   }
 }
 function scheduleAI() {
-  clearTimeout(aiTimer);
+  stopAI();
   if (mode === "online") return;
   if(state.phase==="action" && state.players[state.active].weapon && !paused && !busy && started && state.winner===null){aiTimer=setTimeout(()=>send({type:"attack"}),0);return;}
   if(mode === "tutorial")return;
@@ -454,21 +445,22 @@ function scheduleAI() {
     state.winner !== null
   )
     return;
-  aiTimer = setTimeout(() => {
-    const command = chooseCommand(state);
-    if (command) send(command);
-  }, 1000);
+  aiTimer = setTimeout(requestAI, aiDifficulty==='easy'?1100:700);
 }
 function savedPve(){try{const data=JSON.parse(localStorage.getItem('ff-pve')||'null');if(data){const restored=LocalSession.restore(data);if(restored.getSnapshot().winner===null)return data;}}catch{}return null;}
-function savePve(){if(mode==='ai'&&started&&session){try{localStorage.setItem('ff-pve',JSON.stringify(session.exportSave()));}catch{}}}
+function savePve(){if(mode==='ai'&&started&&session){try{
+ const snapshot=session.getSnapshot(),changedTurn=state&&snapshot.turn!==state.turn;
+ const remainingMs=changedTurn?TURN_SECONDS*1000:Math.max(0,Math.min(TURN_SECONDS*1000,(busy||paused?remaining*1000:deadline-Date.now())));
+ localStorage.setItem('ff-pve',JSON.stringify({...session.exportSave(),remainingMs}));
+ }catch{}}}
+listen(window,'pagehide',savePve);
 function startGame(newMode = mode, chapter = 0, saved = null) {
   actionSerial++;
   stage?.cancel();
   unsubscribe?.();
   session?.dispose();
-  clearTimeout(aiTimer);
+  stopAI();
   feedback.reset();
-  arrivingSlots.clear();
   clearTimeout(toast.timer);
   document.querySelector("#toast").classList.remove("visible");
   document.querySelector("#combat-callout").textContent="";
@@ -478,7 +470,9 @@ function startGame(newMode = mode, chapter = 0, saved = null) {
   paused = false;
   remaining = TURN_SECONDS;
   deadline = Date.now() + TURN_SECONDS * 1000;
-  session = mode === "tutorial" ? new TutorialSession(chapter) : saved ? LocalSession.restore(saved) : new LocalSession(crypto.getRandomValues(new Uint32Array(1))[0]);
+  session = mode === "tutorial" ? new TutorialSession(chapter) : saved ? LocalSession.restore(saved) : new LocalSession(crypto.getRandomValues(new Uint32Array(1))[0],{difficulty:aiDifficulty});
+  if(mode==="ai")aiDifficulty=session.difficulty;
+  if(saved&&Number.isFinite(saved.remainingMs)){remaining=Math.max(0,Math.min(TURN_SECONDS,saved.remainingMs/1000));deadline=Date.now()+remaining*1000;}
   unsubscribe = session.subscribe((next) => {
     savePve();
     if (!busy) {
@@ -511,12 +505,13 @@ function openDialog(content, cls = "") {
   paused = mode !== "online";
   stage?.setPaused(paused);
   feedback.pause(paused);
-  clearTimeout(aiTimer);
+  stopAI();
   dialog.dataset.view = "";
   document.body.classList.toggle("menu-scene",!started || cls.includes("game-menu") || cls==="online-dialog" || cls.startsWith("developer"));
   dialog.className = cls;
   dialog.innerHTML = content;
   if (!dialog.open) dialog.showModal();
+  savePve();
 }
 function closeDialog() {
   dialog.close();
@@ -645,7 +640,7 @@ function receiveRemote(packet) {
   refreshLobby();
   if(!room?.state){if(room?.status==="waiting"&&dialog.dataset.view==="menu")showOnline();if(mode==="online"){remoteMatch=null;remoteQueue=[];started=false;startGame("ai");showOnline();}return;}
   if(remoteMatch!==room.matchId||mode!=="online") {
-    actionSerial++;stage?.cancel();feedback.reset();unsubscribe?.();session?.dispose();clearTimeout(aiTimer);
+    actionSerial++;stage?.cancel();feedback.reset();unsubscribe?.();session?.dispose();stopAI();
     remoteQueue=[];remoteApplying=false;remoteMatch=room.matchId;session=online;mode="online";started=true;selected=null;busy=false;remotePending=false;paused=false;state=room.state;
     stage?.setPaused(false);if(dialog.open)closeDialog();render();if(state.winner!==null)showResult();else if(state.phase==="start")introRemote();return;
   }
@@ -787,6 +782,7 @@ listen(dialog, "click", (e) => {
   const b = e.target.closest("button");
   if (!b || b.disabled) return;
   if (b.dataset.menu) {showMenu(b.dataset.menu);return;}
+  if(b.dataset.ai){aiDifficulty=b.dataset.ai;started=true;closeDialog();startGame("ai");return;}
   if(b.hasAttribute("data-battle-online")){mode==="online"?showOnline():showNameEditor(mode==="local"?state.active:0);return;}
   if(b.hasAttribute("data-resume-pve")){const saved=savedPve();if(saved){started=true;closeDialog();startGame("ai",0,saved);}return;}
   if(b.hasAttribute("data-tutorial-understood")){closeDialog();render();return;}
@@ -899,7 +895,7 @@ if (import.meta.hot)
     info?.dispose();
     clearTimeout(toast.timer);
     clearInterval(ticker);
-    clearTimeout(aiTimer);
+    stopAI();
     feedback.reset();
     stage?.dispose();
     session?.dispose();

@@ -28,27 +28,75 @@ function score(s, actor) {
     (p.resilience-e.resilience)*8+(p.wine-e.wine)*12+(p.adrenaline-e.adrenaline)*14+(p.peace-e.peace)*8+(e.weak-p.weak)*6+(e.poison-p.poison)*2+(p.echo?7:0)+(p.mirror?3:0)-(p.silenced?6:0)+(e.silenced?6:0)
   );
 }
-export function chooseCommand(s) {
-  const actor = s.active;
-  const legal=legalCommands(s);
-  const candidates=legal.some(c=>c.type==="add")?legal.filter(c=>c.type!=="end"):legal;
-  const ranked = candidates.map((c, i) => {
-    const next = applyCommand(s, c);
-    let value = score(next, actor);
-    if (c.type === "advance" && next.winner === null && next.active===actor) {
-      value = Math.max(
-        ...legalCommands(next).map((a) => score(applyCommand(next, a), actor)),
-      );
-    }
 
-    if (c.type === "prop") {
-      const id = s.players[actor].props[c.slot];
-      if (id === "lock" && c.target !== actor) value += 3;
-      if (id === "lock" && c.target === actor) value -= 10;
-    }
-    // Deterministic tie-breaking varies with turn; avoids repeatedly selecting the same hand.
-    return { c, value: value + ((s.turn * 7 + i * 3) % 11) * 0.04 };
-  });
-  ranked.sort((a, b) => b.value - a.value);
-  return ranked[0]?.c;
+export const AI_LEVELS = Object.freeze({easy:'简单',advanced:'进阶',master:'大师'});
+const key = c => JSON.stringify([c.type,c.slot,c.target,c.targetHand,c.hand,c.weapon]);
+// Simulation uses hypothetical random streams, never the live deck/RNG.
+function simulate(s,c) {
+ let next=applyCommand(s,c);
+ if(next.winner===null && next.players[next.active].weapon)
+  next=applyCommand(next,{type:'attack',actor:next.active,revision:next.revision});
+ return next;
+}
+function moves(s) {
+ const legal=legalCommands(s);
+ return legal.filter(c=>c.type!=='prop'||s.players[s.active].props[c.slot]!=='lock'||c.target!==s.active);
+}
+function ranked(s,actor) {
+ return moves(s).map(c=>{const next=simulate(s,c);return {c,next,value:score(next,actor)-(c.type==='end'&&!s.calculated?2:0)};}).sort((a,b)=>b.value-a.value);
+}
+function responseValue(s,actor) {
+ let next=s;
+ for(let step=0;step<6&&next.winner===null&&next.active!==actor;step++) {
+  const best=ranked(next,next.active)[0];if(!best)break;next=best.next;
+ }
+ return score(next,actor);
+}
+function searchTurn(first,actor) {
+ let frontier=[first],finished=[];
+ for(let depth=0;depth<4;depth++) {
+  const expanded=[];
+  for(const node of frontier) {
+   if(node.next.winner!==null||node.next.active!==actor){finished.push(node);continue;}
+   for(const n of ranked(node.next,actor).slice(0,5))expanded.push(n);
+  }
+  if(!expanded.length){frontier=[];break;}
+  const seen=new Set();frontier=expanded.sort((a,b)=>b.value-a.value).filter(n=>{
+   const k=JSON.stringify([n.next.active,n.next.calculated,n.next.players]);if(seen.has(k))return false;seen.add(k);return true;
+  }).slice(0,4);
+ }
+ for(const node of frontier) {
+  let next=node.next;
+  if(next.winner===null&&next.active===actor&&next.phase==='action')next=simulate(next,{type:'end',actor,revision:next.revision});
+  finished.push({...node,next,value:score(next,actor)});
+ }
+ return Math.max(...finished.sort((a,b)=>b.value-a.value).slice(0,3).map(n=>responseValue(n.next,actor)));
+}
+export function chooseCommand(state,difficulty='advanced') {
+ if(!AI_LEVELS[difficulty])difficulty='advanced';
+ const s=structuredClone(state);s.rng=(Math.imul(s.revision+1,2654435761)^0x6a09e667)>>>0;
+ const actor=s.active,legal=moves(s);if(!legal.length)return;
+ if(legal.length===1)return legal[0];
+ if(difficulty==='easy') {
+  // Beginner makes simple local choices and frequently misses combinations.
+  const turn=(s.turn*13+s.revision*7)>>>0;
+  const pool=legal.filter(c=>c.type==='add'||c.type==='end'||(c.type==='forge'&&turn%4===0)||(c.type==='prop'&&turn%3===0));
+  return (pool.length?pool:legal)[turn%(pool.length||legal.length)];
+ }
+ const options=ranked(s,actor);
+ if(difficulty==='advanced') {
+  // A short tactical continuation understands item -> combination and lethal skills.
+  return options.map(n=>({c:n.c,value:n.next.winner!==null?score(n.next,actor):n.next.active===actor?Math.max(n.value,...ranked(n.next,actor).map(r=>r.value)) : n.value}))
+   .sort((a,b)=>b.value-a.value)[0]?.c;
+ }
+ const roots=options.slice(0,8), totals=new Map(roots.map(n=>[key(n.c),0]));
+ for(let sample=0;sample<2;sample++) {
+  const scenario=structuredClone(s);scenario.rng=(0x9e3779b9+Math.imul(s.revision+1,2246822519)+sample*1013904223)>>>0;
+  for(const root of roots) {
+   const next=simulate(scenario,root.c);
+   totals.set(key(root.c),totals.get(key(root.c))+searchTurn({c:root.c,next,value:score(next,actor)},actor));
+  }
+ }
+ roots.sort((a,b)=>totals.get(key(b.c))-totals.get(key(a.c))||b.value-a.value);
+ return roots[0]?.c;
 }

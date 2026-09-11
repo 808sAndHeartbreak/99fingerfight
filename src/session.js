@@ -10,14 +10,15 @@ export class LocalSession {
   #listeners = new Set();
   #disposed = false;
   #commands = [];
-  constructor(seed = 1, { participants = [] } = {}) {
+  constructor(seed = 1, { participants = [], difficulty = "advanced" } = {}) {
     this.#participants = normalizeParticipants(participants);
     this.seed = seed;
+    this.difficulty=["easy","advanced","master"].includes(difficulty)?difficulty:"advanced";
     this.#state = createGame(seed);
   }
   static restore(replay) {
     if(replay?.rulesVersion!==RULES_VERSION||!Array.isArray(replay.commands))throw new Error('存档版本不兼容');
-    const session=new LocalSession(replay.seed,{participants:replay.participants});
+    const session=new LocalSession(replay.seed,{participants:replay.participants,difficulty:replay.difficulty});
     for(const command of replay.commands){session.#state=applyCommand(session.#state,command);session.#commands.push(structuredClone(command));}
     return session;
   }
@@ -42,7 +43,7 @@ export class LocalSession {
     for (const listener of this.#listeners) listener(this.getSnapshot());
     return this.getSnapshot();
   }
-  exportSave(){return {...this.exportReplay(),participants:this.getParticipants()};}
+  exportSave(){return {...this.exportReplay(),participants:this.getParticipants(),difficulty:this.difficulty};}
   exportReplay() {
     return {
       rulesVersion: RULES_VERSION,

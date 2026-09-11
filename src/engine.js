@@ -1,6 +1,6 @@
 import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
-export const RULES_VERSION = 9;
+export const RULES_VERSION = 10;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -23,7 +23,7 @@ export const supplyIn = p => (3 - (p.turns % 3)) % 3 + 1;
 export function calculationOutcome(s, command) {
   const actor=command.actor ?? s.active,p=s.players[actor],enemy=s.players[1-actor];
   const value=mod10(p.hands[command.hand]+enemy.hands[command.targetHand]);
-  const writes=p.mirror?[{owner:1-actor,hand:command.targetHand,value}]:p.echo?[0,1].map(hand=>({owner:actor,hand,value})):[{owner:actor,hand:command.hand,value}];
+  const writes=p.mirror?(p.echo?[0,1].map(hand=>({owner:1-actor,hand,value})):[{owner:1-actor,hand:command.targetHand,value}]):p.echo?[0,1].map(hand=>({owner:actor,hand,value})):[{owner:actor,hand:command.hand,value}];
   return {value,writes,echo:!!p.echo,mirror:!!p.mirror};
 }
 function begin(s) {
@@ -33,10 +33,10 @@ function begin(s) {
     if(!draw(s,p,"回合补给")){s.events.push({type:"supply-full",owner:s.active});log(s,`${name(s.active)}补给时背包已满，本次不获得道具。`);}
   }
   s.phase = "start";
-  s.calculated=false;
+  s.calculated=false;s.acted=false;
   if(p.resilience>0)p.skip=0;
   s.skipping = p.skip > 0;
-  if (s.skipping) { p.skip--; log(s, `${name(s.active)}本回合无法行动，之后还需跳过 ${p.skip} 回合。`); }
+  if (s.skipping) { s.events.push({type:"skip",owner:s.active});p.skip--; log(s, `${name(s.active)}本回合无法行动，之后还需跳过 ${p.skip} 回合。`); }
   if (p.seven > 0) { p.seven--; damage(s,s.active,7,true,"七伤拳"); }
   if (s.winner === null && p.dark) damage(s,s.active,5,true,"玄冥神掌");
   if (s.winner === null && p.poison > 0) { p.poison--; damage(s,s.active,2,false,"中毒"); }
@@ -111,7 +111,7 @@ function damage(s, owner, amount, trueDamage, source) {
 function endTurn(s, skipped=false) {
   const ending=s.players[s.active];
   if(ending.resilience>0 && ending.turns>ending.resilienceSince) ending.resilience--;
-  ending.skippedTurns=skipped ? ending.skippedTurns+1 : 0;
+  ending.skippedTurns=skipped && !s.acted ? ending.skippedTurns+1 : 0;
   if(ending.skippedTurns>=2) {
     ending.resilience=5;ending.resilienceSince=ending.turns;ending.skippedTurns=0;ending.skip=0;
     s.events.push({type:"resilience",owner:s.active});
@@ -160,6 +160,7 @@ export function applyCommand(state, command) {
       assert(s.phase === "action" && !p.weapon, "当前不能合成技能");
       const w = synthesisOptions(s).find(w => w.id === command.weapon);
       assert(w, "不满足该武器的组合条件");
+      s.acted=true;
       p.weapon = w.id;
       p.hands = [1,1];
       log(s, `${name(s.active)}合成「${w.name}」，双手重置为 1。`);
@@ -177,8 +178,8 @@ export function applyCommand(state, command) {
       const a=p.hands[command.hand],b=enemy.hands[command.targetHand],result=calculationOutcome(s,command);
       for(const write of result.writes)s.players[write.owner].hands[write.hand]=write.value;
       s.events.push({type:"calculate",actor:s.active,hand:command.hand,targetHand:command.targetHand,...result});
-      log(s,`${name(s.active)}计算：${a} + ${b} → ${result.value}${result.mirror?"（镜像：写入对手目标手）":result.echo?"（回响：写入己方双手）":""}。`);
-      s.calculated=true;
+      log(s,`${name(s.active)}计算：${a} + ${b} → ${result.value}${result.mirror?(result.echo?"（镜像＋回响：写入对手双手）":"（镜像：写入对手目标手）"):result.echo?"（回响：写入己方双手）":""}。`);
+      s.calculated=true;s.acted=true;
       continueAction(s);
       break;
     }
@@ -222,6 +223,7 @@ export function applyCommand(state, command) {
       const w = weaponById(p.weapon);
       assert(w,"无效技能");
       log(s,`${name(s.active)}发动「${w.name}」。`);
+      s.acted=true;
       const id=w.id, target=1-s.active;
       if(id==="serious") { enemy.hands=[1,1];enemy.foam=0;if(!p.resilience)p.skip++; }
       const direct=["serious","drunken","scissors","fan","claw","buddha","dragon","sorrow","frag","dual","sniper","taser"];

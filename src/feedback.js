@@ -1,4 +1,5 @@
-import { MAX_HP } from "./catalog.js";
+import {stateChanges} from "./state-changes.js";
+import { MAX_HP, PROPS } from "./catalog.js";
 import { escapeHtml } from "./identity.js";
 /** Ephemeral visual feedback, independently paused and cancelled with the match. */
 export function createFeedback() {
@@ -50,6 +51,30 @@ export function createFeedback() {
       true,
     );
   }
+  const counters=new WeakMap();
+  function countTo(el,value) {
+    counters.get(el)?.cancel();const from=Number(el.textContent)||0;
+    const a=animate(el,[{opacity:.7},{opacity:1}],{duration:420});counters.set(el,a);
+    const frame=()=>{if(!el.isConnected||counters.get(el)!==a||a.playState==='idle')return;
+      const t=Math.min(1,Number(a.currentTime||0)/420);el.textContent=Math.round(from+(value-from)*(1-(1-t)**3));
+      if(t<1&&a.playState!=='finished')requestAnimationFrame(frame);else el.textContent=value;
+    };requestAnimationFrame(frame);
+  }
+  function changes(old,next,duration=650) {
+    const all=stateChanges(old,next),duel=document.querySelector('.duel'),bounds=duel.getBoundingClientRect();
+    const groups=new Map();
+    for(const change of all){const id=`${change.owner}:${change.hand??change.kind}`;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(change);}
+    for(const group of groups.values()){
+      const c=group[0],target=document.querySelector(c.hand!==undefined?`#hand-${c.owner}-${c.hand} .hand-value`:c.kind==='inventory'?`#items-${c.owner}`:`#player-${c.owner} .status-strip`);
+      if(!target)continue;const r=target.getBoundingClientRect();
+      const el=document.createElement('div');el.className=`change-marker ${c.hand!==undefined?'hand-change':c.kind+'-change'}`;el.dataset.team=c.owner;
+      el.innerHTML=group.map(c=>`<span>${c.id?`<img src="${new URL('assets/'+PROPS[c.id].image,document.baseURI).href}" alt="">`:''}${escapeHtml(c.label)}</span>`).join('');el.setAttribute('role','status');
+      el.style.left=`${Math.max(65,Math.min(bounds.width-65,r.x+r.width/2-bounds.x))}px`;el.style.top=`${c.kind==='inventory'?r.y-bounds.y+12:r.bottom-bounds.y+6}px`;
+      duel.append(el);nodes.add(el);
+      animate(el,[{opacity:0,transform:'translate(-50%,6px) scale(.92)'},{opacity:1,transform:'translate(-50%,0) scale(1)',offset:.14},{opacity:1,offset:.8},{opacity:0,transform:'translate(-50%,-5px)'}],{duration,fill:'both'},true);
+      animate(target,[{filter:'brightness(1)'},{filter:'brightness(1.5)',offset:.2},{filter:'brightness(1)'}],{duration:450});
+    }
+  }
   function contact(command, old, next) {
     if (command.type === "prop" && command.targetHand !== undefined) {
       const value = document.querySelector(
@@ -69,12 +94,14 @@ export function createFeedback() {
       const delta = p.hp - old.players[owner].hp;
       if (!delta) return;
       const player = document.querySelector(`#player-${owner}`);
-      player.querySelector(".health-number b").textContent = p.hp;
+      countTo(player.querySelector(".health-number b"),p.hp);
       player.querySelector(".hp-bar").setAttribute("aria-valuenow", p.hp);
-      player.querySelector(".hp-bar i").style.width = `${(p.hp / MAX_HP) * 100}%`;
+      const bar=player.querySelector(".hp-bar i"),trail=player.querySelector('.hp-trail');
+      animate(bar,[{width:`${old.players[owner].hp/MAX_HP*100}%`},{width:`${p.hp/MAX_HP*100}%`}],{duration:420,fill:'forwards',easing:'ease-out'});
+      if(trail)animate(trail,[{width:`${old.players[owner].hp/MAX_HP*100}%`},{width:`${p.hp/MAX_HP*100}%`}],{duration:550,delay:160,fill:'forwards',easing:'ease-out'});
       const el = document.createElement("b");
       el.className = `hp-delta ${delta > 0 ? "heal" : "damage"}`;
-      el.textContent = `HP${delta > 0 ? "+" : ""}${delta}`;
+      el.textContent = `${delta > 0 ? "+" : ""}${delta}  ·  ${old.players[owner].hp} → ${p.hp}`;
       el.style.left = owner ? "82%" : "18%";
       document.querySelector(".scoreboard").append(el);
       nodes.add(el);
@@ -151,7 +178,7 @@ export function createFeedback() {
       notice(`${weapon.name} · 已合成`, owner, "forge");
     },
     notice,
-    contact,
+    contact, changes,
     reveal(el, text) {
       if (el.textContent === text) return;
       el.textContent = text;

@@ -23,7 +23,7 @@ export function handPreview(state, selected, owner, hand) {
       };
     number = handPropNumber(id,state.players[owner].hands,hand);
   }
-  const other = selected.kind==="hand"&&state.players[state.active].echo&&!state.players[state.active].mirror ? number : state.players[affected].hands[1 - affectedHand];
+  const other = selected.kind==="hand"&&state.players[state.active].echo ? number : state.players[affected].hands[1 - affectedHand];
   const weapon =
     matchingWeapons([number, other])[0];
   return {
@@ -33,17 +33,17 @@ export function handPreview(state, selected, owner, hand) {
       selected.kind === "hand"
         ? `碰这里 → ${number}`
         : `${state.players[owner].hands[hand]} → ${number}`,
-    note: (selected.kind==="hand" ? state.players[state.active].mirror?"镜像：改变对手目标手 · ":state.players[state.active].echo?"回响：己方双手同值 · ":"" : "") + (weapon ? `${affected === state.active ? "本回合可合成 · " : "对手回合可合成 · "}${matchingWeapons([number,other]).length>1?`${matchingWeapons([number,other]).length} 种技能`:weapon.name}` : number === 5 ? "获得护盾" : ""),
+    note: (selected.kind==="hand" ? state.players[state.active].mirror?(state.players[state.active].echo?"镜像 × 回响：对手双手同值 · ":"镜像：改变对手目标手 · "):state.players[state.active].echo?"回响：己方双手同值 · ":"" : "") + (weapon ? `${affected === state.active ? "本回合可合成 · " : "对手回合可合成 · "}${matchingWeapons([number,other]).length>1?`${matchingWeapons([number,other]).length} 种技能`:weapon.name}` : number === 5 ? "获得护盾" : ""),
   };
 }
 
 export function propUseDetail(state,id) {
   const p=state.players[state.active],e=state.players[1-state.active],sum=p.hands[0]+p.hands[1],enemySum=e.hands[0]+e.hands[1],ruinDamage=Math.max(0,enemySum+(p.adrenaline>0?5:0)-(e.adrenaline>0?5:0));
-  return ({wine:`下一次直接攻击首段 +${(p.wine+1)*10}，一次消耗所有酒；无回合期限`,adrenaline:`${p.resilience?"坚韧：本回合继续":"立即结束本回合"}；后续 ${p.adrenaline+3} 个己方回合，所有伤害 +5、受到伤害 −5`,greed:`获得 ${Math.min(2,4-p.props.length)} 个道具，${p.resilience?"坚韧：本回合继续":"立即结束回合"}`,balance:`自己重抽 ${p.props.length-1} 个，对手重抽 ${e.props.length} 个；先消耗制衡`,boon:`自己补 ${4-p.props.length} 个，对手补 ${3-e.props.length} 个；各自最多 3 个`,grace:`恢复 ${Math.min(MAX_HP-p.hp,sum)} 生命（己方数字 ${p.hands.join(" + ")}）`,ruin:e.peace>0?`对手处于和平，伤害被免疫（数字总和 ${enemySum}）`:`造成 ${ruinDamage} 点直接伤害（对手数字 ${e.hands.join(" + ")}），不触发护盾`,echo:p.echo?"已有回响，重复使用不会增加次数": "本回合下一次计算将同一个结果写入己方双手",mirror:p.mirror?"已有镜像，重复使用不会增加次数":"本回合下一次计算只改变对手目标手",silence:"对手下回合不能主动使用道具，正常补给不受影响"})[id] || PROPS[id].detail;
+  return ({wine:`下一次直接攻击首段 +${(p.wine+1)*10}，一次消耗所有酒；无回合期限`,adrenaline:`${p.resilience?"坚韧：本回合继续":"立即结束本回合"}；后续 ${p.adrenaline+3} 个己方回合，所有伤害 +5、受到伤害 −5`,greed:`获得 ${Math.min(2,4-p.props.length)} 个道具，${p.resilience?"坚韧：本回合继续":"立即结束回合"}`,balance:`自己重抽 ${p.props.length-1} 个，对手重抽 ${e.props.length} 个；先消耗制衡`,boon:`自己补 ${4-p.props.length} 个，对手补 ${3-e.props.length} 个；各自最多 3 个`,grace:`恢复 ${Math.min(MAX_HP-p.hp,sum)} 生命（己方数字 ${p.hands.join(" + ")}）`,ruin:e.peace>0?`对手处于和平，伤害被免疫（数字总和 ${enemySum}）`:`造成 ${ruinDamage} 点直接伤害（对手数字 ${e.hands.join(" + ")}），不触发护盾`,echo:p.mirror?"与镜像组合：本回合计算结果写入对手双手":p.echo?"已有回响，重复使用不会增加次数": "本回合下一次计算将同一个结果写入己方双手",mirror:p.echo?"与回响组合：本回合计算结果写入对手双手":p.mirror?"已有镜像，重复使用不会增加次数":"本回合下一次计算只改变对手目标手",silence:"对手下回合不能主动使用道具，正常补给不受影响"})[id] || PROPS[id].detail;
 }
 export function guidance(state, selected, human, busy) {
   const p=state.players[state.active];
-  const canTouch=state.phase==="action" && !state.calculated && !p.weapon && !state.calculated && touchCommands(state).length>0;
+  const canTouch=state.phase==="action" && !state.calculated && !p.weapon && touchCommands(state).length>0;
   const result=(title,step)=>({title,step,canTouch});
   if(state.winner!==null)return result("对局结束","over");
   if(busy)return result("正在结算","resolving");
@@ -55,7 +55,7 @@ export function guidance(state, selected, human, busy) {
     if(!prop)return result("重新选择道具","source");
     return result(prop.target==="hand"?`选一只手，使用${prop.name}`:`确认使用「${prop.name}」`,"target");
   }
-  if(selected?.kind==="hand" && canTouch)return result(p.mirror?"再选对手的一只手，加和后更新对手数字":p.echo?"再选对手的一只手，加和后更新己方双手":"再选对手的一只手，加和后更新己方数字","target");
+  if(selected?.kind==="hand" && canTouch)return result(p.mirror?(p.echo?"再选对手的一只手，加和后更新对手双手":"再选对手的一只手，加和后更新对手数字"):p.echo?"再选对手的一只手，加和后更新己方双手":"再选对手的一只手，加和后更新己方数字","target");
   const canProp=propCommands(state).length>0,canForge=matchingWeapons(p.hands).length>0;
   if(canForge)return result(canTouch?(canProp?"可合成技能、使用道具或碰手":"可合成技能，也可选手计算"):(canProp?"可合成技能，或继续使用道具":"选择技能合成，或结束回合"),"synthesis");
   if(canTouch)return result(canProp?"使用道具，或选自己的手去碰对手":"选自己的一只手，去碰对手","source");

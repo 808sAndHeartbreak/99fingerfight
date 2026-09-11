@@ -107,6 +107,6 @@ test('touch instruction identifies the actual recipient under echo and mirror',(
  const s=createGame();s.phase='action';const selected={kind:'hand',hand:0};
  assert.match(guidance(s,selected,true,false).title,/己方数字/);
  s.players[0].echo=true;assert.match(guidance(s,selected,true,false).title,/己方双手/);
- s.players[0].mirror=true;assert.match(guidance(s,selected,true,false).title,/对手数字/);
+ s.players[0].mirror=true;assert.match(guidance(s,selected,true,false).title,/对手双手/);
  assert.equal(guidance(s,selected,false,false).step,'waiting');
 });

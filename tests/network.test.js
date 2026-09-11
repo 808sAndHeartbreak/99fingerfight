@@ -9,7 +9,7 @@ import { WebSocket } from 'ws';
 const socket=()=>({messages:[],send(s){this.messages.push(JSON.parse(s));},close(){this.closed=true;}});
 function harness(options={}) {
  let time=1000;const h=new MatchHub({now:()=>time,animationMs:0,...options});
- const a=socket(),b=socket();h.hello(a,{protocolVersion:2,rulesVersion:9,displayName:'一'});h.hello(b,{protocolVersion:2,rulesVersion:9,displayName:'二'});
+ const a=socket(),b=socket();h.hello(a,{protocolVersion:2,rulesVersion:10,displayName:'一'});h.hello(b,{protocolVersion:2,rulesVersion:10,displayName:'二'});
  let seq=0;const req=(ws,op,fields={})=>h.request(ws,{id:String(++seq),op,...fields});
  const room=()=>h.rooms.get(h.userById(a.userId).room);
  const tick=ms=>{time+=ms;h.tick();};
@@ -37,14 +37,14 @@ test('matchmaking, cancel, live rename, reconnect grace and rematch agreement',(
  x.req(x.a,'queue');x.req(x.b,'queue');assert.equal(x.room().status,'playing');
  x.req(x.b,'name',{name:'新名字⚡'});assert.equal(x.h.packet(x.h.userById(x.a.userId)).room.participants[1].displayName,'新名字⚡');
  const token=x.a.messages.find(m=>m.type==='welcome').token;
- x.h.disconnect(x.a);x.tick(2000);const c=socket();x.h.hello(c,{token,protocolVersion:2,rulesVersion:9});assert.equal(c.userId,x.a.userId);
+ x.h.disconnect(x.a);x.tick(2000);const c=socket();x.h.hello(c,{token,protocolVersion:2,rulesVersion:10});assert.equal(c.userId,x.a.userId);
  x.h.disconnect(c);x.tick(60001);assert.equal(x.room().state.winner,1);assert.equal(x.room().status,'finished');
- x.h.hello(c,{token,protocolVersion:2,rulesVersion:9});const oldId=x.room().matchId;
+ x.h.hello(c,{token,protocolVersion:2,rulesVersion:10});const oldId=x.room().matchId;
  x.req(c,'rematch');assert.equal(x.room().matchId,oldId);x.req(x.b,'rematch');assert.notEqual(x.room().matchId,oldId);
  assert.deepEqual(x.room().state.players.map(p=>p.hp),[99,99]);
 });
 test('leaving awards the other seat without changing its identity; occupied rooms reject third users',()=>{
- const x=harness();x.ready();const c=socket();x.h.hello(c,{protocolVersion:2,rulesVersion:9});
+ const x=harness();x.ready();const c=socket();x.h.hello(c,{protocolVersion:2,rulesVersion:10});
  assert.throws(()=>x.req(c,'join',{code:x.room().code}));const room=x.room();x.req(x.a,'name',{name:'离场前新名字'});x.req(x.a,'leave');
  const p=x.h.packet(x.h.userById(x.b.userId));assert.equal(p.room.seat,1);assert.equal(p.room.state.winner,1);assert.equal(p.room.participants[1].displayName,'二');
  assert.equal(p.room.participants[0].displayName,'离场前新名字');assert.equal(p.room.participants[0].departed,true);assert.equal(p.room.participants[1].departed,false);
@@ -53,7 +53,7 @@ test('leaving awards the other seat without changing its identity; occupied room
 test('room state survives process restart and resume token recovers the same seat',()=>{
  const dir=mkdtempSync(join(tmpdir(),'ff-hub-'));
  try{const file=join(dir,'state.json'),x=harness({file});x.ready();const token=x.a.messages.find(m=>m.type==='welcome').token,matchId=x.room().matchId;
- const restored=new MatchHub({file,now:()=>4000});const c=socket();restored.hello(c,{token,protocolVersion:2,rulesVersion:9});const p=restored.packet(restored.userById(c.userId));assert.equal(p.room.matchId,matchId);assert.equal(p.room.seat,0);
+ const restored=new MatchHub({file,now:()=>4000});const c=socket();restored.hello(c,{token,protocolVersion:2,rulesVersion:10});const p=restored.packet(restored.userById(c.userId));assert.equal(p.room.matchId,matchId);assert.equal(p.room.seat,0);
  }finally{assert.ok(resolve(dir).startsWith(resolve(tmpdir())+sep));rmSync(dir,{recursive:true,force:true});}
 });
 
@@ -64,13 +64,13 @@ test('disconnect clears rematch consent and rejected offline rematch does not tr
  assert.deepEqual(x.room().rematch,[false,false]);
  assert.throws(()=>x.req(x.a,'rematch'),/重连/);
  assert.deepEqual(x.room().rematch,[false,false]);
- const resumed=socket();x.h.hello(resumed,{token,protocolVersion:2,rulesVersion:9});
+ const resumed=socket();x.h.hello(resumed,{token,protocolVersion:2,rulesVersion:10});
  x.req(x.a,'rematch');x.req(resumed,'rematch');assert.equal(x.room().status,'playing');
 });
 test('HTTP health, static source isolation, and live WebSocket hello',async()=>{
  const app=createServer({file:null});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const port=app.server.address().port;
  try{assert.equal((await fetch(`http://127.0.0.1:${port}/health`)).status,200);assert.equal((await fetch(`http://127.0.0.1:${port}/server/hub.js`)).status,404);
- await new Promise((resolve,reject)=>{const ws=new WebSocket(`ws://127.0.0.1:${port}/ws`);ws.on('open',()=>ws.send(JSON.stringify({type:'hello',protocolVersion:2,rulesVersion:9,displayName:'网络测试'})));ws.on('message',data=>{if(JSON.parse(data).type==='snapshot'){ws.close();resolve();}});ws.on('error',reject);});
+ await new Promise((resolve,reject)=>{const ws=new WebSocket(`ws://127.0.0.1:${port}/ws`);ws.on('open',()=>ws.send(JSON.stringify({type:'hello',protocolVersion:2,rulesVersion:10,displayName:'网络测试'})));ws.on('message',data=>{if(JSON.parse(data).type==='snapshot'){ws.close();resolve();}});ws.on('error',reject);});
  }finally{await app.close();}
 });
 
@@ -80,7 +80,7 @@ test('two real WebSocket clients complete a match with identical revisions and r
  await new Promise(r=>app.server.listen(0,'127.0.0.1',r));
  const url=`ws://127.0.0.1:${app.server.address().port}/ws`;
  const client=()=>new Promise((resolve,reject)=>{const ws=new WebSocket(url), c={ws,packet:null,seq:0,pending:new Map()};
-  ws.on('open',()=>ws.send(JSON.stringify({type:'hello',protocolVersion:2,rulesVersion:9,displayName:'联机测试'})));
+  ws.on('open',()=>ws.send(JSON.stringify({type:'hello',protocolVersion:2,rulesVersion:10,displayName:'联机测试'})));
   ws.on('error',reject);ws.on('message',raw=>{const m=JSON.parse(raw);if(m.type==='snapshot'){c.packet=m;resolve(c);}if(m.type==='ack')c.pending.get(m.id)?.resolve();if(m.type==='error')c.pending.get(m.id)?.reject(new Error(m.message));});
   c.request=(op,fields={})=>new Promise((resolve,reject)=>{const id=String(++c.seq);const timer=setTimeout(()=>reject(new Error('Request timeout')),3000);c.pending.set(id,{resolve:()=>{clearTimeout(timer);c.pending.delete(id);resolve();},reject:e=>{clearTimeout(timer);c.pending.delete(id);reject(e);}});ws.send(JSON.stringify({type:'request',id,op,...fields}));});
  });
@@ -119,7 +119,7 @@ test('v4 status counters survive public snapshots, duplicate attacks, and reconn
  const x=harness();x.ready();x.tick(1100);const r=x.room();r.state.phase='action';r.state.calculated=true;r.state.players[0].weapon='buddha';r.state.players[1].hands=[5,5];r.state.players[1].seven=3;r.state.players[1].dark=true;r.state.players[1].foam=4;
  const message={id:'new-skill',op:'command',matchId:r.matchId,command:{type:'attack',revision:r.state.revision}};
  x.h.request(x.a,message);const after=structuredClone(r.state);x.h.request(x.a,message);assert.deepEqual(r.state,after);assert.equal(after.players[1].hp,99);assert.equal(after.players[1].skip,3);assert.equal(after.skipping,false);
- const token=x.b.messages.find(m=>m.type==='welcome').token;x.h.disconnect(x.b);const b=socket();x.h.hello(b,{token,protocolVersion:2,rulesVersion:9});assert.deepEqual(b.messages.at(-1).room.state,x.h.publicState(after));
+ const token=x.b.messages.find(m=>m.type==='welcome').token;x.h.disconnect(x.b);const b=socket();x.h.hello(b,{token,protocolVersion:2,rulesVersion:10});assert.deepEqual(b.messages.at(-1).room.state,x.h.publicState(after));
  x.tick(5000);assert.equal(r.state.active,0);assert.equal(r.state.players[1].skip,3);
 });
 
@@ -137,7 +137,7 @@ test('unnamed online seats are distinct and submitted names survive reconnect',(
  assert.deepEqual(packet.room.participants.map(p=>p.displayName),['玩家一','玩家二']);
  x.req(x.b,'name',{name:'红方昵称⚡'});
  const token=x.b.messages.find(m=>m.type==='welcome').token;
- x.h.disconnect(x.b);const b=socket();x.h.hello(b,{token,displayName:'',protocolVersion:2,rulesVersion:9});
+ x.h.disconnect(x.b);const b=socket();x.h.hello(b,{token,displayName:'',protocolVersion:2,rulesVersion:10});
  packet=x.h.packet(x.h.userById(x.a.userId));assert.equal(packet.room.participants[1].displayName,'红方昵称⚡');
 });
 
@@ -156,7 +156,7 @@ test('v5 buffs transfer authoritatively, duplicate requests do not stack twice, 
  x.h.request(x.a,m);const after=structuredClone(r.state);x.h.request(x.a,m);assert.deepEqual(r.state,after);
  assert.equal(after.players[0].knuckles,5);assert.equal(after.players[0].peace,6);assert.equal(after.players[1].knuckles,0);assert.equal(after.players[1].peace,0);assert.equal(after.players[1].foam,6);assert.equal(after.players[1].poison,5);
  assert.equal(after.players[1].echo,true);assert.equal(after.players[1].nine,1);
- const token=x.b.messages.find(m=>m.type==='welcome').token;x.h.disconnect(x.b);const b=socket();x.h.hello(b,{token,protocolVersion:2,rulesVersion:9});assert.deepEqual(b.messages.at(-1).room.state,x.h.publicState(r.state));
+ const token=x.b.messages.find(m=>m.type==='welcome').token;x.h.disconnect(x.b);const b=socket();x.h.hello(b,{token,protocolVersion:2,rulesVersion:10});assert.deepEqual(b.messages.at(-1).room.state,x.h.publicState(r.state));
 });
 
 test('wine use is idempotent online and empty inventory preserves remaining turn time',()=>{
@@ -164,7 +164,7 @@ test('wine use is idempotent online and empty inventory preserves remaining turn
  const m={id:'wine-once',op:'command',matchId:r.matchId,command:{type:'prop',slot:0,target:0,revision:r.state.revision}};
  x.h.request(x.a,m);const revision=r.state.revision;x.h.request(x.a,m);assert.equal(r.state.revision,revision);assert.equal(r.state.players[0].wine,1);assert.equal(r.deadlineAt-r.readyAt,29900);
  x.tick(2001);assert.equal(r.state.phase,'action');assert.equal(r.state.players[0].wine,1);
- const token=x.a.messages.find(m=>m.type==='welcome').token;x.h.disconnect(x.a);const a=socket();x.h.hello(a,{token,protocolVersion:2,rulesVersion:9});assert.deepEqual(a.messages.at(-1).room.state,JSON.parse(JSON.stringify(x.h.publicState(r.state))));
+ const token=x.a.messages.find(m=>m.type==='welcome').token;x.h.disconnect(x.a);const a=socket();x.h.hello(a,{token,protocolVersion:2,rulesVersion:10});assert.deepEqual(a.messages.at(-1).room.state,JSON.parse(JSON.stringify(x.h.publicState(r.state))));
 });
 
 test('forged skill auto-fires at server readiness without a second player request',()=>{
@@ -177,9 +177,9 @@ test('forged skill auto-fires at server readiness without a second player reques
 
  test('room code restores only an authenticated existing seat, never an intruder',()=>{
  const x=harness();x.ready();const code=x.room().code,id=x.room().matchId,token=x.a.messages.find(m=>m.type==='welcome').token;
- x.h.disconnect(x.a);const restored=socket();x.h.hello(restored,{token,protocolVersion:2,rulesVersion:9});x.req(restored,'join',{code});
+ x.h.disconnect(x.a);const restored=socket();x.h.hello(restored,{token,protocolVersion:2,rulesVersion:10});x.req(restored,'join',{code});
  assert.equal(restored.userId,x.a.userId);assert.equal(x.room().matchId,id);assert.equal(x.h.packet(x.h.userById(restored.userId)).room.seat,0);
- const intruder=socket();x.h.hello(intruder,{protocolVersion:2,rulesVersion:9});assert.throws(()=>x.req(intruder,'join',{code}));assert.equal(x.room().matchId,id);
+ const intruder=socket();x.h.hello(intruder,{protocolVersion:2,rulesVersion:10});assert.throws(()=>x.req(intruder,'join',{code}));assert.equal(x.room().matchId,id);
  });
 
 test('expired requests cannot extend a turn, and end requests remain idempotent',()=>{

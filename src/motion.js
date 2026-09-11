@@ -23,9 +23,9 @@ export const touchResult = (state, command) =>
 
 export function touchVisualSteps(state, command) {
   const outcome=calculationOutcome(state,command),p=state.players[command.actor];
-  const hands=outcome.echo?[command.hand,1-command.hand]:[command.hand];
-  return hands.map(hand=>({type:"add",actor:command.actor,hand,targetHand:command.targetHand,
+  const writes=outcome.writes;
+  return writes.map(write=>({type:"add",actor:command.actor,hand:outcome.mirror?command.hand:write.hand,targetHand:outcome.mirror?write.hand:command.targetHand,
     visualResult:outcome.value,visualOperands:[p.hands[command.hand],state.players[1-command.actor].hands[command.targetHand]],
-    visualWrites:outcome.mirror?outcome.writes:outcome.writes.filter(w=>w.hand===hand),
-    visualLabel:outcome.mirror?"镜像 · 对手目标手变数":outcome.echo?"回响 · 己方双手同值":"主动手变数"}));
+    visualWrites:[write],
+    visualLabel:outcome.mirror?(outcome.echo?"镜像 × 回响 · 对手双手同值":"镜像 · 对手目标手变数"):outcome.echo?"回响 · 己方双手同值":"主动手变数"}));
 }
