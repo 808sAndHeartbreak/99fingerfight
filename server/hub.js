@@ -89,7 +89,7 @@ export class MatchHub {
   }
   finish(r,winner,reason) {
     if(r.status!=='playing')return;
-    r.state={...r.state,revision:r.state.revision+1,winner,phase:'over',log:[...r.state.log,`[回合 ${Math.ceil(r.state.turn/2)}] ${reason}`].slice(-30)};
+    r.state={...r.state,revision:r.state.revision+1,winner,phase:'over',log:[...r.state.log,`[回合 ${Math.ceil(r.state.turn/2)}] ${reason}`].slice(-120)};
     r.status='finished';r.finishReason=reason;r.deadlineAt=null;r.readyAt=0;
   }
   step(r,command) {

@@ -161,30 +161,15 @@ export function createFeedback() {
       finally {document.body.classList.remove('introducing');}
       const target=document.querySelector(`#player-${mine}`);if(target)animate(target,[{filter:'brightness(1)'},{filter:'brightness(1.5)',offset:.25},{filter:'brightness(1)'}],{duration:700});
     },
-    async phase(cue, asset) {
-      if (!cue) return;
-      if(cue.kind!=='finish') {
-        const banner=document.createElement('div');banner.className='turn-handoff';banner.dataset.team=cue.owner;banner.setAttribute('role','status');
-        banner.innerHTML=`<small>回合切换</small><strong>${escapeHtml(cue.detail)}</strong><span>${cue.title==='本回合无法行动'?cue.title:'准备行动'}</span>`;
-        document.querySelector('.duel').append(banner);nodes.add(banner);
-        await animate(banner,[{opacity:0,transform:`translateX(${cue.owner?35:-35}px)`},{opacity:1,transform:'translateX(0)',offset:.18},{opacity:1,offset:.8},{opacity:0,transform:'translateY(-8px)'}],{duration:cue.duration,fill:'both'},true).finished.catch(()=>{});
-        return;
+    async phase(cue) {
+      if(!cue)return;
+      if(cue.kind==='finish'&&cue.title==='九九归一'){
+        await animate(document.querySelector('.battle-banner'),[{opacity:1},{opacity:1}],{duration:cue.duration}).finished.catch(()=>{});return;
       }
-      document.querySelectorAll(".phase-cut:not(.finish)").forEach(node=>node.remove());
-      const el = document.createElement("div");
-      el.className = `phase-cut ${cue.kind}`;
-      el.dataset.team = cue.owner;
-      el.setAttribute("role", "status");
-      const cinematic=["start","finish"].includes(cue.kind);
-      el.classList.toggle("phase-text",!cinematic);
-      el.innerHTML = `<div class="phase-speed" aria-hidden="true"></div><div class="phase-ribbon"><img src="${asset(`manga/${cue.owner ? "red" : "blue"}.webp`)}" alt=""><div class="phase-type"><small>${escapeHtml(cue.label)}</small><strong>${escapeHtml(cue.title)}</strong><p>${escapeHtml(cue.detail)}</p></div></div>`;
-      document.querySelector(".game-shell").append(el);
-      nodes.add(el);
-      const duration = cue.duration;
-      if(!cinematic) el.querySelector(".phase-ribbon").innerHTML=`<div class="phase-type"><strong>${escapeHtml(cue.title)}</strong></div>`;
-      animate(el.querySelector(".phase-ribbon"), !cinematic || reduced.matches ? [{opacity:0},{opacity:1,offset:.2},{opacity:1,offset:.8},{opacity:0}] : [{transform:"translateX(-110%) rotate(-6deg)"},{transform:"translateX(2%) rotate(-6deg)",offset:.2},{transform:"translateX(0) rotate(-6deg)",offset:.3},{transform:"translateX(0) rotate(-6deg)",offset:.78},{transform:"translateX(115%) rotate(-6deg)"}], {duration,fill:"both",easing:"cubic-bezier(.16,1,.3,1)"});
-      const completion=animate(el,[{opacity:0},{opacity:1,offset:.1},{opacity:1,offset:.85},{opacity:0}],{duration,fill:"both"},true).finished.catch(()=>{});
-      if(cinematic) await completion;
+      const el=document.createElement('div');el.className=`turn-handoff ${cue.kind==='finish'?'match-finished':''}`;el.dataset.team=cue.owner;el.setAttribute('role','status');
+      el.innerHTML=`<small>${cue.kind==='finish'?'对局结束':'回合切换'}</small><strong>${escapeHtml(cue.detail)}</strong><span>${cue.kind==='finish'?escapeHtml(cue.title):cue.title==='本回合无法行动'?cue.title:'准备行动'}</span>`;
+      document.querySelector('.duel').append(el);nodes.add(el);
+      await animate(el,[{opacity:0,transform:`translateX(${cue.owner?30:-30}px)`},{opacity:1,transform:'translateX(0)',offset:.18},{opacity:1,offset:.82},{opacity:0}],{duration:cue.duration,fill:'both'},true).finished.catch(()=>{});
     },
     async forge({owner, weapon}, asset, next, participants) {
       notice(`${weapon.name} · 已合成`, owner, "forge");

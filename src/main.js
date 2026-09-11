@@ -330,10 +330,11 @@ async function animateCommand(command, old, next, contact) {
         stage?.sync(visual,null,false,true);
         target.hands.forEach((n,h)=>{handElements[beat.owner][h].querySelector('.hand-value').textContent=n;});
       }
-      else if(beat.type==='settle' || beat.type==='reset-hands') {
-        const actorHands=[...visual.players[old.active].hands];
+      else if(beat.type==='settle' || beat.type==='reset-hands' || beat.skillEffect) {
+        const actorHands=[...visual.players[old.active].hands],hp=visual.players.map(p=>p.hp);
         visual=structuredClone(next);
-        if(beat.preserveActorHands)visual.players[old.active].hands=actorHands;
+        if(beat.preserveActorHands || beat.skillEffect)visual.players[old.active].hands=actorHands;
+        if(beat.skillEffect)visual.players.forEach((p,i)=>p.hp=hp[i]);
         stage?.sync(visual,null,false,true);
         visual.players.forEach((p,owner)=>p.hands.forEach((n,h)=>{handElements[owner][h].querySelector('.hand-value').textContent=n;}));
       }

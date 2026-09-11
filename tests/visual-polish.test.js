@@ -4,7 +4,7 @@ import {historyMarkup} from '../src/match-history.js';
 import {createAudioSettings} from '../src/audio-settings.js';
 test('record groups same-round entries, keeps item damage together and escapes names',()=>{
  const html=historyMarkup(['[回合 1] 蓝方使用「破坏」。','[回合 1] 破坏对红方造成 2 点真实伤害。','[回合 1] 蓝方计算：1 + 2 → 3。','[回合 2] 红方使用「增幅」。'],[{displayName:'<小蓝>'},{displayName:'小红'}]);
- assert.equal((html.match(/<h3>回合 1<\/h3>/g)||[]).length,1);assert.ok(html.includes('&lt;小蓝&gt;'));assert.ok(html.indexOf('回合 2')<html.indexOf('回合 1'));assert.match(html,/<b>道具<\/b><ul>.*破坏对小红<em/);
+ assert.equal((html.match(/<h3>回合 1<\/h3>/g)||[]).length,1);assert.ok(html.includes('&lt;小蓝&gt;'));assert.ok(html.indexOf('回合 2')<html.indexOf('回合 1'));assert.match(html,/破坏对小红（红方）<em/);assert.doesNotMatch(html,/<b>道具<\/b>/);
 });
 test('audio defaults, independent controls, mute, hidden pause and stored settings',()=>{
  const saved={Audio:globalThis.Audio,document:globalThis.document,localStorage:globalThis.localStorage};let media;const events={};let stored=null;

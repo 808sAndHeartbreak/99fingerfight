@@ -1,3 +1,4 @@
+import {effectDetail,defenseDetail} from "./effect-copy.js";
 import {stateChanges} from "./state-changes.js";
 import {TOUCH_DURATION_MS} from "./motion.js";
 import {PROPS,weaponById} from './catalog.js';
@@ -11,23 +12,11 @@ export function actionBeats(old,next,command) {
  for(const e of next.events||[])if(e.type==='skip'||e.type==='resilience')beats.push({type:'effect',owner:e.owner,label:e.type==='skip'?'本回合无法行动':'获得坚韧 · 免疫跳过'});
  for(const e of next.events||[])if(e.type==='damage')beats.push({...e,label:e.blocked&&e.amount===0?e.blocked:`${e.source} · ${e.trueDamage?'真实伤害':'伤害'} HP-${e.amount}`});
  if(command.type==='attack'){
-  const id=old.players[old.active].weapon,p=next.players[old.active],e=next.players[1-old.active];
-  if(next.winner===null||id==='unify') {
-   const labels={serious:old.players[old.active].resilience?'双手归一 · 破盾 · 本回合结束 · 坚韧免疫下回合跳过':'双手归一 · 破盾 · 本回合结束 · 下回合无法行动',seven:`七伤已施加 · 剩余 ${e.seven} 次`,scissors:`对手双手 → ${e.hands.map(n=>`[${n}]`).join(' / ')}`,fan:'花蝶扇 · 道具已结算',buddha:old.players[1-old.active].resilience?'双手归一 · 坚韧免疫跳过':'双手归一 · 跳过三回合',dark:'玄冥 · 永久侵蚀',foam:`盾墙 → ${p.foam} 次`,knuckles:`指虎 ${p.knuckles} 层 · 每段技能 +${p.knuckles*10}`,peace:'双方和平 · 各自接下来三回合免疫伤害',serpent:'虚弱与中毒 · 五回合',steal:'道具与增益已转移',dual:`道具补充 → ${p.props.length}/3`,taser:old.players[1-old.active].resilience?'坚韧：免疫跳过':'对手跳过三回合',unify:p.nine===2?'九九归一':'减益已清除 · 九印 1 / 2'};
-   if(labels[id])beats.push({type:'effect',owner:old.active,label:labels[id]});
-  }
+  const id=old.players[old.active].weapon;
+  const effects=['serious','seven','scissors','fan','buddha','dark','foam','knuckles','peace','serpent','steal','dual','taser','unify'];
+  if((next.winner===null||id==='unify')&&effects.includes(id))beats.push({type:'effect',owner:old.active,skillEffect:true,label:effectDetail(old,next,command)});
  }
- if(command.type==='prop'){
-  const id=old.players[old.active].props[command.slot],p=next.players[command.target];
-  let label=PROPS[id].name+' · 生效';
-  if(command.targetHand!==undefined)label=id==='lock'?'封印至该玩家回合结束':`数字 ${old.players[command.target].hands[command.targetHand]} → ${p.hands[command.targetHand]}`;
-  if(id==='grace')label=`回复 ${p.hp-old.players[command.target].hp} 生命`;
-  if(id==='wine')label=`首段伤害 +${next.players[old.active].wine*10} · 下次直接攻击消耗`;
-  if(id==='adrenaline')label=`${old.players[old.active].resilience?'坚韧：本回合继续':'本回合结束'} · 三回合伤害 +5、减伤 5`;
-  if(id==='greed')label=old.players[old.active].resilience?'获得道具 · 坚韧：本回合继续':'获得道具 · 立即结束回合';
-  if(id==='echo'||id==='mirror')label=next.players[old.active].echo&&next.players[old.active].mirror?'镜像 × 回响 · 加和结果写入对手双手':PROPS[id].name+' · 本回合计算生效';
-  beats.push({type:'effect',owner:command.target,label});
- }
+ if(command.type==='prop')beats.push({type:'effect',owner:command.target,label:effectDetail(old,next,command)});
  return beats;
 }
 export function actionDuration(old,next,c) {
@@ -46,5 +35,5 @@ export const commandArt=(old,c)=>c.type==='attack'?weaponById(old.players[old.ac
 export function skillSummary(old,next,command) {
  const weapon=weaponById(old.players[old.active].weapon);
  const hits=(next.events||[]).filter(e=>e.type==='damage'&&e.owner===1-old.active&&e.source===weapon?.name);
- return {hits:hits.length,damage:hits.reduce((sum,e)=>sum+e.amount,0),effects:actionBeats(old,next,command).filter(e=>e.type==='effect').map(e=>e.label)};
+ return {hits:hits.length,damage:hits.reduce((sum,e)=>sum+e.amount,0),effects:[...new Set([...actionBeats(old,next,command).filter(e=>e.type==='effect').map(e=>e.label),...hits.filter(e=>e.blocked).map(defenseDetail)])]};
 }

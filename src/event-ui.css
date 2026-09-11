@@ -111,3 +111,57 @@ body:has(.combat-cinema.milestone) .game-shell { visibility:hidden; }
 
 /* The primary action already names itself; avoid a tutorial badge over its label. */
 .game-shell .end-turn.tutorial-target::after { content:none; }
+
+/* One event card explains the action; hands and HP remain the visual result. */
+.game-shell .notice-stack .combat-cinema.skill.arena-skill { position:relative; inset:auto; width:100%; height:auto; min-height:132px; display:grid; grid-template-columns:60px minmax(0,1fr); gap:10px 14px; padding:15px; overflow:visible; border:1px solid #ffffff26; border-left:4px solid var(--strike); border-radius:9px; }
+.game-shell .notice-stack .arena-skill .cinema-heading { position:static; grid-column:1/-1; transform:none!important; }
+.game-shell .notice-stack .arena-skill .cinema-heading small { font-size:11px; color:#c7d3e6; }
+.game-shell .notice-stack .arena-skill .cinema-heading h2 { font-size:25px; margin:3px 0 0; }
+.game-shell .notice-stack .arena-skill .cinema-icon { position:static; grid-column:1; width:60px; height:60px; background:#f5edd9; border-radius:8px; padding:5px; align-self:center; object-fit:contain; }
+.game-shell .notice-stack .arena-skill .cinema-result { position:static; grid-column:2; display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:0; background:none; color:#fff8e8; transform:none; min-width:0; }
+.game-shell .notice-stack .arena-skill .cinema-result .damage-value { color:#ffdd8a; font-size:30px; line-height:1.05; }
+.game-shell .notice-stack .arena-skill .cinema-result .effect-text { color:#fff8e8; font-size:14px; line-height:1.55; text-align:left; font-weight:500; }
+.game-shell .notice-stack .arena-skill .cinema-result>small { font-size:12px; color:#c7d3e6; }
+.game-shell .notice-stack .arena-skill .damage-caption,.game-shell .notice-stack .arena-skill .cinema-ink,.game-shell .notice-stack .arena-skill .cinema-portrait { display:none; }
+.game-shell .notice-stack .arena-skill .cinema-hit { top:16px; right:15px; font-size:11px; }
+.skill-flight { position:absolute; z-index:196; width:72px; height:72px; object-fit:contain; pointer-events:none; background:#fff8e8dc; padding:8px; border-radius:50%; box-shadow:0 0 24px #e3b45180; }
+.match-history .history-phase { grid-template-columns:1fr; }
+.history-note { color:#626775; font-size:12px; margin-top:-8px; }
+.match-finished { border:1px solid #edc981; }
+.nine-finale { position:fixed; inset:0; z-index:210; display:grid; place-items:center; overflow:hidden; pointer-events:none; background:radial-gradient(ellipse at center,#142136e8,#090f1ff2); backdrop-filter:blur(4px); color:#fff4d9; }
+.nine-content { position:relative; z-index:2; text-align:center; padding:30px; width:min(620px,100%); }
+.nine-content>small { font-size:14px; letter-spacing:.12em; color:#dfc596; }
+.nine-orbit { height:190px; width:280px; margin:20px auto; position:relative; display:grid; place-items:center; }
+.nine-orbit>span,.nine-orbit>b { position:absolute; font-family:'Noto Sans SC',serif; font-weight:500; color:#ffe5a8; text-shadow:0 0 35px #f3c56645; }
+.nine-orbit>span { font-size:84px; }
+.nine-orbit>b { font-size:126px; }
+.nine-content h2 { font-size:clamp(34px,6vw,64px); font-weight:700; letter-spacing:.15em; margin:0 0 12px; opacity:0; }
+.nine-content p { margin:0; font-size:16px; color:#e4d9c2; opacity:0; }
+.nine-content footer { font-size:14px; color:#c6cddd; margin-top:22px; opacity:0; }
+.nine-progress { display:flex; justify-content:center; gap:10px; margin-top:22px; opacity:0; }
+.nine-progress i { display:grid; place-items:center; font-style:normal; width:34px; height:34px; border:1px solid #b99d6635; color:#9e9784; border-radius:50%; }
+.nine-progress i.lit { background:#dfbd79; border-color:#f8e3b3; color:#17213a; }
+.nine-aura { position:absolute; width:min(65vw,510px); aspect-ratio:1; border:1px solid #efd29266; border-radius:50%; box-shadow:0 0 100px #e8bf5718,inset 0 0 90px #f6d78315; }
+.nine-aura::before,.nine-aura::after { content:''; position:absolute; inset:18px; border:1px solid #f8dda22b; border-radius:50%; }
+.nine-aura::after { inset:-26px; border-style:dashed; opacity:.4; }
+@media(max-width:650px) {
+ .notice-stack { width:calc(100% - 64px); top:100px; }
+ .game-shell .notice-stack .combat-cinema.skill.arena-skill { min-height:120px; padding:12px; grid-template-columns:46px minmax(0,1fr); gap:8px 12px; }
+ .game-shell .notice-stack .arena-skill .cinema-heading h2 { font-size:22px; }
+ .game-shell .notice-stack .arena-skill .cinema-icon { width:46px; height:46px; }
+ .game-shell .notice-stack .arena-skill .cinema-result .effect-text { font-size:13px; }
+ .skill-flight { width:55px; height:55px; }
+ .nine-content { padding:22px; }
+ .nine-orbit { margin:16px auto; width:240px; height:160px; }
+ .nine-orbit>span { font-size:70px; }
+ .nine-orbit>b { font-size:104px; }
+ .nine-aura { width:310px; }
+ .nine-content p { font-size:14px; }
+ .nine-content footer { font-size:12px; }
+}
+
+@media(min-width:651px) { .notice-stack { width:min(280px,22%); } }
+
+.game-shell .notice-stack .arena-skill .cinema-result { flex-wrap:nowrap; justify-content:flex-start; height:auto; }
+.game-shell .notice-stack .arena-skill .cinema-result .effect-text { flex-basis:auto; width:100%; }
+.game-shell .notice-stack .arena-skill .cinema-heading h2 { background:none; padding:0; }

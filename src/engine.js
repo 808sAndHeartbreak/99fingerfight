@@ -1,3 +1,4 @@
+import {effectDetail,defenseDetail} from "./effect-copy.js";
 import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
 export const RULES_VERSION = 12;
@@ -7,7 +8,7 @@ const assert = (condition, message) => {
 const mod10 = (n) => (n + 10) % 10;
 const log = (s, message) => {
   s.log.push(`[回合 ${Math.ceil(s.turn/2)}] ${message}`);
-  s.log = s.log.slice(-30);
+  s.log = s.log.slice(-120);
 };
 const name = (p) => (p === 0 ? "蓝方" : "红方");
 
@@ -105,7 +106,7 @@ function damage(s, owner, amount, trueDamage, source) {
   const actual=Math.min(target.hp,value);
   target.hp-=actual;
   s.events.push({type:"damage",owner,amount:actual,raw:amount,trueDamage,source,blocked,hands:[...target.hands],foam:target.foam});
-  log(s,`${source}对${name(owner)}造成 ${actual} 点${trueDamage?"真实":"普通"}伤害${blocked?`（${blocked}）`:""}。`);
+  log(s,`${source}对${name(owner)}造成 ${actual} 点${trueDamage?"真实":"普通"}伤害${blocked?`（${defenseDetail({blocked})}）`:""}。`);
   checkWinner(s);
 }
 function endTurn(s, skipped=false) {
@@ -213,9 +214,10 @@ export function applyCommand(state, command) {
         s.players.forEach((player,i)=>{for(let n=0;n<counts[i];n++)draw(s,player,"制衡");});
       } else if(id==="boon")s.players.forEach(player=>{while(player.props.length<3)draw(s,player,"天降的宝札");});
       else if(id==="greed"){draw(s,p,"强欲");draw(s,p,"强欲");log(s,`${name(s.active)}强欲生效${p.resilience?"，坚韧使本回合继续":"，立即结束回合"}。`);if(!p.resilience)endTurn(s,true);}
-      else if(id==="grace"){const amount=Math.min(MAX_HP-p.hp,p.hands[0]+p.hands[1]);p.hp+=amount;log(s,`${name(s.active)}恩惠恢复 ${amount} 生命。`);}
+      else if(id==="grace"){const amount=Math.min(MAX_HP-p.hp,p.hands[0]+p.hands[1]);p.hp+=amount;}
       else if(id==="ruin")damage(s,1-s.active,enemy.hands[0]+enemy.hands[1],true,"破坏");
       checkWinner(s);
+      const detail=effectDetail(state,s,command);if(detail)log(s,detail);
       break;
     }
     case "attack": {
@@ -256,6 +258,7 @@ export function applyCommand(state, command) {
           if(p.nine===2) {s.winner=s.active;s.phase="over";s.winReason="九九归一";log(s,`${name(s.active)}九九归一，立即获胜！`);}
         }
       }
+      const detail=effectDetail(state,s,command);if(detail)log(s,detail);
       p.hands = [1,1];
       log(s, `${name(s.active)}技能结算完成，双手归 [1]。`);
       p.weapon = null;
