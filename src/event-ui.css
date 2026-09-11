@@ -93,3 +93,21 @@ body:has(.combat-cinema.milestone) .game-shell { visibility:hidden; }
  .combat-cinema.arena-skill .cinema-result .damage-value { font-size:26px; }
  .combat-cinema.arena-skill .cinema-result .damage-caption { display:none; }
 }
+
+/* A clear next action, with stronger emphasis only when the turn is exhausted. */
+.tutorial-intro [data-tutorial-confirm] { display:block; width:100%; min-width:0; max-width:none; margin-top:28px; padding:15px 24px; text-align:center; }
+.tutorial-pause { display:flex; flex-direction:column; gap:14px; }
+.game-shell .end-turn { min-width:128px; min-height:52px; font-size:18px; border-width:2px; }
+.game-shell .end-turn.recommended { background:#ffd166; color:#17213a; border-color:#ffe6a7; box-shadow:0 0 0 4px #ffd16625,0 4px 0 #b48225; animation:end-invite 2.4s ease-in-out infinite; }
+.game-shell .end-turn.recommended:hover { background:#ffe29a; }
+.game-shell .end-turn.urgent { animation:end-urgent 1.5s ease-in-out infinite; }
+.game-shell .end-turn:disabled { background:#26334a; border-color:#59677d; color:#a5afbe; opacity:.65; animation:none; }
+.needs-calculation .hand-hotspot.available .hand-value { animation:hand-invite 1.8s ease-in-out infinite; }
+@keyframes end-invite { 50% { box-shadow:0 0 0 7px #ffd16618,0 4px 0 #b48225; filter:brightness(1.12); } }
+@keyframes end-urgent { 0%,100% { transform:translateY(0); box-shadow:0 0 0 4px #ffd16635,0 4px 0 #b48225; } 50% { transform:translateY(-3px); box-shadow:0 0 0 10px #ffd16612,0 6px 0 #b48225; } }
+@keyframes hand-invite { 50% { filter:drop-shadow(0 0 8px currentColor); background:#fff3bd; } }
+@media(max-width:650px) { .game-shell .end-turn { min-width:110px; min-height:48px; font-size:16px; padding:10px 14px; } }
+@media(prefers-reduced-motion:reduce) { .game-shell .end-turn,.needs-calculation .hand-hotspot.available .hand-value { animation:none!important; } }
+
+/* The primary action already names itself; avoid a tutorial badge over its label. */
+.game-shell .end-turn.tutorial-target::after { content:none; }

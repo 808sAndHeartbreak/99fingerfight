@@ -411,6 +411,7 @@ export class DuelStage {
           }
         }
         if (!this.animation) h.halo.visible = true;
+        if(h.actionable && this.state?.active===h.owner && !this.selection && !this.presenting)h.halo.material.opacity=this.reduced.matches?.65:.55+Math.sin(this.time*3)*.18;
         h.halo.position.copy(h.base);
         h.halo.position.z = -0.65;
         h.shield.position.copy(h.root.position);

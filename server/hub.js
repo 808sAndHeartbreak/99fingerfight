@@ -1,7 +1,7 @@
 import { randomBytes, createHash, randomUUID } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { createGame, applyCommand, RULES_VERSION } from '../src/engine.js';
+import { createGame, applyCommand, canEndTurn, RULES_VERSION } from '../src/engine.js';
 import { turnSeconds, phaseCue } from '../src/phase-cue.js';
 import { presentationDuration } from '../src/presentation.js';
 import { normalizeParticipants } from '../src/identity.js';
@@ -131,6 +131,7 @@ export class MatchHub {
       check(['prop','forge','add','attack','end','surrender'].includes(message.command.type),'无效指令');
       check(r.state.phase!=='start','回合正在开始');
       check(message.command.type==='end'||message.command.type==='surrender'||this.now()<r.deadlineAt,'回合时间已到，请等待交接');
+      if(message.command.type==='end')check(canEndTurn(r.state),'先用自己的手计算一次');
       const c={...message.command,actor:r.seats.indexOf(u.id)};
       event=this.step(r,c);r.cache[cacheKey]=true;
       const keys=Object.keys(r.cache);if(keys.length>256)delete r.cache[keys[0]];

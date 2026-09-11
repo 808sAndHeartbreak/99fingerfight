@@ -6,7 +6,7 @@ import { createBattleSound } from "./battle-sound.js";
 import { TutorialSession, LESSONS } from "./tutorial.js";
 import { menuMarkup } from "./menu.js";
 import { OnlineClient, onlineMarkup } from "./online.js";
-import { synthesisOptions, supplyIn, hasTurnOptions, propCommands } from "./engine.js";
+import { synthesisOptions, supplyIn, hasTurnOptions, canEndTurn, propCommands } from "./engine.js";
 import { playerName, escapeHtml, shortName } from "./identity.js";
 import { phaseCue, turnSeconds, TURN_SECONDS } from "./phase-cue.js";
 import "./style.css";
@@ -248,7 +248,7 @@ function render() {
   document.querySelector(".game-shell").dataset.actor = state.active;
   document.querySelector(".game-shell").dataset.phase = state.phase;
   const forgePanel=document.querySelector("#forge-options");
-  forgePanel.hidden=busy || remotePending || !!selected || !humanTurn() || state.phase!=="action" || !!p.weapon || !synthesisOptions(state).length;
+  forgePanel.hidden=!enabled || busy || remotePending || !!selected || !humanTurn() || state.phase!=="action" || !!p.weapon || !synthesisOptions(state).length;
   forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><h2>合成技能</h2><p>${p.hands.map(n=>`[${n}]`).join(" + ")}</p></div><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${enabled && (mode!=="tutorial" || session.guide?.command.weapon===w.id) ? "" : "disabled"}>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span></button>`).join("")}</div>`;
   for(const owner of [0,1]) {
     const player=state.players[owner], usable=owner===state.active && enabled && state.phase==="action" && !p.weapon && !player.silenced;
@@ -267,8 +267,12 @@ function render() {
   document.querySelector("#primary-actions").innerHTML = `${selected ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"}</button>` : ""}`;
   const endButton=document.querySelector('#end-turn');
   endButton.hidden=state.winner!==null;
-  endButton.disabled=!enabled || state.phase!=="action" || !!p.weapon || (mode==='tutorial' && (session.guide?.command.type!=='end' || !session.canProceed));
-  endButton.classList.toggle('recommended',(mode==='tutorial' || !hasTurnOptions(state)) && !endButton.disabled);
+  endButton.disabled=!enabled || !canEndTurn(state) || (mode==='tutorial' && (session.guide?.command.type!=='end' || !session.canProceed));
+  endButton.classList.toggle('recommended',!endButton.disabled);
+  endButton.classList.toggle('urgent',!endButton.disabled && !hasTurnOptions(state));
+  endButton.textContent=endButton.disabled && enabled && !state.calculated && mode!=='tutorial'?'先计算一次':'结束回合';
+  endButton.setAttribute('aria-label',endButton.disabled && enabled && !state.calculated?'先计算一次，再结束回合':!hasTurnOptions(state)?'结束回合，没有其他可用操作':'结束回合');
+  document.querySelector('.game-shell').classList.toggle('needs-calculation',enabled && state.phase==='action' && !state.calculated && !p.weapon && !selected && (mode!=='tutorial' || session.guide?.command.type==='add'));
 
   document.querySelector(".game-shell").classList.toggle("is-busy", busy);
   document.querySelectorAll("#menu,#help").forEach((b) => (b.disabled = busy));
@@ -382,7 +386,7 @@ async function send(command) {
   render();
   try {
     const full = { ...command, actor: old.active, revision: old.revision };
-    const next = await current.send(full);
+    const next = await current.send(full,{timeout:mode!=="tutorial" && remaining===0});
     const completed = await animateCommand(full, old, next, (visual) => {
       if (current === session && serial === actionSerial)
         showContact(visual, old, next);
@@ -681,7 +685,7 @@ async function drainRemote() {
 
 info = setupInfo(app, () => state, asset, participants, () => mode === "online", key => {
   if(mode!=="tutorial" || !session.inspect(key))return;
-  const end=document.querySelector("#end-turn");end.disabled=false;end.classList.add("recommended");feedback.reveal(document.querySelector("#instruction"),"已查看配方，点击结束回合");renderTutorial();
+  const end=document.querySelector("#end-turn");end.disabled=false;end.classList.add("recommended");end.classList.toggle("urgent",!hasTurnOptions(state));feedback.reveal(document.querySelector("#instruction"),"已查看配方，点击结束回合");renderTutorial();
 });
 listen(app, "click", (e) => {
   const tutorialAction=e.target.closest('button')?.id;
@@ -819,6 +823,11 @@ listen(document, "keydown", (e) => {
     e.stopPropagation();
     if(!e.repeat)dismissDialog();
     return;
+  }
+  if(e.key==='Escape' && !dialog.open && mode==='tutorial' && started){
+    e.preventDefault();if(e.repeat)return;
+    openDialog('<section class="dialog-body tutorial-pause"><h2>教学已暂停</h2><p>随时继续，当前步骤会保留。</p><button class="primary" data-close>继续教学</button><button data-tutorial-retry>重试本节</button><button data-tutorial-exit>退出教学</button></section>');
+    dialog.dataset.view='tutorial-pause';return;
   }
   if (e.key === "Escape" && !dialog.open && selected && !busy) {
     selected = null;

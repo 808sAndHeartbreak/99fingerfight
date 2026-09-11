@@ -1,5 +1,5 @@
 import { normalizeParticipants } from "./identity.js";
-import { createGame, applyCommand, RULES_VERSION } from "./engine.js";
+import { createGame, applyCommand, canEndTurn, RULES_VERSION } from "./engine.js";
 
 /** UI depends only on getSnapshot / subscribe / send / dispose.
  * A remote session can implement the same interface with server-owned snapshots.
@@ -36,8 +36,9 @@ export class LocalSession {
     listener(this.getSnapshot());
     return () => this.#listeners.delete(listener);
   }
-  async send(command) {
+  async send(command, {timeout=false}={}) {
     if (this.#disposed) throw new Error("对局已关闭");
+    if(command.type==="end" && !timeout && !canEndTurn(this.#state))throw new Error("先用自己的手计算一次");
     this.#state = applyCommand(this.#state, command);
     this.#commands.push(structuredClone(command));
     for (const listener of this.#listeners) listener(this.getSnapshot());

@@ -1,6 +1,6 @@
 import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
-export const RULES_VERSION = 11;
+export const RULES_VERSION = 12;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -151,6 +151,7 @@ export function applyCommand(state, command) {
       assert(s.phase === "start", "回合已经开始");
       if(s.skipping)endTurn(s,true);else continueAction(s);
       break;
+    // Trusted reducer also records clock expiry. Manual callers must use canEndTurn.
     case "end":
       assert(s.phase === "action" && !p.weapon, "当前不能结束回合");
       log(s, `${name(s.active)}结束回合。`);
@@ -286,6 +287,8 @@ export function propCommands(s) {
   });
   return commands;
 }
+export const canEndTurn = s => s.winner===null && s.phase==="action" && !s.players[s.active].weapon && (s.calculated || !touchCommands(s).length);
+
 export function legalCommands(s) {
   if(s.winner!==null)return [];
   const base={actor:s.active,revision:s.revision},p=s.players[s.active];
@@ -294,7 +297,7 @@ export function legalCommands(s) {
   else if(s.phase==="action") {
     if(p.weapon)commands=[{type:"attack"}];
     else commands=[...propCommands(s),...synthesisOptions(s).map(w=>({type:"forge",weapon:w.id})),
-      ...(!s.calculated?touchCommands(s):[]),{type:"end"}];
+      ...(!s.calculated?touchCommands(s):[]),...(canEndTurn(s)?[{type:"end"}]:[])];
   }
   return commands.map(c=>({...c,...base}));
 }

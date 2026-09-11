@@ -40,7 +40,7 @@ test("eight recipes require explicit synthesis and never form during calculation
 test("skills check only actor recipe and may be ignored without a phase transition",()=>{
  let s=planning();s.players[1].hands=[9,9];assert.equal(synthesisOptions(s).length,0);
  s.players[0].hands=[9,9];assert.throws(()=>run(s,{type:'forge',weapon:'serious'}));
- assert.ok(legalCommands(s).some(c=>c.type==='add'));assert.ok(legalCommands(s).some(c=>c.type==='end'));
+ assert.ok(legalCommands(s).some(c=>c.type==='add'));assert.equal(legalCommands(s).some(c=>c.type==='end'),false);
  const n=run(s,{type:'end'});assert.equal(n.active,1);assert.deepEqual(n.players[0].hands,[9,9]);
 });
 
@@ -94,7 +94,7 @@ test("draw cadence and inventory capacity survive mandatory action and start pha
   assert.equal(s.phase,"start"); assert.equal(s.players[0].props.length,1);
   while(s.turn<7) {
     const commands=legalCommands(s);
-    s=run(s,commands.find(c=>c.type==="advance") || commands.find(c=>c.type==="end") || commands[0]);
+    s=run(s,commands.find(c=>c.type==="advance") || commands.find(c=>c.type==="end") || commands.find(c=>c.type==="add") || commands[0]);
   }
   assert.equal(s.players[0].props.length,2);
 });

@@ -17,7 +17,7 @@ test('items, synthesis and calculation interleave in one turn without granting a
  s=run(s,{type:'end'});assert.equal(s.active,1);assert.equal(s.calculated,false);
 });
 test('a recipe never locks out calculation or items and does not need a decline command',()=>{
- let s=ready();for(const type of ['prop','forge','add','end'])assert.ok(legalCommands(s).some(c=>c.type===type));
+ let s=ready();for(const type of ['prop','forge','add'])assert.ok(legalCommands(s).some(c=>c.type===type));
  s.players[0].mirror=true;s=run(s,{type:'add',hand:0,targetHand:0});assert.deepEqual(s.players[0].hands,[2,2]);
  assert.ok(legalCommands(s).some(c=>c.type==='forge'));assert.ok(legalCommands(s).some(c=>c.type==='prop'));
  assert.throws(()=>run(s,{type:'decline'}));assert.throws(()=>run(s,{type:'advance'}));
