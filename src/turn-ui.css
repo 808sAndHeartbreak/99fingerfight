@@ -1,0 +1,83 @@
+/* Unified turn: ownership, time and one contextual instruction. */
+.game-shell .battle-banner { min-height:112px; padding:14px 3%; gap:24px; border-bottom:1px solid #ffffff18; border-left-width:5px; overflow:visible; background:#141d30; }
+.game-shell .turn-overview { flex:0 0 270px; display:flex; flex-direction:column; gap:6px; }
+.game-shell .round-inline { display:flex; gap:14px; align-items:center; font-size:12px; }
+.round-caption { color:#b6bfce; white-space:nowrap; }
+.round-caption b { font:600 17px Teko,sans-serif; margin-left:4px; }
+.game-shell #phase-label { color:#fff8e8; font-size:18px; font-weight:800; }
+.turn-controls { display:flex; align-items:center; gap:16px; }
+.game-shell .phase-time { display:flex; align-items:baseline; gap:5px; background:transparent; padding:0; border:0; min-width:72px; color:#fff7e9; }
+.game-shell .phase-time #clock { font:600 58px/.95 Teko,sans-serif; font-variant-numeric:tabular-nums; font-style:normal; text-shadow:none; min-width:44px; }
+.game-shell .phase-time small { font-size:12px; color:#aab6c9; }
+.game-shell .phase-time.urgent { color:#ffb85d; }
+.game-shell .end-turn { padding:12px 18px; min-height:46px; border:1px solid #91a2be; border-radius:7px; background:#283750; color:#f9f4e8; font-size:16px; font-weight:800; white-space:nowrap; box-shadow:0 3px 0 #090f1a; }
+.game-shell .end-turn:not(:disabled):hover { background:#3b506e; }
+.game-shell .end-turn.recommended { color:#152036; background:#ffe0a0; border-color:#fff0cc; box-shadow:0 0 0 3px #ffe0a022,0 3px 0 #a87b31; }
+.game-shell .end-turn:disabled { opacity:.35; box-shadow:none; }
+.game-shell .turn-instruction { flex:1; min-width:0; }
+.game-shell #instruction { display:block; font-size:clamp(18px,1.7vw,25px); font-style:normal; line-height:1.55; font-weight:750; padding:0; color:#f9f4e8; background:none; transform:none; box-shadow:none; text-shadow:none; text-wrap:balance; }
+.game-shell .hud-tools { gap:6px; }
+.game-shell .hud-tools button { padding:10px; min-height:40px; font-size:12px; border:1px solid #ffffff20; border-radius:6px; transform:none; }
+.game-shell .duel { background:#f2ede1; }
+.game-shell .duel::before,.game-shell .duel::after,.game-shell .paper-grain { display:none; }
+.game-shell:has(#forge-options:not([hidden])) .duel::after { display:none; }
+.game-shell .field-items { width:96px; gap:9px; padding:10px; top:124px; bottom:22px; justify-content:center; border:1px solid #24324d18; border-radius:14px; background:#e5dfd1; box-shadow:inset 0 1px 0 #fff9; }
+.game-shell .field-items.blue { left:3%; }
+.game-shell .field-items.red { right:3%; }
+.game-shell .field-items.items-usable { border-color:currentColor; background:#e9e4d8; }
+.game-shell .field-items .prop-slot { height:76px; min-height:65px; border:1px solid #24324d25; border-radius:8px; background:#fbf8ef; box-shadow:0 2px 3px #17203412; transform:none; animation:none; overflow:visible; }
+.game-shell .field-items .prop-slot.selected { border-color:currentColor; box-shadow:0 0 0 2px currentColor; background:white; }
+.game-shell .field-items .prop-use { border-radius:7px; box-shadow:none; padding:5px 2px; gap:2px; }
+.game-shell .field-items .prop-use[aria-disabled="false"] { box-shadow:inset 0 -3px 0 var(--active); }
+.game-shell .field-items .prop-use[aria-disabled="false"]:hover { background:#fff; box-shadow:inset 0 -3px 0 var(--active),0 0 0 2px var(--active); }
+.game-shell .field-items .prop-use img { width:45px; height:45px; }
+.game-shell .field-items .prop-use b { font-size:12px; font-weight:750; }
+.game-shell .field-items .prop-slot.empty { opacity:1; border:1px dashed #26334b25; box-shadow:inset 0 2px 5px #19213306; background:#d7d1c329; }
+.game-shell .field-items .prop-slot.empty>span { color:#aaa69c; font-size:22px; font-weight:400; }
+.game-shell .supply-dots { justify-content:center; padding:0 0 3px; gap:5px; }
+.game-shell .supply-dots i { width:14px; height:4px; border-radius:3px; transform:none; box-shadow:none; }
+.game-shell .supply-dots i.filled { box-shadow:none; }
+.game-shell .prop-confirm { border-radius:7px; font-size:13px; padding:12px; box-shadow:0 3px 10px #16203630; }
+/* Inline skill choices leave hands and inventories available. */
+.game-shell #forge-options,.game-shell.is-tutorial #forge-options { inset:50% auto auto 50%; width:270px; max-height:75%; min-height:0; transform:translate(-50%,-40%); padding:12px; background:#162137f5; border:1px solid #ffffff35; border-radius:10px; box-shadow:0 8px 24px #16203620; gap:8px; overflow:auto; }
+.game-shell .forge-heading { display:flex!important; justify-content:space-between; align-items:center; padding:0 2px 8px; border-bottom:1px solid #ffffff25; }
+.game-shell .forge-heading h2 { font-size:15px; font-style:normal; transform:none; text-shadow:none; }
+.game-shell .forge-heading p { margin:0; font:600 24px/1 Teko,sans-serif; }
+.game-shell .forge-choices,.game-shell .forge-choices:has(>button:only-child) { display:flex; flex-direction:column; gap:7px; padding:0; margin:0; width:100%; }
+.game-shell .forge-choices button { display:grid; grid-template-columns:40px 1fr; gap:2px 8px; min-height:65px; padding:8px; border:1px solid #fff9db30; box-shadow:none; background:#fbf6e9; border-radius:6px; text-align:left; }
+.game-shell .forge-choices button:hover:not(:disabled) { transform:none; box-shadow:0 0 0 2px var(--active); }
+.game-shell .forge-choices .skill-icon { width:40px; height:40px; grid-row:1/3; background:transparent; }
+.game-shell .forge-choices strong { font-size:15px; }
+.game-shell .forge-choices button>span:not(.skill-icon) { font-size:11px; line-height:1.4; }
+@media(max-width:900px) {
+ .game-shell .battle-banner { gap:10px 16px; flex-wrap:wrap; }
+ .game-shell .turn-overview { flex-basis:250px; }
+ .game-shell .hud-tools { margin-left:auto; }
+ .game-shell #forge-options { width:220px; }
+}
+@media(max-width:650px) {
+ .game-shell .battle-banner { padding:10px 12px; gap:10px; }
+ .game-shell .turn-overview { flex:1 1 210px; }
+ .game-shell .turn-instruction { order:3; flex:1 0 100%; min-height:48px; display:flex; align-items:center; }
+ .game-shell #instruction { font-size:16px; text-wrap:pretty; }
+ .game-shell .hud-tools { flex-direction:column; align-self:flex-start; }
+ .game-shell .hud-tools button { min-height:34px; padding:6px 9px; font-size:11px; }
+ .game-shell .phase-time #clock { font-size:48px; }
+ .game-shell .end-turn { font-size:14px; padding:10px 14px; min-height:44px; }
+ .game-shell #phase-label { font-size:16px; }
+ .game-shell .field-items { width:60px; padding:6px; gap:7px; top:110px; bottom:12px; border-radius:10px; }
+ .game-shell .field-items.blue { left:8px; }
+ .game-shell .field-items.red { right:8px; }
+ .game-shell .field-items .prop-slot { height:62px; min-height:54px; border-radius:6px; }
+ .game-shell .field-items .prop-use img { width:34px; height:34px; }
+ .game-shell .field-items .prop-use b { font-size:10px; }
+ .game-shell .supply-dots { gap:3px; }
+ .game-shell .supply-dots i { width:10px; }
+ .game-shell #forge-options,.game-shell.is-tutorial #forge-options { width:190px; top:calc(50% + 95px); transform:translate(-50%,-50%); padding:8px; max-height:160px; }
+ .game-shell .forge-choices button { grid-template-columns:30px 1fr; padding:6px; min-height:60px; }
+ .game-shell .forge-choices .skill-icon { width:30px; height:30px; }
+ .game-shell .forge-choices strong { font-size:13px; }
+ .game-shell .forge-choices button>span:not(.skill-icon) { font-size:10px; }
+}
+
+.game-shell .phase-time[hidden] { display:none; }

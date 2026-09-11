@@ -30,7 +30,9 @@ function score(s, actor) {
 }
 export function chooseCommand(s) {
   const actor = s.active;
-  const ranked = legalCommands(s).map((c, i) => {
+  const legal=legalCommands(s);
+  const candidates=legal.some(c=>c.type==="add")?legal.filter(c=>c.type!=="end"):legal;
+  const ranked = candidates.map((c, i) => {
     const next = applyCommand(s, c);
     let value = score(next, actor);
     if (c.type === "advance" && next.winner === null && next.active===actor) {

@@ -12,8 +12,6 @@
 .player-effects .loadout-count { font-size:12px; }
 .game-shell[data-phase="planning"] .player.active .prop-label { display:none; }
 .player-effects button { min-height:34px; }
-.turn-track > div > span { font-size:17px; }
-.turn-track small { font-size:12px; }
 .bottom-line { min-height:36px; }
 .battle-log { font-size:12px; }
 .forge-options { overflow:auto; overscroll-behavior:contain; }
@@ -31,8 +29,7 @@ dialog[open] { animation:dialog-arrive .18s ease-out both; }
 @keyframes dialog-arrive { from { opacity:0; translate:0 8px; } to { opacity:1; translate:0 0; } }
 @media(min-width:901px) and (max-height:850px) {
   .topbar { height:60px; min-height:60px; }
-  .turn-track { min-height:56px; }
-  .duel,.game-shell[data-phase="synthesis"] .duel { min-height:400px; flex-basis:400px; }
+  .duel { min-height:400px; flex-basis:400px; }
   .command-inner { min-height:115px; height:auto; padding-block:12px; }
   .game-menu .menu-keyart { min-height:520px; }
   .game-menu .menu-body { padding-block:28px; }
@@ -50,8 +47,6 @@ dialog[open] { animation:dialog-arrive .18s ease-out both; }
   .game-menu .menu-body h2 { font-size:36px; }
   .turn-instruction h1 { font-size:22px; }
   .turn-instruction p { font-size:13px; }
-  .turn-track > div > span { font-size:14px; }
-  .turn-track small { font-size:10px; }
   .topbar nav button { min-height:36px; }
   .forge-choices button > span { font-size:13px; }
   .cinema-hit { font-size:12px; bottom:calc(7% + 76px); }
@@ -138,9 +133,9 @@ dialog[open] { animation:dialog-arrive .18s ease-out both; }
 .combat-cinema.skill.contact[data-family="nine"] .nine-ritual { display:flex; flex-wrap:wrap; justify-content:center; align-content:center; padding:24px; }
 .nine-ritual>b,.nine-ritual>small { flex-basis:100%; }
 
-/* The logical left hand stays index 0; only player one's screen order changes. */
-#hand-0-0 { top:76%; }
-#hand-0-1 { top:28%; }
+/* Keep logical hand indices; match both players' swapped 3D screen positions. */
+#hand-0-0, #hand-1-1 { top:28%; }
+#hand-0-1, #hand-1-0 { top:76%; }
 .phase-text .phase-ribbon { min-height:0; height:auto; max-height:none; }
 .combat-cinema.ultimate .nine-ritual { background:var(--strike); }
 .combat-cinema .nine-ritual>span { color:var(--strike); }
@@ -161,8 +156,6 @@ dialog[open] { animation:dialog-arrive .18s ease-out both; }
 }
 .phase-text .phase-type { margin:0; width:auto; color:inherit; text-shadow:none; text-align:center; }
 .phase-text .phase-type strong { white-space:nowrap; font-style:normal; letter-spacing:.08em; }
-.turn-track>div.current { box-shadow:none; }
-.turn-track>div.current::before { box-shadow:4px 4px 0 var(--active); }
 /* Preview text can extend outside a hand, but must never steal another hand's input. */
 .hand-hotspot .sum-preview, .hand-hotspot .hand-status { pointer-events:none; }
 

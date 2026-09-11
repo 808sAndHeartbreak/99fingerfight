@@ -5,8 +5,8 @@ import {describe} from '../src/info.js';
 const run=(s,c)=>applyCommand(s,{actor:s.active,revision:s.revision,...c});
 const fixture=id=>{const s=createGame(42);s.phase='action';s.players[0].weapon=id;s.players.forEach(p=>{p.props=[];p.turns=1;});return s;};
 // These duration tests resolve skills after the turn's calculation.
-const attack=s=>run({...s,calculated:true},{type:'attack'});
-const touch=s=>{s.phase='action';s.calculated=false;s.players[s.active].weapon=null;const n=run(s,{type:'add',hand:0,targetHand:0});return n.phase==='synthesis'?run(n,{type:'decline'}):n;};
+const attack=s=>{const n=run({...s,calculated:true},{type:'attack'});if(n.winner!==null||n.active!==s.active)return n;const ended=run(n,{type:'end'});ended.events=[...n.events,...ended.events];return ended;};
+const touch=s=>{s.phase='action';s.calculated=false;s.players[s.active].weapon=null;const n=run(s,{type:'add',hand:0,targetHand:0});return n.winner===null?run(n,{type:'end'}):n;};
 
 test('peace covers exactly each next three own turns, including DOT and skipped turns',()=>{
  let s=attack(fixture('peace'));assert.deepEqual(s.players.map(p=>p.peace),[3,3]);
@@ -28,7 +28,7 @@ test('peace blocks every direct segment and item damage without consuming any de
   assert.deepEqual(n.players[1].hands,id==='serious'?[1,1]:[5,5]);
  }
  const s=fixture('fan');s.players[1].peace=3;s.players[1].props=['add'];assert.equal(attack(s).players[1].props.length,0);
- s.phase='planning';s.players[0].props=['ruin'];s.players[1].hands=[9,9];
+ s.phase='action';s.players[0].weapon=null;s.players[0].props=['ruin'];s.players[1].hands=[9,9];
  assert.match(describe('prop:ruin:0',s).body,/实际扣血 0/);
  assert.equal(run(s,{type:'prop',slot:0,target:1}).players[1].hp,99);
 });
@@ -45,7 +45,7 @@ test('weakness floors each direct segment at zero, preserves shields and combine
  }
  const s=fixture('claw');s.players[0].weak=2;s.players[0].knuckles=3;
  assert.deepEqual(attack(s).events.filter(e=>e.type==='damage').map(e=>e.raw),[30,30]);
- s.phase='planning';s.players[0].props=['ruin'];s.players[1].hands=[9,9];assert.equal(run(s,{type:'prop',slot:0,target:1}).players[1].hp,81);
+ s.phase='action';s.players[0].weapon=null;s.players[0].props=['ruin'];s.players[1].hands=[9,9];assert.equal(run(s,{type:'prop',slot:0,target:1}).players[1].hp,81);
 });
 
 test('serpent applies five weakened turns and five shieldable poison starts; repeats extend',()=>{

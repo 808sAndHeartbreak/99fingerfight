@@ -32,10 +32,9 @@ body.introducing .player-identity,body.introducing .field-items{visibility:hidde
 button:not(:disabled){transition:transform .16s ease,filter .16s ease,box-shadow .16s ease}
 button:not(:disabled):hover{filter:brightness(1.08)}
 .menu-choice:not(:disabled):hover,.battle-menu>button:not(:disabled):hover{translate:5px -2px}
-.hud-tools button:not(:disabled):hover,.item-advance:not(:disabled):hover{translate:0 -2px;box-shadow:3px 4px 0 #0005}
+.hud-tools button:not(:disabled):hover{translate:0 -2px;box-shadow:3px 4px 0 #0005}
 button:focus-visible{outline:3px solid #eab94b;outline-offset:4px}
 .game-shell #instruction{display:inline-block;padding:5px 10px;background:var(--paper);color:#151c2d;box-shadow:3px 3px 0 var(--active);transform:rotate(-1deg);font-size:clamp(16px,1.7vw,23px)}
-.game-shell #instruction-detail{padding-left:10px}
 .match-history{max-width:760px}.match-history h2{font-size:30px;margin:0 0 20px}.match-history section{display:grid;grid-template-columns:74px 1fr;gap:8px 16px}.match-history section>h3{font-size:18px;grid-column:1;grid-row:1 / span 20;background:var(--ink);color:var(--paper);height:fit-content;padding:7px 5px;transform:rotate(-3deg);text-align:center}.match-history .history-phase{grid-column:2;grid-template-columns:64px 1fr;gap:8px;margin:0 0 6px}.history-phase>b{font-size:11px;background:#ddd7c6;height:fit-content;padding:3px 5px}.history-phase ul{list-style:none;padding:0;font-size:13px;line-height:1.65}.history-phase li{border-bottom:1px solid #16203913;padding:3px 0}.record-damage{color:#b42d26;font-style:normal;font-weight:900}.record-heal{color:#187b62;font-style:normal;font-weight:900}
 .result-dialog.manga-result{background:radial-gradient(circle at 78% 78%,#ffffff0e 0 1px,transparent 1.5px) 0 0/8px 8px,#101727}
 .result-dialog.manga-result::after{content:'FIGHT';position:absolute;right:-3%;bottom:-7%;font:900 italic clamp(130px,26vw,440px)/1 Teko,sans-serif;color:var(--winner);opacity:.16;transform:rotate(-9deg);pointer-events:none;z-index:0}
@@ -45,7 +44,7 @@ button:focus-visible{outline:3px solid #eab94b;outline-offset:4px}
 .result-dialog.manga-result .result-art{animation:winner-drift 9s ease-in-out infinite alternate}
 @keyframes winner-drift{from{translate:0 0}to{translate:0 -10px}}
 @media(max-width:650px){.match-history section{grid-template-columns:55px 1fr;gap:8px}.match-history .history-phase{grid-template-columns:1fr}.match-history section>h3{font-size:14px}.game-shell #instruction{font-size:15px}}
-@media(prefers-reduced-motion:reduce){.result-dialog.manga-result .result-art{animation:none}button{transition:none!important}.menu-choice:hover,.battle-menu>button:hover,.hud-tools button:hover,.item-advance:hover{translate:none}}
+@media(prefers-reduced-motion:reduce){.result-dialog.manga-result .result-art{animation:none}button{transition:none!important}.menu-choice:hover,.battle-menu>button:hover,.hud-tools button:hover{translate:none}}
 .result-dialog.manga-result { overflow:hidden; } @media(max-height:600px) { .result-dialog.manga-result { overflow-y:auto; overflow-x:hidden; } .result-dialog.manga-result::after { display:none; } }
 .menu-loader{position:fixed;inset:0;background:#101727;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff4d8;gap:12px}.menu-loader b{font:900 italic 96px Teko,sans-serif;animation:loader-pulse .8s ease-in-out infinite alternate}.menu-loader span{font-size:12px;letter-spacing:.35em}.menu-entering button{opacity:0}.menu-body[data-menu-page="home"].menu-entering .menu-choice:first-child{background:#182338}.menu-body button{transition:background .2s,filter .2s,translate .2s}.menu-back{font-size:18px!important;padding:14px 20px!important;background:#19243b!important;color:#fff4d8!important;margin-top:16px}
 @keyframes loader-pulse{to{opacity:.4;transform:scale(.95)}}
@@ -79,7 +78,7 @@ body:has(#dialog.game-menu[open]) #menu-backdrop .menu-body{visibility:hidden}
 /* Lobby uses the same ink poster and paper-cut controls as the main menu. */
 .online-dialog{background:#121b30;border:2px solid #fff0cf;box-shadow:10px 12px 0 #080d2380}
 .online-dialog .online-lobby{position:relative;isolation:isolate;background:#141e33;color:#fff0d4;padding:clamp(24px,4vw,42px);overflow:hidden}
-.online-dialog .online-lobby::before{content:'';position:absolute;right:0;top:0;width:44%;height:190px;background:linear-gradient(90deg,#141e33,transparent),linear-gradient(0deg,#141e33,transparent),url('/assets/manga/menu-99.webp') 76% 25%/cover;opacity:.6;z-index:-1;pointer-events:none}
+.online-dialog .online-lobby::before{content:'';position:absolute;right:0;top:0;width:44%;height:190px;background:linear-gradient(90deg,#141e33,transparent),linear-gradient(0deg,#141e33,transparent),url('/assets/manga/menu-99.webp?v=20260910') 76% 25%/cover;opacity:.6;z-index:-1;pointer-events:none}
 .online-dialog h2{background:none;color:#fff0d4;transform:rotate(-4deg);font-size:clamp(36px,5vw,58px);padding:0 10px 12px 0;margin:0 0 8px;border-bottom:5px solid #f24432;letter-spacing:-.045em;text-shadow:3px 4px 0 #070e22}
 .online-dialog .dialog-close{color:#fff0d4;background:#141e33;border:1px solid #fff0d480}
 .online-dialog .network-state{color:#bac5d9;margin-bottom:22px}.online-dialog #name-form{padding-bottom:22px;border-bottom:1px solid #fff0d42b;margin-bottom:24px}.online-dialog label{color:#fff0d4;font-size:14px}.online-dialog label small{color:#bac5d9}.online-dialog input{min-width:0;background:#0e1628;color:#fff5df;border:1px solid #9da9c1;font-size:18px}.online-dialog input::placeholder{color:#a8b2c6}

@@ -2,20 +2,20 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createGame,applyCommand} from '../src/engine.js';
 import {PROP_WEIGHTS} from '../src/catalog.js';
-import {autoItemPhase,phaseSeconds,turnSteps} from '../src/phase-cue.js';
+import {turnSeconds} from '../src/phase-cue.js';
 import {describe} from '../src/info.js';
 import {propUseDetail} from '../src/guidance.js';
 import {MatchHub} from '../server/hub.js';
 const run=(s,c)=>applyCommand(s,{actor:s.active,revision:s.revision,...c});
 const fixture=(weapon='dual')=>{const s=createGame(27);s.phase='action';s.players[0].weapon=weapon;s.players.forEach(p=>{p.props=[];p.turns=1;});return s;};
 // These duration tests resolve skills after the turn's calculation.
-const attack=s=>run({...s,calculated:true},{type:'attack'});
+const attack=s=>{const n=run({...s,calculated:true},{type:'attack'});if(n.winner!==null||n.active!==s.active)return n;const ended=run(n,{type:'end'});ended.events=[...n.events,...ended.events];return ended;};
 const damage=n=>n.events.filter(e=>e.type==='damage');
-const touch=s=>{s.phase='action';s.calculated=false;s.players[s.active].weapon=null;const n=run(s,{type:'add',hand:0,targetHand:0});return n.phase==='synthesis'?run(n,{type:'decline'}):n;};
+const touch=s=>{s.phase='action';s.calculated=false;s.players[s.active].weapon=null;const n=run(s,{type:'add',hand:0,targetHand:0});return n.winner===null?run(n,{type:'end'}):n;};
 
 test('wine and adrenaline are tier B and wine stacks for only the next first direct segment',()=>{
  assert.equal(PROP_WEIGHTS.wine,2);assert.equal(PROP_WEIGHTS.adrenaline,2);
- let s=fixture();s.phase='planning';s.players[0].props=['wine','wine'];
+ let s=fixture();s.phase='action';s.players[0].weapon=null;s.players[0].props=['wine','wine'];
  s=run(s,{type:'prop',slot:0,target:0});s=run(s,{type:'prop',slot:0,target:0});assert.equal(s.players[0].wine,2);
  for(const id of ['dual','drunken','claw']){
   const t=structuredClone(s);t.phase='action';t.players[0].weapon=id;const n=attack(t),hits=damage(n);
@@ -27,15 +27,15 @@ test('wine persists through calculation, harmless skills and end-turn items but 
  for(const id of ['peace','foam','knuckles','unify','serpent']){const s=fixture(id);s.players[0].wine=3;assert.equal(attack(s).players[0].wine,3);}
  const s=fixture();s.players[0].wine=3;assert.equal(touch(structuredClone(s)).players[0].wine,3);
  s.players[1].peace=3;let n=attack(s);assert.equal(n.players[0].wine,0);assert.ok(damage(n).every(e=>e.amount===0));
- s.phase='planning';s.players[0].props=['adrenaline'];n=run(s,{type:'prop',slot:0,target:0});assert.equal(n.players[0].wine,3);
+ s.phase='action';s.players[0].weapon=null;s.players[0].props=['adrenaline'];n=run(s,{type:'prop',slot:0,target:0});assert.equal(n.players[0].wine,3);
 });
 
 test('adrenaline ends current turn, lasts three subsequent own turns, repeats extend not intensity',()=>{
- let s=fixture();s.phase='planning';s.players[0].props=['adrenaline'];s.players[0].hands=[9,9];s.players[0].weapon=null;
+ let s=fixture();s.phase='action';s.players[0].weapon=null;s.players[0].props=['adrenaline'];s.players[0].hands=[9,9];s.players[0].weapon=null;
  s=run(s,{type:'prop',slot:0,target:0});assert.equal(s.active,1);assert.equal(s.players[0].adrenaline,3);assert.equal(s.players[0].weapon,null);assert.equal(s.players[0].nine,0);
  for(let i=0;i<3;i++){s=touch(s);assert.equal(s.players[0].adrenaline,3-i);s=touch(s);}
  assert.equal(s.players[0].adrenaline,0);
- s.phase='planning';s.active=0;s.players[0].adrenaline=2;s.players[0].adrenalineSince=0;s.players[0].props=['adrenaline'];s=run(s,{type:'prop',slot:0,target:0});assert.equal(s.players[0].adrenaline,4);
+ s.phase='action';s.active=0;s.players[0].adrenaline=2;s.players[0].adrenalineSince=0;s.players[0].props=['adrenaline'];s=run(s,{type:'prop',slot:0,target:0});assert.equal(s.players[0].adrenaline,4);
 });
 
 test('adrenaline combines with wine, knuckles and weakness before flooring, then incoming reduction before shields',()=>{
@@ -49,7 +49,7 @@ test('adrenaline applies to true, item and DOT damage with matching tooltip valu
  const t=fixture('sniper');t.players[0].adrenaline=3;t.players[1].adrenaline=3;assert.equal(damage(attack(t))[0].amount,30);
  const s=fixture('foam');s.players[0].adrenaline=3;s.players[1].seven=1;s.players[1].dark=true;s.players[1].poison=1;
  assert.deepEqual(damage(attack(s)).map(e=>e.raw),[12,10,7]);
- s.phase='planning';s.players[0].props=['ruin'];s.players[1].hands=[3,4];assert.match(describe('prop:ruin:0',s).body,/当前伤害 12/);assert.match(propUseDetail(s,'ruin'),/造成 12/);assert.equal(damage(run(s,{type:'prop',slot:0,target:1}))[0].amount,12);
+ s.phase='action';s.players[0].weapon=null;s.players[0].props=['ruin'];s.players[1].hands=[3,4];assert.match(describe('prop:ruin:0',s).body,/当前伤害 12/);assert.match(propUseDetail(s,'ruin'),/造成 12/);assert.equal(damage(run(s,{type:'prop',slot:0,target:1}))[0].amount,12);
  s.players[0].props=['grace'];s.players[0].hp=50;s.players[0].hands=[3,4];assert.equal(run(s,{type:'prop',slot:0,target:0}).players[0].hp,57);
 });
 
@@ -59,9 +59,8 @@ test('steal transfers consumable and timed buffs but never nine; unify retains b
  const u=fixture('unify');Object.assign(u.players[0],{wine:3,adrenaline:3,adrenalineSince:1});const v=attack(u);assert.equal(v.players[0].wine,3);assert.equal(v.players[0].adrenaline,3);
 });
 
-test('two visible phases retain optional skill selection; empty or silenced item phase gets one second server deadline',()=>{
- const s=fixture();s.phase='planning';s.players[0].weapon=null;assert.equal(autoItemPhase(s),true);assert.equal(phaseSeconds(s),1);
- s.players[0].props=['wine'];assert.equal(phaseSeconds(s),20);s.players[0].silenced=true;assert.equal(phaseSeconds(s),1);s.players[0].silenced=false;
- const h=new MatchHub({now:()=>10000}),r={state:s,status:'playing',readyAt:0,deadlineAt:20000};h.step(r,{type:'prop',actor:0,revision:s.revision,slot:0,target:0});assert.equal(r.deadlineAt,r.readyAt+1000);
- assert.deepEqual(turnSteps(s).map(x=>x.label),['道具','行动']);s.phase='synthesis';assert.equal(turnSteps(s)[1].current,true);s.phase='action';assert.equal(turnSteps(s)[1].current,true);
+test('empty or silenced inventory never creates a separate timer',()=>{
+ const s=fixture();s.players[0].weapon=null;assert.equal(turnSeconds(s),30);
+ s.players[0].props=['wine'];assert.equal(turnSeconds(s),30);s.players[0].silenced=true;assert.equal(turnSeconds(s),30);s.players[0].silenced=false;
+ const h=new MatchHub({now:()=>10000}),r={state:s,status:'playing',readyAt:0,deadlineAt:20000};h.step(r,{type:'prop',actor:0,revision:s.revision,slot:0,target:0});assert.equal(r.deadlineAt-r.readyAt,10000);
 });

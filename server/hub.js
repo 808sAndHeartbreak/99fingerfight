@@ -2,8 +2,7 @@ import { randomBytes, createHash, randomUUID } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createGame, applyCommand, RULES_VERSION } from '../src/engine.js';
-import { chooseCommand } from '../src/ai.js';
-import { phaseSeconds, phaseCue, autoItemPhase } from '../src/phase-cue.js';
+import { turnSeconds, phaseCue } from '../src/phase-cue.js';
 import { presentationDuration } from '../src/presentation.js';
 import { normalizeParticipants } from '../src/identity.js';
 const hash = token => createHash('sha256').update(token).digest('hex');
@@ -99,7 +98,7 @@ export class MatchHub {
     else {
       const buffer=this.animationMs===null?presentationDuration(old,next,command):( ['add','forge','attack'].includes(command.type)?this.animationMs:1000);
       r.readyAt=this.now()+buffer;
-      if(next.turn!==old.turn||next.phase!==old.phase||command.type==='attack'||autoItemPhase(next))r.deadlineAt=r.readyAt+(next.phase==='start'?0:phaseSeconds(next)*1000);
+      if(next.turn!==old.turn||old.phase==='start')r.deadlineAt=r.readyAt+(next.phase==='start'?0:turnSeconds(next)*1000);
       else r.deadlineAt+=buffer;
     }
     return {command,revision:next.revision,matchId:r.matchId};
@@ -127,10 +126,11 @@ export class MatchHub {
       check(r?.status==='playing'||r?.status==='finished','不在对局中');check(message.matchId===r.matchId,'对局已更新');
       const cacheKey=u.id+':'+id;
       if(r.cache[cacheKey]) {ws.send(JSON.stringify({type:"ack",id}));this.emit(u);return;}
-      check(r.status==='playing','对局已结束');check(this.now()>=r.readyAt,'阶段切换中');
+      check(r.status==='playing','对局已结束');check(this.now()>=r.readyAt,'动画播放中');
       check(message.command&&typeof message.command==='object','无效指令');
-      check(['advance','prop','forge','decline','add','attack','surrender'].includes(message.command.type),'无效指令');
+      check(['prop','forge','add','attack','end','surrender'].includes(message.command.type),'无效指令');
       check(r.state.phase!=='start','回合正在开始');
+      check(message.command.type==='end'||message.command.type==='surrender'||this.now()<r.deadlineAt,'回合时间已到，请等待交接');
       const c={...message.command,actor:r.seats.indexOf(u.id)};
       event=this.step(r,c);r.cache[cacheKey]=true;
       const keys=Object.keys(r.cache);if(keys.length>256)delete r.cache[keys[0]];
@@ -145,8 +145,8 @@ export class MatchHub {
       if(r.status!=='playing')continue;
       const expired=r.seats.map((id,i)=>({u:this.userById(id),i})).filter(({u})=>u&&!this.connected(u.id)&&u.disconnectedAt!==null&&this.now()-u.disconnectedAt>=this.graceMs);
       if(expired.length){this.finish(r,1-expired[0].i,'断线重连超时');this.broadcast(r);changed=true;continue;}
-      if(this.now()>=r.deadlineAt) {
-        const c=r.state.phase==='start'||r.state.phase==='planning'?{type:'advance',actor:r.state.active,revision:r.state.revision}:chooseCommand(r.state);
+      if(this.now()>=r.readyAt && (r.state.phase==='start'||r.state.players[r.state.active].weapon||this.now()>=r.deadlineAt)) {
+        const c={type:r.state.phase==='start'?'advance':r.state.players[r.state.active].weapon?'attack':'end',actor:r.state.active,revision:r.state.revision};
         const event=this.step(r,c);this.broadcast(r,event);changed=true;
       }
     }

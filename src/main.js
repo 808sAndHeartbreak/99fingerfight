@@ -6,14 +6,15 @@ import { createBattleSound } from "./battle-sound.js";
 import { TutorialSession, LESSONS } from "./tutorial.js";
 import { menuMarkup } from "./menu.js";
 import { OnlineClient, onlineMarkup } from "./online.js";
-import { synthesisOptions, supplyIn } from "./engine.js";
+import { synthesisOptions, supplyIn, hasTurnOptions, propCommands } from "./engine.js";
 import { playerName, escapeHtml, shortName } from "./identity.js";
-import { phaseCue, turnSteps, phaseSeconds, autoItemPhase } from "./phase-cue.js";
+import { phaseCue, turnSeconds, TURN_SECONDS } from "./phase-cue.js";
 import "./style.css";
 import "./comfort.css";
 import "./menu.css";
 import "./battle-layout.css";
 import "./visual-polish.css";
+import "./turn-ui.css";
 import { WEAPONS, PROPS, MAX_HP, weaponById } from "./catalog.js";
 import { LocalSession } from "./session.js";
 import { chooseCommand } from "./ai.js";
@@ -44,7 +45,7 @@ let session,
   sound = true,
   aiTimer,
   deadline,
-  remaining = 20,
+  remaining = TURN_SECONDS,
   started = false;
 let stage,
   info,
@@ -72,7 +73,7 @@ function play(id) {
 app.innerHTML = `<main class="game-shell">
   <div class="paper-grain" aria-hidden="true"></div>
 
-  <div id="network-notice" class="network-notice" role="status" hidden></div><section id="tutorial-guide" class="tutorial-guide" hidden aria-label="新手教学"></section><section class="battle-banner" aria-label="当前操作"><div class="turn-overview"><div class="round-inline">回合 <b id="round-number">01</b><span id="phase-label"></span><div class="phase-time" id="phase-time" role="timer" aria-live="off" aria-label="剩余时间"><span id="clock">20</span><small>SEC</small></div></div><nav id="phase-steps" class="phase-steps turn-track" aria-label="回合流程"></nav></div><div class="turn-instruction"><h1 id="instruction"></h1><p id="instruction-detail"></p></div><div id="primary-actions" class="primary-actions"></div><nav class="hud-tools" aria-label="游戏工具"><button id="history">对局记录</button><button id="menu">菜单 ☰</button></nav><span id="mode-label" hidden></span></section><section class="duel" aria-label="指尖对战场">
+  <div id="network-notice" class="network-notice" role="status" hidden></div><section id="tutorial-guide" class="tutorial-guide" hidden aria-label="新手教学"></section><section class="battle-banner" aria-label="当前操作"><div class="turn-overview"><div class="round-inline"><span class="round-caption">回合 <b id="round-number">01</b></span><strong id="phase-label"></strong></div><div class="turn-controls"><div class="phase-time" id="phase-time" role="timer" aria-live="off" aria-label="剩余时间"><span id="clock">30</span><small>秒</small></div><button id="end-turn" class="end-turn">结束回合</button></div></div><div class="turn-instruction"><h1 id="instruction" aria-live="polite"></h1></div><div id="primary-actions" class="primary-actions"></div><nav class="hud-tools" aria-label="游戏工具"><button id="history">对局记录</button><button id="menu">菜单 ☰</button></nav><span id="mode-label" hidden></span></section><section class="duel" aria-label="指尖对战场">
     <div class="scoreboard"><div id="player-0" class="player blue"></div><div class="round-block"></div><div id="player-1" class="player red"></div></div>
     <div id="stage" class="stage" data-motion="idle"><div class="hand-layer" id="hand-layer">${[0, 1].map((owner) => [0, 1].map((hand) => `<button id="hand-${owner}-${hand}" class="hand-hotspot ${owner ? "red" : "blue"}" data-owner="${owner}" data-hand="${hand}" aria-pressed="false"><span class="hand-corner"></span>${img("hand-1.webp", "fallback-hand")}<b class="hand-value">1</b><span class="hand-status"></span><span class="hand-shield" data-info="shield" data-info-only hidden></span><span class="sum-preview"></span></button>`).join("")).join("")}</div><div class="contact-fx" id="contact-fx" aria-hidden="true">${img("manga/contact.webp")}<b>碰!</b></div></div>
     <div id="combat-callout" class="combat-callout" aria-live="polite"></div>
@@ -181,7 +182,7 @@ function renderHands() {
         selectable =
           !busy && !remotePending && (mode !== "online" || online.status === "connected" && online.serverNow() >= (online.packet?.room?.readyAt || 0)) &&
           humanTurn() &&
-          state.phase === "action" &&
+          state.phase === "action" && !state.calculated &&
           !state.players[state.active].weapon &&
           state.active === o &&
           !p.locks[h];
@@ -224,15 +225,16 @@ function updateNetworkNotice() {
 function render() {
   if(mode === "online") {
     const until=online.packet?.room?.deadlineAt;
-    remaining=until ? Math.max(0,Math.ceil((until-online.serverNow())/1000)) : 0;
+    remaining=until ? Math.max(0,Math.ceil((until-Math.max(online.serverNow(),online.packet.room.readyAt||0))/1000)) : 0;
   }
   renderedRemoteReady = mode === "online" && online.status === "connected" && online.serverNow() >= (online.packet?.room?.readyAt || 0);
   info?.hide();
-  document.querySelector("#phase-time").hidden = mode === "tutorial" || state.winner !== null || state.phase === "start" || (state.phase==="action" && state.players[state.active].weapon) || autoItemPhase(state);
-  document.querySelector("#clock").textContent = mode==="online"&&(online.status!=="connected"||busy)?"—":remaining;
+  document.querySelector("#phase-time").hidden = state.winner !== null || state.phase === "start" || (state.phase==="action" && state.players[state.active].weapon);
+  document.querySelector("#clock").textContent = mode==="tutorial"?"∞":mode==="online"&&online.status!=="connected"?"—":Math.ceil(remaining);
   document
     .querySelector("#phase-time")
     .classList.toggle("urgent", remaining <= 5);
+  document.querySelector("#phase-time small").textContent=mode==="tutorial"?"练习":"秒";
   renderPlayer(0);
   renderPlayer(1);
   renderHands();
@@ -253,31 +255,33 @@ function render() {
   if(mode==="online" && online.status==="connected" && !busy && !renderedRemoteReady && state.winner===null) Object.assign(guide,{title:"正在交接",detail:"演出结束后即可操作",step:"waiting"});
   if(remotePending && !busy && mode==="online" && online.status==="connected") Object.assign(guide,{title:"操作已发送",detail:"等待服务器确认",step:"waiting"});
 
-  if(mode==="tutorial" && state.phase==="synthesis" && !busy)guide.detail="点击高亮技能，合成并使用";
   feedback.reveal(document.querySelector("#instruction"), guide.title);
-  document.querySelector("#instruction-detail").textContent = guide.detail;
   document.querySelector(".game-shell").dataset.step = guide.step;
   document.querySelector(".game-shell").dataset.actor = state.active;
   document.querySelector(".game-shell").dataset.phase = state.phase;
-  document.querySelector("#phase-steps").innerHTML = turnSteps(state).map((step,i)=>`<div class="${step.current ? "current" : step.done ? "done" : ""}" ${step.current ? 'aria-current="step"' : ""}><b>${step.done ? (step.id==="synthesis" && state.synthesis==="skipped" ? "—" : "✓") : `0${i+1}`}</b><span>${step.label}<small>${step.note}</small></span></div>`).join("");
   const forgePanel=document.querySelector("#forge-options");
-  forgePanel.hidden=busy || remotePending || state.phase !== "synthesis";
-  forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><h2>${humanTurn()?"合成并使用":"对手正在选招"}</h2><p>${p.hands.join(" + ")}</p></div><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${enabled && (mode!=="tutorial" || session.guide?.command.weapon===w.id) ? "" : "disabled"}><span class="forge-recipe">${w.recipe.join(" · ")}</span>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span><b>${humanTurn()?"释放 ":"等待对手"}</b></button>`).join("")}</div>`;
+  forgePanel.hidden=busy || remotePending || !!selected || !humanTurn() || state.phase!=="action" || !!p.weapon || !synthesisOptions(state).length;
+  forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><h2>合成技能</h2><p>${p.hands.join(" + ")}</p></div><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${enabled && (mode!=="tutorial" || session.guide?.command.weapon===w.id) ? "" : "disabled"}>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span></button>`).join("")}</div>`;
   for(const owner of [0,1]) {
-    const player=state.players[owner], usable=owner===state.active && enabled && state.phase==="planning" && !player.silenced;
+    const player=state.players[owner], usable=owner===state.active && enabled && state.phase==="action" && !p.weapon && !player.silenced;
     const supply=player.turns===0?1:supplyIn(player);
     document.querySelector(`#items-${owner}`).classList.toggle("items-usable",usable&&player.props.length>0);
     document.querySelector(`#items-${owner}`).innerHTML=`<div class="supply-dots" data-info="supply:${owner}" tabindex="0" aria-label="道具补给：${supply} 回合后">${[1,2,3].map(n=>`<i class="${n<=3-supply?'filled':''}"></i>`).join('')}</div>`+[0,1,2].map(slot=>{
       const id=player.props[slot], mine=owner===state.active && humanTurn();
-      return id ? `<div class="prop-slot ${mine&&selected?.kind==='prop'&&selected.slot===slot?'selected':''}"><button class="prop-use" ${mine?`data-prop="${slot}"`:'data-info-only'} data-info="prop:${id}:${owner}" aria-disabled="${!usable}" aria-label="${mine?'使用':'查看'}${PROPS[id].name}">${propArt(id)}<b>${PROPS[id].name}</b></button>${mine&&selected?.kind==='prop'&&selected.slot===slot&&PROPS[id].target!=='hand'?`<button class="prop-confirm" id="use-prop" ${usable?'':'disabled'}>确认使用</button>`:''}</div>` : '<div class="prop-slot empty" aria-label="空道具位"><span>＋</span></div>';
-    }).join('')+`<button class="item-advance" ${owner===state.active?'id="advance"':''} data-advance-owner="${owner}" ${owner===state.active&&enabled&&state.phase==='planning'&&!autoItemPhase(state)?'':'disabled'}>进入行动 </button>`;
+      return id ? `<div class="prop-slot ${mine&&selected?.kind==='prop'&&selected.slot===slot?'selected':''}"><button class="prop-use" ${mine?`data-prop="${slot}"`:'data-info-only'} data-info="prop:${id}:${owner}" aria-disabled="${!usable || !propCommands(state).some(c=>c.slot===slot)}" aria-label="${mine?'使用':'查看'}${PROPS[id].name}">${propArt(id)}<b>${PROPS[id].name}</b></button>${mine&&selected?.kind==='prop'&&selected.slot===slot&&PROPS[id].target!=='hand'?`<button class="prop-confirm" id="use-prop" ${usable?'':'disabled'}>确认使用</button>`:''}</div>` : '<div class="prop-slot empty" aria-label="空道具位"><span>＋</span></div>';
+    }).join('');
   }
   const shelf=document.querySelector('#recipe-shelf');
   if(!shelf.children.length)shelf.innerHTML='<div class="reference-recipe shield-reference" tabindex="0" data-info="shield:0" aria-label="5 护盾"><b>5</b></div>'+[5,0,2,4,6,7,8,9].map(n=>{
     return `<div class="reference-recipe" tabindex="0" data-number="${n}" data-info="recipe:${n}" aria-label="${n} 加 ${n} 配方"><b>${n} + ${n}</b></div>`;
   }).join('');
   for(const el of shelf.children){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',!p.hands.every(v=>v===n)&&p.hands.includes(n));}
-  document.querySelector("#primary-actions").innerHTML = `${selected ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"} </button>` : state.phase === "synthesis" && mode!=="tutorial" ? `<button class="secondary" id="decline" ${enabled ? "" : "disabled"}>${state.calculated?"放弃合成，结束回合":"放弃合成，继续计算"}</button>` : ""}`;
+  document.querySelector("#primary-actions").innerHTML = `${selected ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"}</button>` : ""}`;
+  const endButton=document.querySelector('#end-turn');
+  endButton.hidden=state.winner!==null;
+  endButton.disabled=!enabled || state.phase!=="action" || !!p.weapon || (mode==='tutorial' && session.guide?.command.type!=='end');
+  endButton.classList.toggle('recommended',!hasTurnOptions(state) && !endButton.disabled);
+
   document.querySelector(".game-shell").classList.toggle("is-busy", busy);
   document.querySelectorAll("#menu,#help").forEach((b) => (b.disabled = busy));
 
@@ -372,6 +376,7 @@ async function send(command) {
     finally {remotePending=false;if(!busy)render();}
     return;
   }
+  remaining=Math.max(0,(deadline-Date.now())/1000);
   feedback.clearNotices();
   busy = true;
   selected = null;
@@ -390,8 +395,8 @@ async function send(command) {
     });
     if (!completed || current !== session || serial !== actionSerial) return;
     state = next;
-    if (old.phase !== next.phase || old.turn !== next.turn || command.type === "attack" || autoItemPhase(next))
-      remaining = phaseSeconds(next);
+    if (old.phase === "start" || old.turn !== next.turn)
+      remaining = turnSeconds(next);
     deadline = Date.now() + remaining * 1000;
     document.querySelector("#combat-callout").classList.remove("visible");
       document.querySelector("#combat-callout").textContent = "";
@@ -435,9 +440,6 @@ function scheduleAI() {
   clearTimeout(aiTimer);
   if (mode === "online") return;
   if(state.phase==="action" && state.players[state.active].weapon && !paused && !busy && started && state.winner===null){aiTimer=setTimeout(()=>send({type:"attack"}),0);return;}
-  if(autoItemPhase(state) && !paused && !busy && started && state.winner===null && (mode!=="tutorial" || !session.done && session.guide.command.type==="advance")){
-    aiTimer=setTimeout(()=>send({type:"advance"}),1000);return;
-  }
   if(mode === "tutorial")return;
   if (state?.phase === "start" && !paused && !busy && started) {
     aiTimer=setTimeout(()=>send({type:"advance"}),80);
@@ -474,8 +476,8 @@ function startGame(newMode = mode, chapter = 0, saved = null) {
   selected = null;
   busy = false;
   paused = false;
-  remaining = 20;
-  deadline = Date.now() + 20000;
+  remaining = TURN_SECONDS;
+  deadline = Date.now() + TURN_SECONDS * 1000;
   session = mode === "tutorial" ? new TutorialSession(chapter) : saved ? LocalSession.restore(saved) : new LocalSession(crypto.getRandomValues(new Uint32Array(1))[0]);
   unsubscribe = session.subscribe((next) => {
     savePve();
@@ -504,6 +506,7 @@ async function introPhase() {
   scheduleAI();
 }
 function openDialog(content, cls = "") {
+  if(!paused && !busy && mode!=="online")remaining=Math.max(0,(deadline-Date.now())/1000);
   info?.hide();
   paused = mode !== "online";
   stage?.setPaused(paused);
@@ -699,13 +702,12 @@ listen(app, "click", (e) => {
     return;
   }
   if(button.dataset.editName!==undefined){showNameEditor(Number(button.dataset.editName));return;}
-  if(button.dataset.advanceOwner!==undefined){send({type:"advance"});return;}
   if (button.dataset.forge) { send({type:"forge",weapon:button.dataset.forge}); return; }
   if (button.dataset.hand !== undefined) {
     const owner = Number(button.dataset.owner),
       hand = Number(button.dataset.hand);
     if (busy || remotePending || (mode === "online" && (online.status !== "connected" || online.serverNow() < (online.packet?.room?.readyAt || 0)))) return;
-    const computing = humanTurn() && state.phase === "action" && !state.players[state.active].weapon && state.winner === null;
+    const computing = humanTurn() && state.phase === "action" && !state.calculated && !state.players[state.active].weapon && state.winner === null;
     if (selected?.kind === "prop") {
       if (canTarget(owner, hand)) send({type:"prop",slot:selected.slot,target:owner,targetHand:hand});
       return;
@@ -745,9 +747,8 @@ listen(app, "click", (e) => {
   }
   const handlers = {
     "use-prop": () => {const id=state.players[state.active].props[selected.slot];send({type:"prop",slot:selected.slot,target:PROPS[id].target==="enemy"?1-state.active:state.active});},
-    advance: () => send({ type: "advance" }),
+    "end-turn": () => send({ type: "end" }),
     attack: () => send({ type: "attack" }),
-    decline: () => send({ type: "decline" }),
     cancel: () => {
       selected = null;
       render();
@@ -837,19 +838,19 @@ const ticker = setInterval(() => {
   if(mode === "online") {
     const room=online.packet?.room;
     updateNetworkNotice();
-    if(room?.state){remaining=room.deadlineAt ? Math.max(0,Math.ceil((room.deadlineAt-online.serverNow())/1000)):0;document.querySelector("#clock").textContent=online.status==="connected"&&!busy?remaining:"—";document.querySelector("#phase-time").classList.toggle("urgent",remaining<=5);
+    if(room?.state){remaining=room.deadlineAt ? Math.max(0,Math.ceil((room.deadlineAt-Math.max(online.serverNow(),room.readyAt||0))/1000)):0;document.querySelector("#clock").textContent=online.status==="connected"?Math.ceil(remaining):"—";document.querySelector("#phase-time").classList.toggle("urgent",remaining<=5);
       const ready = online.status === 'connected' && online.serverNow() >= room.readyAt;
       if(!busy && !remotePending && ready !== renderedRemoteReady)render();}
     return;
   }
   if (mode === "tutorial" || paused || busy || !started || !state || state.winner !== null) return;
-  remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
-  document.querySelector("#clock").textContent = mode==="online"&&(online.status!=="connected"||busy)?"—":remaining;
+  remaining = Math.max(0, (deadline - Date.now()) / 1000);
+  document.querySelector("#clock").textContent = mode==="tutorial"?"∞":mode==="online"&&online.status!=="connected"?"—":Math.ceil(remaining);
   document
     .querySelector("#phase-time")
     .classList.toggle("urgent", remaining <= 5);
   if (remaining === 0)
-    send(state.phase === "planning" || state.phase === "start" ? {type:"advance"} : chooseCommand(state));
+    send(state.phase === "start" ? {type:"advance"} : {type:"end"});
 }, 200);
 
 startGame();

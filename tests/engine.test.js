@@ -6,7 +6,7 @@ import { LocalSession } from "../src/session.js";
 const run = (s, c) =>
   applyCommand(s, { actor: s.active, revision: s.revision, ...c });
 const planning = () => run(createGame(), { type: "advance" });
-const action = () => run(planning(), { type: "advance" });
+const action = planning;
 
 test("initial data and modulo addition modify own hand only, immutably", () => {
   const s = action();
@@ -17,15 +17,15 @@ test("initial data and modulo addition modify own hand only, immutably", () => {
   assert.deepEqual(s, copy);
   assert.deepEqual(next.players[0].hands, [3, 1]);
   assert.deepEqual(next.players[1].hands, [6, 1]);
-  assert.equal(next.active, 1);
+  assert.equal(next.active, 0);
+  assert.equal(next.calculated,true);
 });
 test("eight recipes require explicit synthesis and never form during calculation or props", () => {
   for(const [n,weapon] of [[0,"serious"],[2,"scissors"],[4,"fan"],[5,"buddha"],[6,"frag"],[7,"steal"],[8,"dual"],[9,"unify"]]) {
     let s=planning(); s.players[0].hands=[(n+9)%10,n]; s.players[0].props=["add"];
     s=run(s,{type:"prop",slot:0,target:0,targetHand:0});
     assert.equal(s.players[0].weapon,null); assert.deepEqual(s.players[0].hands,[n,n]);
-    assert.throws(()=>run(s,{type:"forge",weapon}),/技能选择/);
-    s=run(s,{type:"advance"}); assert.equal(s.phase,"synthesis");
+    assert.equal(s.phase,"action");
     assert.equal(synthesisOptions(s)[0].id,weapon);
     s=run(s,{type:"forge",weapon}); assert.equal(s.phase,"action");
     assert.equal(s.players[0].weapon,weapon); assert.deepEqual(s.players[0].hands,[1,1]);
@@ -36,25 +36,20 @@ test("eight recipes require explicit synthesis and never form during calculation
     assert.equal(next.players[0].weapon,null); assert.deepEqual(next.players[0].hands,[n,n]);
   }
 });
-test("synthesis checks only the actor, can be declined, and no recipe skips directly to action",()=>{
-  let s=planning(); s.players[1].hands=[9,9];
-  s=run(s,{type:"advance"}); assert.equal(s.phase,"action"); assert.equal(s.synthesis,"skipped");
-  assert.equal(s.players[1].weapon,null);
-  s=planning(); s.players[0].hands=[9,9]; s=run(s,{type:"advance"});
-  assert.throws(()=>run(s,{type:"forge",weapon:"serious"}));
-  s=run(s,{type:"decline"}); assert.equal(s.phase,"action"); assert.equal(s.active,0);
-  assert.deepEqual(s.players[0].hands,[9,9]); assert.equal(s.players[0].weapon,null);
+test("skills check only actor recipe and may be ignored without a phase transition",()=>{
+ let s=planning();s.players[1].hands=[9,9];assert.equal(synthesisOptions(s).length,0);
+ s.players[0].hands=[9,9];assert.throws(()=>run(s,{type:'forge',weapon:'serious'}));
+ assert.ok(legalCommands(s).some(c=>c.type==='add'));assert.ok(legalCommands(s).some(c=>c.type==='end'));
+ const n=run(s,{type:'end'});assert.equal(n.active,1);assert.deepEqual(n.players[0].hands,[9,9]);
 });
-test("no legal touch automatically ends turn, while locked hands may still synthesize",()=>{
-  for(const owner of [0,1]) {
-    let s=planning(); s.players[owner].locks=[true,true];
-    s=run(s,{type:"advance"}); assert.equal(s.active,1); assert.equal(s.phase,"start");
-    assert.ok(s.log.some(x=>x.includes("无合法计算")));
-  }
-  let s=planning(); s.players[0].hands=[9,9]; s.players[0].locks=[true,true];
-  s=run(s,{type:"advance"}); s=run(s,{type:"forge",weapon:"unify"});
-  assert.equal(s.phase,"action"); assert.deepEqual(legalCommands(s).map(c=>c.type),["attack"]);
+
+test("no legal touch leaves the turn open; locked hands may still synthesize",()=>{
+ let s=planning();s.players[0].locks=[true,true];s.players[0].props=[];
+ assert.deepEqual(legalCommands(s).map(c=>c.type),['end']);assert.equal(s.active,0);
+ s.players[0].hands=[9,9];s=run(s,{type:'forge',weapon:'unify'});
+ assert.deepEqual(legalCommands(s).map(c=>c.type),['attack']);
 });
+
 test("healing capped, negative wrap, ruin ends match immediately", () => {
   let s = planning();
   s.players[0].props = ["grace", "sub", "ruin"];
@@ -69,19 +64,15 @@ test("healing capped, negative wrap, ruin ends match immediately", () => {
   assert.equal(s.phase, "over");
   assert.throws(() => run(s, { type: "advance" }), /结束/);
 });
-test("locks block source and target and clear only at owner turn end", () => {
-  let s = planning();
-  s.players[0].props = ["lock"];
-  s = run(s, { type: "prop", slot: 0, target: 1, targetHand: 0 });
-  s = run(s, { type: "advance" });
-  assert.throws(() => run(s, { type: "add", hand: 0, targetHand: 0 }), /封印/);
-  s = run(s, { type: "add", hand: 0, targetHand: 1 });
-  assert.equal(s.players[1].locks[0], true);
-  s = run(run(s, { type: "advance" }), { type: "advance" });
-  assert.throws(() => run(s, { type: "add", hand: 0, targetHand: 0 }), /封印/);
-  s = run(s, { type: "add", hand:1, targetHand:0 });
-  assert.deepEqual(s.players[1].locks, [false, false]);
+test("locks block source and target and clear only at owner turn end",()=>{
+ let s=planning();s.players[0].props=['lock'];s=run(s,{type:'prop',slot:0,target:1,targetHand:0});
+ assert.throws(()=>run(s,{type:'add',hand:0,targetHand:0}),/封印/);
+ s=run(s,{type:'add',hand:0,targetHand:1});s=run(s,{type:'end'});s=run(s,{type:'advance'});
+ assert.equal(s.players[1].locks[0],true);assert.throws(()=>run(s,{type:'add',hand:0,targetHand:0}),/封印/);
+ s=run(s,{type:'add',hand:1,targetHand:0});assert.equal(s.players[1].locks[0],true);
+ s=run(s,{type:'end'});assert.deepEqual(s.players[1].locks,[false,false]);
 });
+
 test("commands reject wrong actor, stale revision, malformed indices, phase and missing items", () => {
   const s = createGame();
   for (const c of [
@@ -102,7 +93,7 @@ test("draw cadence and inventory capacity survive mandatory action and start pha
   assert.equal(s.phase,"start"); assert.equal(s.players[0].props.length,1);
   while(s.turn<7) {
     const commands=legalCommands(s);
-    s=run(s,commands.find(c=>c.type==="advance") || commands.find(c=>c.type==="decline") || commands[0]);
+    s=run(s,commands.find(c=>c.type==="advance") || commands.find(c=>c.type==="end") || commands[0]);
   }
   assert.equal(s.players[0].props.length,2);
 });

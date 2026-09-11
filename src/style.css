@@ -2349,37 +2349,6 @@ dialog[open] {
 .prop-slot.empty > span {
   display: none;
 }
-.phase-steps {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 9px;
-  font-size: 11px;
-  color: #8e97a8;
-}
-.phase-steps span {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-.phase-steps b {
-  font:
-    500 17px Teko,
-    sans-serif;
-  width: 19px;
-  height: 19px;
-  line-height: 20px;
-  text-align: center;
-  border: 1px solid #6c7585;
-  border-radius: 50%;
-}
-.phase-steps .current {
-  color: #fff1d9;
-}
-.phase-steps .current b {
-  background: var(--active);
-  border-color: var(--active);
-  color: white;
-}
 .turn-tag {
   color: #eeeee4 !important;
   font-size: 10px;
@@ -2596,20 +2565,12 @@ dialog[open] {
   background: var(--red);
   color: white;
 }
-.game-shell[data-step="resolving"] .phase-steps,
-.game-shell[data-step="waiting"] .phase-steps {
-  opacity: 0.35;
-}
 @media (max-width: 800px) {
   .turn-instruction {
     display: block;
   }
   .turn-instruction h1 {
     font-size: 21px;
-  }
-  .phase-steps {
-    margin-bottom: 5px;
-    gap: 12px;
   }
   .turn-instruction p {
     font-size: 11px;
@@ -2637,16 +2598,6 @@ dialog[open] {
   }
   .turn-instruction h1 {
     font-size: 20px;
-  }
-  .phase-steps {
-    font-size: 10px;
-    gap: 12px;
-  }
-  .phase-steps b {
-    font-size: 15px;
-    width: 17px;
-    height: 17px;
-    line-height: 18px;
   }
   .arsenal {
     left: 15px;
@@ -2785,15 +2736,6 @@ dialog[open] {
  .result-score b { font-size:42px; }
 }
 @media(prefers-reduced-motion:reduce) { .manga-result * { animation:none !important; } }
-.turn-track { position:sticky; top:0; z-index:95; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; padding:0 max(12px,3.3vw); margin:0; min-height:65px; background:var(--ink); color:var(--paper); border-bottom:4px solid var(--paper); isolation:isolate; }
-.turn-track > div { display:flex; align-items:center; gap:10px; padding:10px 12px; position:relative; opacity:.5; }
-.turn-track > div + div { border-left:1px solid #ffffff25; }
-.turn-track > div > b { font:700 30px/1 Teko,sans-serif; width:auto; height:auto; border:0; }
-.turn-track > div > span { display:block; font-size:15px; font-weight:700; }
-.turn-track small { display:block; font-size:10px; font-weight:400; margin-top:3px; }
-.turn-track > div.current { opacity:1; color:var(--ink); }
-.turn-track > div.current::before { content:""; position:absolute; inset:5px -2px; background:var(--paper); z-index:-1; transform:skewX(-12deg); box-shadow:4px 4px 0 #e44535; }
-.turn-track > div.done { opacity:.8; }
 .forge-options[hidden] { display:none; }
 .forge-options { position:absolute; inset:150px 3.3% 55px; z-index:25; display:flex; align-items:center; justify-content:center; gap:35px; padding:24px; background:#f5eedfeF; border-block:5px solid var(--ink); transform:rotate(-2deg); box-shadow:7px 7px 0 var(--ink); }
 .forge-heading small { color:#e44535; font:700 30px/1 Teko,sans-serif; }
@@ -2807,13 +2749,7 @@ dialog[open] {
 .forge-choices strong { font-size:20px; }
 .forge-choices button > span:not(.forge-recipe) { font-size:12px; }
 .forge-choices button > b { grid-column:1/-1; padding-top:10px; border-top:1px solid #ffffff60; font-size:14px; }
-.game-shell[data-phase="synthesis"] .stage { opacity:.18; }
 @media(max-width:600px) {
- .turn-track { padding:0 8px; min-height:58px; }
- .turn-track > div { gap:5px; padding:8px 5px; }
- .turn-track > div > b { font-size:22px; }
- .turn-track > div > span { font-size:12px; }
- .turn-track small { font-size:8px; }
  .forge-options { inset:140px 12px 54px; gap:10px; padding:14px; flex-direction:column; }
  .forge-heading { width:100%; display:flex; justify-content:space-between; align-items:center; gap:8px; }
  .forge-heading small { font-size:24px; }
@@ -2824,11 +2760,9 @@ dialog[open] {
 }
 /* Flow occupies real layout space; the arena and controls never sit behind it. */
 .game-shell { height:auto; min-height:100svh; display:flex; flex-direction:column; overflow:clip; }
-.topbar,.turn-track { flex-shrink:0; }
+.topbar { flex-shrink:0; }
 .duel { position:relative; inset:auto; flex:1 0 430px; min-height:430px; }
 .command-deck { position:relative; inset:auto; height:auto; flex-shrink:0; }
-.game-shell .turn-track { opacity:1; }
-.game-shell .turn-track > div > b { background:none; border-radius:0; color:inherit; }
 .forge-options { inset:125px 3.3% 55px; }
 @media(max-width:600px) { .duel { inset:auto; flex-basis:430px; } .forge-options { inset:125px 12px 54px; } }
 .forge-choices { max-height:none; overflow-y:visible; }
@@ -2972,8 +2906,6 @@ body:has(dialog[open]) { overflow:hidden; }
  .combo-routes { grid-template-columns:repeat(2,minmax(0,1fr)); }
  .skill-receipt { left:5%; right:5%; padding:16px; }
 }
-
-@media(min-width:651px) { .game-shell[data-phase="synthesis"] .duel { min-height:640px; flex-basis:640px; } }
 /* Ink arsenal: the icon, skill name and actual outcome each have a fixed place. */
 .forge-choices button { grid-template-columns:74px 1fr; align-content:start; }
 .forge-choices .skill-icon { display:block; width:74px; height:74px; object-fit:contain; grid-column:1; grid-row:1/4; background:var(--paper); }
@@ -3054,7 +2986,6 @@ body:has(dialog[open]) { overflow:hidden; }
 .nine-badge { display:inline-block; }
 .status-strip>button { white-space:nowrap; }
 @media(min-width:1100px) {
- .game-shell[data-phase="synthesis"] .duel { min-height:500px; flex-basis:500px; }
  .forge-choices { grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); }
  .forge-choices button { grid-template-columns:60px 1fr; }
  .forge-choices .skill-icon { width:60px; height:70px; }
@@ -3094,7 +3025,6 @@ body:has(dialog[open]) { overflow:hidden; }
 .is-tutorial #combo-hint, .is-tutorial #latest-log { visibility:hidden; }
 .is-tutorial .duel { min-height:430px; }
 .is-tutorial #instruction { font-size:clamp(22px,2.5vw,32px); }
-.is-tutorial #instruction-detail { font-size:16px; line-height:1.65; }
 @media(max-width:700px) { .character-art { display:none; } .cinema-portrait { width:25%; } .cinema-heading { left:22%; } .player-portrait { width:40px; min-width:40px; height:50px; } }
 
 .tutorial-guide details { margin-top:5px; font-size:12px; }
@@ -3103,12 +3033,12 @@ body:has(dialog[open]) { overflow:hidden; }
 .is-tutorial .command-deck { position:sticky; bottom:0; z-index:35; }
 .is-tutorial .command-inner { min-height:88px; height:auto; padding-block:12px; justify-content:space-between; }
 .is-tutorial .primary-actions { margin-left:auto; }
-.is-tutorial .duel, .game-shell.is-tutorial[data-phase="synthesis"] .duel { min-height:400px; flex-basis:400px; }
+.is-tutorial .duel { min-height:400px; flex-basis:400px; }
 .is-tutorial .forge-choices { grid-template-columns:1fr; }
 .is-tutorial .forge-choices button { grid-template-columns:72px 1fr; text-align:left; }
 .is-tutorial .forge-choices .skill-icon { grid-row:1 / 4; height:72px; width:72px; }
 .is-tutorial .forge-choices strong { font-size:22px; }
 .is-tutorial .forge-heading { display:none; }
-@media(max-width:650px) { .is-tutorial .duel, .game-shell.is-tutorial[data-phase="synthesis"] .duel { min-height:450px; flex-basis:450px; } }
+@media(max-width:650px) { .is-tutorial .duel { min-height:450px; flex-basis:450px; } }
 
 .is-tutorial .tutorial-guide { position:relative; z-index:120; }

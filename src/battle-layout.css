@@ -6,8 +6,6 @@
 .battle-banner button { min-height:44px; margin:0; }
 .battle-banner .primary { background:var(--paper); color:var(--ink); }
 .battle-banner .secondary,.battle-banner .cancel-action { color:var(--paper); border-color:var(--paper); }
-.game-shell .turn-track>div.current { background:var(--active,var(--blue)); color:white; transition:background .16s; }
-.game-shell .turn-track>div.current small { color:inherit; opacity:.85; }
 .game-shell .duel { flex-basis:390px; min-height:390px; }
 .game-shell .stage { top:120px; bottom:20px; }
 .game-shell .scoreboard { z-index:4; }
@@ -82,11 +80,6 @@
 .round-inline .phase-time { position:static; display:flex; align-items:baseline; gap:3px; transform:none; clip-path:none; width:auto; height:auto; min-height:0; background:transparent; padding:0; margin:0 0 0 auto; }
 .round-inline .phase-time #clock { font:700 22px/1 Teko,sans-serif; }
 .round-inline .phase-time small { font-size:9px; }
-.game-shell #phase-steps { display:flex; position:static; margin:0; padding:0; height:auto; min-height:0; gap:4px; border:0; background:transparent; opacity:1; }
-.game-shell #phase-steps>div { min-height:0; flex:1; display:block; padding:5px 8px; margin:0; border:0; clip-path:none; transform:none; font-size:13px; background:#ffffff12; }
-.game-shell #phase-steps>div:before,.game-shell #phase-steps>div>b,.game-shell #phase-steps small { display:none; }
-.game-shell #phase-steps>div.current { background:var(--active); box-shadow:inset 0 -2px 0 var(--paper); }
-.game-shell #phase-steps>div.done { opacity:.5; }
 .battle-banner .turn-instruction h1 { font-size:20px; }
 .battle-banner .turn-instruction p { font-size:12px; }
 .battle-banner .turn-instruction p:empty { display:none; }
@@ -160,8 +153,6 @@
 .topbar nav { gap:16px; }
 .topbar nav button { padding:8px 2px; min-height:40px; }
 .battle-banner { min-height:78px; border-left-width:5px; }
-.game-shell #phase-steps>div { position:relative; text-align:center; padding:5px 14px; font-size:13px; }
-.game-shell #phase-steps>div.current { clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%); box-shadow:inset 0 -2px 0 #fff8; }
 .battle-banner .turn-instruction { flex:1; min-width:0; }
 .battle-banner .turn-instruction h1 { font-size:clamp(16px,1.8vw,22px); line-height:1.4; }
 .battle-banner .turn-instruction p { color:#cbcbd0; font-size:12px; line-height:1.6; }
@@ -212,15 +203,11 @@
 .turn-overview { flex-basis:235px; }
 .round-inline { font-size:12px; gap:6px; }
 .round-inline .phase-time #clock { font-size:34px; }
-.game-shell #phase-steps>div { font-size:18px; padding:7px 14px; }
 .hud-tools { display:flex; gap:8px; align-items:center; margin-left:auto; flex-shrink:0; }
 .hud-tools button { font-size:12px; padding:8px; min-height:40px; border-bottom:1px solid #fff3; }
 .hud-tools button:hover { background:#fff2; }
 .battle-banner .primary-actions { min-width:0; }
 .battle-banner .turn-instruction h1 { font-size:clamp(17px,1.7vw,24px); }
-.item-advance { flex-shrink:0; font-size:12px; font-weight:800; padding:10px 2px; background:var(--active,var(--blue)); color:white; border:1px solid currentColor; }
-.item-advance:disabled { background:#17203414; color:var(--muted); opacity:.65; }
-.item-advance:not(:disabled) { box-shadow:0 0 14px #4672df60; }
 .field-items .prop-use[aria-disabled="true"] { opacity:.8; }
 .items-usable .prop-slot:not(.empty) { animation:item-ready 2.4s ease-in-out infinite; }
 @keyframes item-ready { 50% { box-shadow:0 0 12px 1px currentColor; } }
@@ -256,9 +243,7 @@
  .turn-overview { flex:1 0 45%; }
  .battle-banner .turn-instruction { flex:1 0 45%; }
  .hud-tools { position:static; margin-left:auto; }
- .game-shell #phase-steps>div { font-size:16px; }
  .field-items { bottom:4px; }
- .item-advance { font-size:10px; padding:8px 0; }
  .item-receipt { top:140px; width:70%; }
 }
 @media(prefers-reduced-motion:reduce) { .items-usable .prop-slot:not(.empty) { animation:none; box-shadow:inset 0 -2px currentColor; } }
@@ -293,11 +278,3 @@ body:has(.combat-cinema.skill) .game-shell { visibility:hidden; }
 .combat-cinema.skill .cinema-result:empty { visibility:hidden; }
 
 /* Keep the optional item step easy to leave, even with a full inventory. */
-.field-items .item-advance{position:relative;width:calc(100% + 16px);margin:8px -8px 0;min-height:50px;padding:12px 4px;font-size:17px;line-height:1.2;font-weight:900;white-space:nowrap;border:2px solid var(--ink);border-bottom:5px solid currentColor;background:var(--paper);color:inherit;transform:skew(-4deg);transition:background .16s,color .16s,translate .16s;isolation:isolate}
-.field-items .item-advance:not(:disabled){box-shadow:4px 5px 0 var(--ink);animation:advance-ready 2.2s ease-in-out infinite}
-.field-items .item-advance:not(:disabled):is(:hover,:focus-visible){background:var(--active);color:#fff8e8;outline:3px solid var(--paper);outline-offset:3px;translate:0 -2px;animation:none;box-shadow:4px 6px 0 var(--ink)}
-.field-items .item-advance:active:not(:disabled){translate:1px 1px;box-shadow:1px 2px 0 var(--ink)}
-.field-items .item-advance:disabled{background:#17203414;color:var(--muted);border:1px solid #17203430;opacity:.55;box-shadow:none;animation:none;transform:none}
-@keyframes advance-ready{0%,100%{box-shadow:4px 5px 0 var(--ink),0 0 0 2px var(--paper)}50%{box-shadow:4px 5px 0 var(--ink),0 0 0 5px var(--paper),0 0 22px 3px currentColor}}
-@media(max-width:650px){.field-items .item-advance{font-size:14px;min-height:44px;padding:10px 2px;width:calc(100% + 8px);margin-inline:-4px}}
-@media(prefers-reduced-motion:reduce){.field-items .item-advance:not(:disabled){animation:none}.field-items .item-advance{transition:none;translate:none!important}}

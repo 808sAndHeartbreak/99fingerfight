@@ -14,7 +14,7 @@ test('each A/B/C item has exact 4/2/1 ticket weight, with no missing items', () 
 });
 
 test('weighted repeated draws are deterministic, inventory capped, input immutable', () => {
-  const s=createGame(123);s.phase='planning';s.players[0].props=['boon'];
+  const s=createGame(123);s.phase='action';s.players[0].props=['boon'];
   const before=structuredClone(s),c={type:'prop',slot:0,target:0,actor:0,revision:s.revision};
   const a=applyCommand(s,c),b=applyCommand(s,c);
   assert.deepEqual(a,b);assert.deepEqual(s,before);

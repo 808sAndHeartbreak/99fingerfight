@@ -23,7 +23,7 @@ export function describe(key, state, participants) {
       tag: "合成武器",
       stats: [
         ["合成", w.recipe.join(" · ")],
-        ["使用", "行动阶段"],
+        ["使用", "自己的回合"],
       ],
       body: w.detail,
       note: "合成后双手归 1 并自动释放；每回合计算一次，计算前后均可合成。",
@@ -39,7 +39,7 @@ export function describe(key, state, participants) {
       image: PROPS[id].image,
       tag: "一次性道具",
       stats: [
-        ["阶段", "道具阶段"],
+        ["使用", "自己的回合"],
         ["目标", ({hand:"任意一方的手",self:"自己",enemy:"对手",all:"双方"})[PROPS[id].target]],
       ],
       body: (p.resilience>0 && ["greed","adrenaline"].includes(id) ? PROPS[id].detail.replace("立即结束本回合；", "").replace("，立即结束回合", "")+"（坚韧：使用后继续本回合）" : PROP_INFO[id] || PROPS[id].detail)+preview,
@@ -70,7 +70,7 @@ export function describe(key, state, participants) {
   if(kind==="supply") {
     const p=state.players[Number(id)];
     const rounds=p.turns===0?1:supplyIn(p);
-    return {title:"道具补给",tag:"",stats:[],body:`将在 ${rounds} 回合后的开始阶段获得一个随机道具。`,note:"按该玩家自己的回合计数；背包满时跳过本次补给。"};
+    return {title:"道具补给",tag:"",stats:[],body:`将在 ${rounds} 个己方回合开始时获得一个随机道具。`,note:"按该玩家自己的回合计数；背包满时跳过本次补给。"};
   }
   if (kind === "hand") {
     const owner = Number(id),
@@ -123,11 +123,11 @@ export function describe(key, state, participants) {
       title: "回合流程",
       tag: "行动规则",
       stats: [
-        ["道具 / 选招 / 计算", "20 秒"],
+        ["每回合", "30 秒，动画时暂停"],
         ["技能", "合成后自动释放"],
       ],
-      body: "道具 → 行动。每回合计算一次，可在计算前后合成并使用技能；放弃只针对当前组合，数字改变后重新询问。",
-      note: "超时自动推进、选择合成或执行合法行动。计算已用或无法计算，且没有待选组合时结束回合。本地对局在查看菜单、说明或切到后台时暂停，触碰演出期间不扣操作时间。",
+      body: "道具、计算、合成没有先后限制。每回合最多计算一次，合成后自动释放技能。操作完成后点击倒计时旁的结束回合。",
+      note: "超时结束回合；没有可用操作时，结束回合按钮高亮。本地对局在查看菜单、说明或切到后台时暂停，触碰演出期间不扣操作时间。",
     };
   return null;
 }
@@ -163,7 +163,7 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
       return;
     const data = describe(button.dataset.info, getState(), getParticipants());
     if (!data) return;
-    if(isRemote() && button.dataset.info === "phase") data.note="服务器统一计时，菜单、图鉴、后台和断线都不会暂停对局。超时自动执行合法操作。";
+    if(isRemote() && button.dataset.info === "phase") data.note="服务器统一计时，菜单、图鉴、后台和断线都不会暂停对局。动画期间暂停计时，超时结束回合。";
     clearTimeout(timer);
     anchor?.removeAttribute("aria-describedby");
     anchor = button;

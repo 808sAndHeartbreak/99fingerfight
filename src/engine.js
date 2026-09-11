@@ -1,6 +1,6 @@
 import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
-export const RULES_VERSION = 8;
+export const RULES_VERSION = 9;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -33,8 +33,7 @@ function begin(s) {
     if(!draw(s,p,"回合补给")){s.events.push({type:"supply-full",owner:s.active});log(s,`${name(s.active)}补给时背包已满，本次不获得道具。`);}
   }
   s.phase = "start";
-  s.synthesis = "pending";
-  s.calculated=false;s.declinedHands=null;
+  s.calculated=false;
   if(p.resilience>0)p.skip=0;
   s.skipping = p.skip > 0;
   if (s.skipping) { p.skip--; log(s, `${name(s.active)}本回合无法行动，之后还需跳过 ${p.skip} 回合。`); }
@@ -51,7 +50,6 @@ export function createGame(seed = 1) {
     active: 0,
     turn: 1,
     phase: "start",
-    synthesis: "pending",
     winner: null,
     log: ["对决开始，双方生命 99，双手从 1 开始。"],
     events: [],
@@ -76,20 +74,7 @@ export function touchCommands(s) {
   return [0,1].flatMap(hand => [0,1].flatMap(targetHand => !s.players[s.active].locks[hand] && !s.players[1-s.active].locks[targetHand] ? [{type:"add",hand,targetHand}] : []));
 }
 function continueAction(s) {
-  if(s.winner!==null)return;
-  const key=s.players[s.active].hands.join(',');
-  if(synthesisOptions(s).length && s.declinedHands!==key){s.phase='synthesis';s.synthesis='pending';return;}
-  if(s.calculated){endTurn(s);return;}
-  if(!touchCommands(s).length){log(s,`${name(s.active)}无合法计算目标，自动结束回合。`);endTurn(s);return;}
-  if(s.synthesis!=="declined")s.synthesis="skipped";
-  enterAction(s);
-}
-function enterAction(s) {
-  s.phase = "action";
-  if (!s.players[s.active].weapon && !touchCommands(s).length) {
-    log(s, `${name(s.active)}无合法计算目标，自动结束回合。`);
-    endTurn(s);
-  }
+  if(s.winner===null)s.phase="action";
 }
 function checkWinner(s) {
   if (s.winner !== null) return;
@@ -163,26 +148,22 @@ export function applyCommand(state, command) {
   s.events=[];
   switch (command.type) {
     case "advance":
-      assert(s.phase === "start" || s.phase === "planning", "当前不能进入下一阶段");
-      if (s.phase === "start") { if(s.skipping) endTurn(s,true); else s.phase = "planning"; }
-      else continueAction(s);
+      assert(s.phase === "start", "回合已经开始");
+      if(s.skipping)endTurn(s,true);else continueAction(s);
       break;
-    case "decline":
-      assert(s.phase === "synthesis", "当前不能放弃合成");
-      s.synthesis = "declined";
-      s.declinedHands=p.hands.join(',');
-      log(s, `${name(s.active)}放弃当前组合。`);
-      continueAction(s);
+    case "end":
+      assert(s.phase === "action" && !p.weapon, "当前不能结束回合");
+      log(s, `${name(s.active)}结束回合。`);
+      endTurn(s);
       break;
     case "forge": {
-      assert(s.phase === "synthesis", "只能在行动阶段的技能选择中合成");
+      assert(s.phase === "action" && !p.weapon, "当前不能合成技能");
       const w = synthesisOptions(s).find(w => w.id === command.weapon);
       assert(w, "不满足该武器的组合条件");
       p.weapon = w.id;
       p.hands = [1,1];
-      s.synthesis = "forged";
       log(s, `${name(s.active)}合成「${w.name}」，双手重置为 1。`);
-      enterAction(s);
+      continueAction(s);
       break;
     }
     case "add": {
@@ -202,11 +183,12 @@ export function applyCommand(state, command) {
       break;
     }
     case "prop": {
-      assert(s.phase === "planning", "道具只能在道具阶段使用");
+      assert(s.phase === "action" && !p.weapon, "当前不能使用道具");
       assert(!p.silenced,"本回合被沉默，不能使用道具");
       assert(Number.isInteger(command.slot)&&command.slot>=0&&command.slot<p.props.length,"道具不存在");
       const id=p.props[command.slot],prop=PROPS[id];
       assert(prop,"无效道具");
+      assert(!s.calculated || !["echo","mirror"].includes(id),"本回合计算已完成，请下回合使用");
       playerIndex(command.target);
       if(prop.target==="self"||prop.target==="all")assert(command.target===s.active,"该道具只能由自己发动");
       if(prop.target==="enemy")assert(command.target===1-s.active,"该道具只能对对手使用");
@@ -288,26 +270,29 @@ export function applyCommand(state, command) {
   return s;
 }
 
-export function legalCommands(s) {
-  if (s.winner !== null) return [];
-  const base = { actor: s.active, revision: s.revision };
-  const p = s.players[s.active];
-  const commands = [];
-  if (s.phase === "start") commands.push({ type: "advance" });
-  else if (s.phase === "planning") {
-    commands.push({type:"advance"});
-    if(!p.silenced)p.props.forEach((id,slot)=>{
-      const prop=PROPS[id];
-      if(prop.target==="hand")[0,1].forEach(target=>[0,1].forEach(targetHand=>{if(id!=="lock" || !s.players[target].locks.some(Boolean))commands.push({type:"prop",slot,target,targetHand});}));
-      else commands.push({type:"prop",slot,target:prop.target==="enemy"?1-s.active:s.active});
-    });
-  } else if (s.phase === "synthesis") {
-    synthesisOptions(s).forEach(w => commands.push({type:"forge",weapon:w.id}));
-    commands.push({type:"decline"});
-  }
-  else if (s.phase === "action") {
-    if(p.weapon) commands.push({type:"attack"});
-    else commands.push(...touchCommands(s));
-  }
-  return commands.map(c => ({...c,...base}));
+export function propCommands(s) {
+  const p=s.players[s.active], commands=[];
+  if(s.winner!==null || s.phase!=="action" || p.weapon || p.silenced)return commands;
+  p.props.forEach((id,slot)=>{
+    if(s.calculated && ["echo","mirror"].includes(id))return;
+    const prop=PROPS[id];
+    if(prop.target==="hand")[0,1].forEach(target=>[0,1].forEach(targetHand=>{
+      if(id!=="lock" || !s.players[target].locks.some(Boolean))commands.push({type:"prop",slot,target,targetHand});
+    }));
+    else commands.push({type:"prop",slot,target:prop.target==="enemy"?1-s.active:s.active});
+  });
+  return commands;
 }
+export function legalCommands(s) {
+  if(s.winner!==null)return [];
+  const base={actor:s.active,revision:s.revision},p=s.players[s.active];
+  let commands=[];
+  if(s.phase==="start")commands=[{type:"advance"}];
+  else if(s.phase==="action") {
+    if(p.weapon)commands=[{type:"attack"}];
+    else commands=[...propCommands(s),...synthesisOptions(s).map(w=>({type:"forge",weapon:w.id})),
+      ...(!s.calculated?touchCommands(s):[]),{type:"end"}];
+  }
+  return commands.map(c=>({...c,...base}));
+}
+export const hasTurnOptions = s => legalCommands(s).some(c=>!["end","advance"].includes(c.type));

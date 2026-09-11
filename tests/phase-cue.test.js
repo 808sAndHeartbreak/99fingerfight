@@ -2,25 +2,16 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { LocalSession } from "../src/session.js";
 import { createGame, applyCommand } from "../src/engine.js";
-import { phaseCue, turnSteps, phaseSeconds } from "../src/phase-cue.js";
+import { phaseCue, turnSeconds } from "../src/phase-cue.js";
 import { normalizeParticipants, escapeHtml } from "../src/identity.js";
 
-test("two visible stages, optional synthesis and terminal cues match authoritative state", () => {
-  const run=(s,c)=>applyCommand(s,{actor:s.active,revision:s.revision,...c});
-  let s=createGame(); assert.equal(phaseCue(null,s).kind,"start");
-  let next=run(s,{type:"advance"}); assert.equal(phaseCue(s,next).kind,"planning");
-  s=next; next=run(s,{type:"advance"}); assert.equal(phaseCue(s,next).kind,"action");
-  assert.equal(turnSteps(next)[1].note,"计算");
-  assert.equal(phaseCue(next,next),null);
-  s=run(createGame(),{type:"advance"}); s.players[0].hands=[9,9];
-  next=run(s,{type:"advance"}); assert.equal(phaseCue(s,next).kind,"synthesis");
-  s=next; next=run(s,{type:"forge",weapon:"unify"}); assert.equal(phaseCue(s,next).kind,"action");
-  assert.equal(phaseSeconds(next),0); assert.equal(turnSteps(next)[1].note,"攻击");
-  for(const actor of [0,1]) {
-    s=createGame(); s.active=actor; next=run(s,{type:"surrender"});
-    assert.equal(phaseCue(s,next).owner,1-actor); assert.equal(phaseCue(next,next),null);
-  }
+test("only turn changes and the final result generate cues",()=>{
+ const run=(s,c)=>applyCommand(s,{actor:s.active,revision:s.revision,...c});
+ let s=createGame(),n=run(s,{type:'advance'});assert.equal(phaseCue(null,s).kind,'start');assert.equal(phaseCue(s,n),null);
+ s=n;s.players[0].hands=[9,9];n=run(s,{type:'forge',weapon:'unify'});assert.equal(phaseCue(s,n),null);assert.equal(turnSeconds(n),30);
+ for(const actor of [0,1]){s=createGame();s.active=actor;n=run(s,{type:'surrender'});assert.equal(phaseCue(s,n).owner,1-actor);assert.equal(phaseCue(n,n),null);}
 });
+
 test("session identity accepts safe bounded Unicode names without changing rules or replay", () => {
   const source=[{displayName:'  雪⚡<img src=x onerror="x">  '},{displayName:'\u202e'}];
   const session=new LocalSession(42,{participants:source});

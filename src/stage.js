@@ -65,7 +65,7 @@ export class DuelStage {
         const model = createHand(COLORS[owner], hand === 1);
         const base = new THREE.Vector3(
           owner ? 3.0 : -3.0,
-          (owner === 0 ? 1-hand : hand) ? -1.65 : 1.5,
+          (owner === 0 ? hand : 1-hand) ? -1.65 : 1.5,
           0,
         );
         model.root.position.copy(base);
@@ -136,7 +136,7 @@ export class DuelStage {
     this.hands.forEach((h) => {
       h.base.set(
         (h.owner ? 1 : -1) * viewWidth * .21,
-        ((h.owner === 0 ? 1-h.hand : h.hand) ? -1 : 1) * viewHeight * .24,
+        ((h.owner === 0 ? h.hand : 1-h.hand) ? -1 : 1) * viewHeight * .24,
         0,
       );
       h.restScale = Math.min(1.15, viewWidth / 13.5, viewHeight / 5.5);
@@ -163,7 +163,7 @@ export class DuelStage {
       const canSelect =
         enabled &&
         !p.locks[h.hand] &&
-        state.phase === "action" &&
+        state.phase === "action" && !state.calculated &&
         !state.players[state.active].weapon &&
         (state.active === h.owner || selected?.kind === "hand");
       h.halo.material.opacity = chosen

@@ -55,12 +55,12 @@ test("guidance distinguishes optional preparation, legal targets, blocked turns 
     guidance(s, { kind: "hand", hand: 0 }, true, false).step,
     "target",
   );
-  s.players[1].locks = [true, true];
+  s.players[1].locks = [true, true];s.players[0].props=[];
   assert.equal(guidance(s, null, true, false).step, "blocked");
   assert.equal(guidance(s, null, false, false).step, "waiting");
   assert.equal(guidance(s, null, true, true).step, "resolving");
   s.players[0].props = ["grace"];
-  s.phase = "planning";
+  s.phase = "action";
   assert.equal(
     guidance(s, { kind: "prop", slot: 0 }, true, false).title,
     "确认使用「恩惠」",
@@ -74,40 +74,39 @@ test("combination routes expose only legal immediate touch targets", () => {
   assert.equal(comboRoutes(s,0,0).find(r=>r.weapon.id === "buddha").ready,true);
   s.players[1].locks = [true,true];
   assert.equal(comboRoutes(s,0,0).some(r=>r.ready),false);
-  s.players[1].locks = [false,false]; s.phase = "planning";
+  s.players[1].locks = [false,false]; s.calculated=true;
   assert.equal(comboRoutes(s,0,0).some(r=>r.ready),false);
 });
 test("forge visual events occur only on explicit synthesis command", () => {
-  let s=createGame(); s.phase="planning"; s.players[0].hands=[4,5]; s.players[0].props=["add"];
+  let s=createGame(); s.phase="action"; s.players[0].hands=[4,5]; s.players[0].props=["add"];
   const c={type:"prop",actor:0,revision:s.revision,slot:0,target:0,targetHand:0};
   let next=applyCommand(s,c); assert.deepEqual(forgeEvents(s,next,c),[]);
-  s=applyCommand(next,{type:"advance",actor:0,revision:next.revision});
+  s=next;
   const f={type:"forge",actor:0,revision:s.revision,weapon:"buddha"};
   next=applyCommand(s,f); assert.equal(forgeEvents(s,next,f)[0].weapon.id,"buddha");
 });
 
 import { propContactNumber } from "../src/guidance.js";
 test("item contact shows pre-forge pair before hands reset", () => {
-  const s=createGame(); s.phase="planning"; s.players[0].props=["add"]; s.players[0].hands=[4,5];
+  const s=createGame(); s.phase="action"; s.players[0].props=["add"]; s.players[0].hands=[4,5];
   const c={type:"prop",actor:0,revision:s.revision,slot:0,target:0,targetHand:0};
   const next=applyCommand(s,c);
   assert.equal(propContactNumber(s,c),5);
   assert.deepEqual(next.players[0].hands,[5,5]);
 });
 
-test('planning guidance follows actual synthesis eligibility and respects silence and opponent turns',()=>{
- const s=createGame();s.phase='planning';s.players[0].props=['add'];
- s.players[0].hands=[1,2];assert.equal(guidance(s,null,true,false).detail,'');
- s.players[0].hands=[2,2];assert.equal(guidance(s,null,true,false).title,'点击道具，选择目标使用');
- s.players[0].silenced=true;assert.match(guidance(s,null,true,false).title,/沉默/);
- assert.equal(guidance(s,null,false,false).title,'对手正在使用道具');
- assert.equal(guidance(s,null,false,false).detail,'');
+test('unified hints advertise only available operations and wait on the opponent',()=>{
+ const s=createGame();s.phase='action';s.players[0].hands=[1,2];s.players[0].props=['add'];
+ assert.match(guidance(s,null,true,false).title,/道具/);s.players[0].silenced=true;
+ assert.doesNotMatch(guidance(s,null,true,false).title,/道具/);s.players[0].hands=[2,2];
+ assert.match(guidance(s,null,true,false).title,/合成/);assert.equal(guidance(s,null,false,false).title,'等待对手出手');
+ assert.equal(guidance(s,null,true,false).detail,undefined);
 });
 
 test('touch instruction identifies the actual recipient under echo and mirror',()=>{
  const s=createGame();s.phase='action';const selected={kind:'hand',hand:0};
- assert.match(guidance(s,selected,true,false).detail,/主动手/);
- s.players[0].echo=true;assert.match(guidance(s,selected,true,false).detail,/自己的双手/);
- s.players[0].mirror=true;assert.match(guidance(s,selected,true,false).detail,/对手目标手/);
+ assert.match(guidance(s,selected,true,false).title,/己方数字/);
+ s.players[0].echo=true;assert.match(guidance(s,selected,true,false).title,/己方双手/);
+ s.players[0].mirror=true;assert.match(guidance(s,selected,true,false).title,/对手数字/);
  assert.equal(guidance(s,selected,false,false).step,'waiting');
 });

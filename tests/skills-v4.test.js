@@ -2,17 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createGame,applyCommand,legalCommands,synthesisOptions} from '../src/engine.js';
 import {WEAPONS} from '../src/catalog.js';
-import {phaseCue,turnSteps} from '../src/phase-cue.js';
+import {phaseCue} from '../src/phase-cue.js';
 import {describe} from '../src/info.js';
 const run=(s,c)=>applyCommand(s,{actor:s.active,revision:s.revision,...c});
 const fixture=(id)=>{const s=createGame(27);s.phase='action';s.players[0].weapon=id;s.players.forEach(p=>p.props=[]);return s;};
 // These duration tests resolve skills after the turn's calculation.
-const attack=s=>run({...s,calculated:true},{type:'attack'});
+const attack=s=>{const n=run({...s,calculated:true},{type:'attack'});if(n.winner!==null||n.active!==s.active)return n;const ended=run(n,{type:'end'});ended.events=[...n.events,...ended.events];return ended;};
 const damageEvents=s=>s.events.filter(e=>e.type==='damage');
 const cycle=s=>{while(s.active===1&&s.winner===null){const cs=legalCommands(s);s=run(s,cs.find(c=>c.type==='advance')||cs.find(c=>c.type==='decline')||cs.find(c=>c.type==='add')||cs[0]);}return s;};
 test('20 skills are explicitly selectable only for their recipe, with dedicated image assets',()=>{
  assert.equal(WEAPONS.length,20);
- for(const w of WEAPONS){let s=run(createGame(),{type:'advance'});s.players[0].hands=[...w.recipe];s=run(s,{type:'advance'});assert.ok(synthesisOptions(s).some(o=>o.id===w.id));s=run(s,{type:'forge',weapon:w.id});assert.deepEqual(s.players[0].hands,[1,1]);assert.equal(s.players[0].weapon,w.id);assert.equal(describe('weapon:'+w.id,s).image,w.image);assert.equal(attack(s).players[0].weapon,null);}
+ for(const w of WEAPONS){let s=run(createGame(),{type:'advance'});s.players[0].hands=[...w.recipe];assert.ok(synthesisOptions(s).some(o=>o.id===w.id));s=run(s,{type:'forge',weapon:w.id});assert.deepEqual(s.players[0].hands,[1,1]);assert.equal(s.players[0].weapon,w.id);assert.equal(describe('weapon:'+w.id,s).image,w.image);assert.equal(attack(s).players[0].weapon,null);}
 });
 test('ordinary single shield rounds up and is consumed; 55 remains indefinitely and follows digits',()=>{
  let s=fixture('scissors');s.players[1].hands=[5,0];let n=attack(s);assert.equal(n.players[1].hp,96);assert.deepEqual(n.players[1].hands,[0,9]);
@@ -50,11 +50,11 @@ test('seven injury runs for precisely seven target starts, repeats extend count,
 });
 test('skip turns retain supply and DOT, decrement once, expire turn items; no action commands leak',()=>{
  let s=fixture('buddha');s.players[1].hands=[5,5];s.players[1].echo=true;s.players[1].mirror=true;s.players[1].silenced=true;s.players[1].seven=5;s.players[1].locks=[true,true];s=attack(s);
- assert.equal(s.skipping,true);assert.equal(s.players[1].skip,2);assert.deepEqual(s.players[1].hands,[1,1]);assert.equal(s.players[1].hp,92);assert.equal(s.players[1].props.length,1);assert.deepEqual(legalCommands(s).map(c=>c.type),['advance']);assert.match(phaseCue(null,s).detail,/无法行动/);assert.equal(turnSteps(s)[1].note,'本回合跳过');
+ assert.equal(s.skipping,true);assert.equal(s.players[1].skip,2);assert.deepEqual(s.players[1].hands,[1,1]);assert.equal(s.players[1].hp,92);assert.equal(s.players[1].props.length,1);assert.deepEqual(legalCommands(s).map(c=>c.type),['advance']);assert.match(phaseCue(null,s).title,/无法行动/);
  for(const c of [{type:'attack'},{type:'prop',slot:0,target:1},{type:'add',hand:0,targetHand:0}])assert.throws(()=>run(s,c));
  s=run(s,{type:'advance'});assert.equal(s.players[1].silenced,false);assert.equal(s.players[1].echo,false);assert.equal(s.players[1].mirror,false);assert.deepEqual(s.players[1].locks,[false,false]);
  for(let i=0;i<1;i++){s.phase='action';s.players[0].weapon='foam';s=attack(s);assert.equal(s.skipping,true);s=run(s,{type:'advance'});}
- s.phase='action';s.players[0].weapon='foam';s=attack(s);assert.equal(s.skipping,false);assert.equal(run(s,{type:'advance'}).phase,'planning');
+ s.phase='action';s.players[0].weapon='foam';s=attack(s);assert.equal(s.skipping,false);assert.equal(run(s,{type:'advance'}).phase,'action');
 });
 test('skip counters accumulate and blocked damage still applies digit changes, removal and skip',()=>{
  let s=fixture('taser');s.players[1].hands=[5,5];s.players[1].skip=2;let n=attack(s);assert.equal(n.players[1].hp,99);assert.equal(n.players[1].skip,4);

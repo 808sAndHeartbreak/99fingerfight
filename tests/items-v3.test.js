@@ -50,12 +50,14 @@ test('echo copies into a locked secondary hand and mirror never advertises a cha
  const n=run(s,{type:'add',hand:0,targetHand:0});assert.deepEqual(n.players[0].hands,[5,5]);
  s.players[0].mirror=true;assert.ok(comboRoutes(s,0,0).every(r=>!r.ready));
 });
-test('silence prevents all active item use for exactly the opponents next turn but permits supply',()=>{
- let [s,n]=use('silence',{target:1});assert.equal(n.players[1].silenced,true);assert.equal(n.players[0].silenced,false);
- n.phase='action';n=run(n,{type:'add',hand:0,targetHand:0});assert.equal(n.players[1].silenced,true);assert.equal(n.players[1].props.length,1);
- n=run(n,{type:'advance'});assert.deepEqual(legalCommands(n).map(c=>c.type),['advance']);assert.throws(()=>run(n,{type:'prop',slot:0,target:1}),/沉默/);
- n=run(n,{type:'advance'});n=run(n,{type:'add',hand:0,targetHand:0});assert.equal(n.players[1].silenced,false);
+test('silence lasts until the affected player explicitly ends their next turn',()=>{
+ const [,next]=use('silence',{target:1});let n=next;n.phase='action';n=run(n,{type:'add',hand:0,targetHand:0});
+ assert.equal(n.players[1].silenced,true);n=run(n,{type:'end'});assert.equal(n.players[1].props.length,1);n=run(n,{type:'advance'});
+ assert.ok(legalCommands(n).some(c=>c.type==='add'));assert.ok(legalCommands(n).every(c=>c.type!=='prop'));
+ assert.throws(()=>run(n,{type:'prop',slot:0,target:1}),/沉默/);n=run(n,{type:'add',hand:0,targetHand:0});
+ assert.equal(n.players[1].silenced,true);n=run(n,{type:'end'});assert.equal(n.players[1].silenced,false);
 });
+
 test('balance redraws post-consumption counts, boon fills both, greed ends once with capped inventory',()=>{
  const s=planning();s.players[0].props=['balance','echo','lock'];s.players[1].props=['civil','double','ruin'];
  const n=run(s,{type:'prop',slot:0,target:0});assert.deepEqual(n.players.map(p=>p.props.length),[2,3]);assert.equal(n.events.filter(e=>e.type==='draw').length,5);assert.deepEqual(n,run(s,{type:'prop',slot:0,target:0}));
@@ -71,7 +73,7 @@ test('grace caps healing and ruin uses enemy sum, bypassing and preserving shiel
 });
 test('turn-limited modifiers expire on attack or no legal calculation and do not accumulate uses',()=>{
  const [s]=use('echo',{props:['echo','echo','mirror']});let n=run(s,{type:'prop',slot:0,target:0});n=run(n,{type:'prop',slot:0,target:0});assert.equal(n.players[0].echo,true);
- n=run(n,{type:'prop',slot:0,target:0});n.players[0].hands=[9,9];n=run(n,{type:'advance'});n=run(n,{type:'forge',weapon:'unify'});assert.equal(n.players[0].echo,true);
- n=run(n,{type:'attack'});assert.equal(n.players[0].echo,true);n=run(n,{type:'add',hand:0,targetHand:0});if(n.phase==='synthesis')n=run(n,{type:'decline'});assert.equal(n.players[0].echo,false);assert.equal(n.players[0].mirror,false);
- const b=planning();b.players[0].echo=true;b.players[0].mirror=true;b.players[0].locks=[true,true];const bn=run(b,{type:'advance'});assert.equal(bn.active,1);assert.equal(bn.players[0].echo,false);assert.equal(bn.players[0].mirror,false);
+ n=run(n,{type:'prop',slot:0,target:0});n.players[0].hands=[9,9];n=run(n,{type:'forge',weapon:'unify'});assert.equal(n.players[0].echo,true);
+ n=run(n,{type:'attack'});assert.equal(n.players[0].echo,true);n=run(n,{type:'add',hand:0,targetHand:0});n=run(n,{type:'end'});assert.equal(n.players[0].echo,false);assert.equal(n.players[0].mirror,false);
+ const b=planning();b.players[0].echo=true;b.players[0].mirror=true;b.players[0].locks=[true,true];const bn=run(b,{type:'end'});assert.equal(bn.active,1);assert.equal(bn.players[0].echo,false);assert.equal(bn.players[0].mirror,false);
 });

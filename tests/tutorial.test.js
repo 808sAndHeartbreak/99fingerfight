@@ -40,8 +40,8 @@ test('retries are fresh, snapshots isolated, disposed sessions reject and normal
 
 test('both opposing tutorial hands accept the touch and reach the same checkpoint',async()=>{
  for(const targetHand of [0,1]){
-  const s=new TutorialSession(0);await send(s,{type:'advance'});
+  const s=new TutorialSession(0);
   await send(s,{type:'add',hand:0,targetHand});
-  assert.equal(s.done,true);assert.deepEqual(s.getSnapshot().players[0].hands,[2,1]);
+  assert.equal(s.step,1);await send(s,{type:"end"});assert.equal(s.done,true);assert.deepEqual(s.getSnapshot().players[0].hands,[2,1]);
  }
 });
