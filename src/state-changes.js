@@ -5,7 +5,7 @@ export function stateChanges(old,next) {
  for(const owner of [0,1]) {
   const a=old.players[owner],b=next.players[owner];
   for(const hand of [0,1]) {
-   if(a.hands[hand]!==b.hands[hand])changes.push({owner,hand,kind:'number',label:`${a.hands[hand]} → ${b.hands[hand]}`});
+   if(a.hands[hand]!==b.hands[hand])changes.push({owner,hand,kind:'number',label:`[${a.hands[hand]}] → [${b.hands[hand]}]`});
    if(a.locks[hand]!==b.locks[hand])changes.push({owner,hand,kind:'lock',label:b.locks[hand]?'封印':'解除封印'});
   }
   for(const [key,name] of Object.entries(STATUS_NAMES))if(a[key]!==b[key]){

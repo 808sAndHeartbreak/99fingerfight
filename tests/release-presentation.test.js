@@ -16,8 +16,8 @@ test('dual-gun presentation preserves per-hit shield resolution and never invent
  s.players[1].hands=[1,1];s.players[1].foam=0;s.players[1].hp=4;n=run(s,{type:'attack'});assert.equal(actionBeats(s,n,{type:'attack'}).length,1);
 });
 test('nine mark acquisition and forced win have separate pacing and outcomes',()=>{
- const s=createGame();s.phase='action';s.players[0].weapon='unify';const first=run(s,{type:'attack'});assert.equal(actionDuration(s,first,{type:'attack'}),1800);assert.equal(first.winner,null);
- s.players[0].nine=1;const last=run(s,{type:'attack'});assert.equal(actionDuration(s,last,{type:'attack'}),3200);assert.equal(actionBeats(s,last,{type:'attack'}).at(-1).label,'九九归一');
+ const s=createGame();s.phase='action';s.players[0].weapon='unify';const first=run(s,{type:'attack'});assert.equal(actionDuration(s,first,{type:'attack'}),3000);assert.equal(first.winner,null);
+ s.players[0].nine=1;const last=run(s,{type:'attack'});assert.equal(actionDuration(s,last,{type:'attack'}),4400);assert.equal(actionBeats(s,last,{type:'attack'}).at(-1).label,'九九归一');
 });
 test('server protects same-phase item presentation without granting a fresh planning clock',()=>{
  let now=10000;const h=new MatchHub({now:()=>now});const s=run(createGame(),{type:'advance'});s.players[0].props=['double','add'];

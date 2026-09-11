@@ -1,49 +1,48 @@
-import { ITEM_NOTICE_MS, actionBeats, actionDuration, commandArt, SKILL_MOTION, skillSummary } from './presentation.js';
+import { actionBeats, actionDuration, commandArt, SKILL_MOTION, skillSummary } from './presentation.js';
 import { propUseDetail } from './guidance.js';
 import { playerName, escapeHtml } from './identity.js';
 
 // Presentation consumes authoritative events; it never rolls randomness or changes game state.
-export function createCombatCinema({animate,register,generation,asset,sound,impact,participants}) {
+export function createCombatCinema({animate,register,generation,asset,sound,participants,notice,noticeRoot}) {
   return async function perform(old,next,command,onBeat) {
     const epoch=generation(), art=commandArt(old,command), skill=command.type==='attack';
     const wait=async(el,ms)=>{await animate(el,[{opacity:1},{opacity:1}],{duration:ms}).finished.catch(()=>{});return generation()===epoch;};
     if(!art) {
       const beats=actionBeats(old,next,command),duration=actionDuration(old,next,command);
       if(!duration){onBeat({type:'settle'});return true;}
-      const banner=document.createElement('aside');banner.className='event-banner';banner.setAttribute('role','status');document.querySelector('.duel').append(banner);register(banner);
-      for(const beat of beats){banner.dataset.team=beat.owner;banner.innerHTML=`<small>${escapeHtml(playerName(participants(),beat.owner))} · 回合结算</small><strong>${escapeHtml(beat.label)}</strong>`;onBeat(beat);sound(beat.type==='damage'?(beat.amount?'curse':'guard'):'turn',.6);if(!await wait(banner,600))return false;}
+      const banner=document.createElement('span');banner.hidden=true;document.querySelector('.duel').append(banner);register(banner);
+      for(const beat of beats){notice(`${playerName(participants(),beat.owner)} · ${beat.label}`,beat.owner,'effect');onBeat(beat);sound(beat.type==='damage'?(beat.amount?'curse':'guard'):'turn',.6);if(!await wait(banner,900))return false;}
       onBeat({type:'settle'});
-      if(!beats.length)banner.hidden=true;
-      if(!await wait(banner,Math.max(0,duration-beats.length*600-180)))return false;
-      await animate(banner,[{opacity:1},{opacity:0}],{duration:180},true).finished.catch(()=>{});return generation()===epoch;
+      await animate(banner,[{opacity:1},{opacity:1}],{duration:Math.max(0,duration-beats.length*900)},true).finished.catch(()=>{});
+      return generation()===epoch;
     }
     if(!skill) {
       const beats=actionBeats(old,next,command),owner=old.active,id=old.players[owner].props[command.slot];
       const targets=art.target==='all'?[0,1]:[command.target];
       const names=targets.map(o=>playerName(participants(),o)+(command.targetHand===undefined?'':` · ${command.targetHand===0?'左':'右'}手`)).join('、');
       const result=command.targetHand!==undefined && id!=='lock'
-        ? `${old.players[command.target].hands[command.targetHand]} → ${next.players[command.target].hands[command.targetHand]}`
+        ? `[${old.players[command.target].hands[command.targetHand]}] → [${next.players[command.target].hands[command.targetHand]}]`
         : ['balance','boon','greed'].includes(id)?propUseDetail(old,id):beats.filter(b=>b.type==='effect').map(b=>b.label).join(' · ');
       const duel=document.querySelector('.duel'),card=document.createElement('aside');card.className='item-receipt';card.dataset.owner=owner;card.setAttribute('role','status');
       card.innerHTML=`<img src="${asset(art.image)}" alt=""><div><small>${escapeHtml(playerName(participants(),owner))} 使用 · ${escapeHtml(names)}</small><strong>${art.name}</strong><b>${escapeHtml(result)}</b></div>`;
-      duel.append(card);register(card);
+      noticeRoot().append(card);register(card);
       const bounds=duel.getBoundingClientRect(),source=document.querySelector(`#items-${owner} .prop-slot:nth-of-type(${command.slot+2}) .prop-use`),icon=card.querySelector('img');
       const to=icon.getBoundingClientRect(),from=source?.getBoundingClientRect()||to;
       const flight=document.createElement('img');flight.src=asset(art.image);flight.className='released-item';flight.style.left=`${to.x+to.width/2-bounds.x}px`;flight.style.top=`${to.y+to.height/2-bounds.y}px`;duel.append(flight);register(flight);
       icon.style.visibility='hidden';
       if(source)animate(source,[{opacity:1},{opacity:0,offset:.08},{opacity:0}],{duration:actionDuration(old,next,command),fill:'forwards'});
-      animate(card,[{opacity:0,transform:'translateX(-50%) scale(.96)'},{opacity:1,transform:'translateX(-50%) scale(1)'}],{duration:350,fill:'forwards'});
+      animate(card,[{opacity:0,transform:'scale(.96)'},{opacity:1,transform:'scale(1)'}],{duration:350,fill:'forwards'});
       sound('release',.65);
       await animate(flight,[{opacity:1,transform:`translate(calc(-50% + ${from.x+from.width/2-to.x-to.width/2}px),calc(-50% + ${from.y+from.height/2-to.y-to.height/2}px)) scale(.55)`},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}],{duration:350,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'}).finished.catch(()=>{});
       if(generation()!==epoch)return false;
-      if(!await wait(card,1100))return false;
+      if(!await wait(card,1800))return false;
       const target=document.querySelector(command.targetHand===undefined?`#player-${command.target}`:`#hand-${command.target}-${command.targetHand}`),r=target.getBoundingClientRect();
       await animate(flight,[{opacity:1,transform:'translate(-50%,-50%) scale(1)'},{opacity:0,transform:`translate(calc(-50% + ${r.x+r.width/2-to.x-to.width/2}px),calc(-50% + ${r.y+r.height/2-to.y-to.height/2}px)) scale(.2)`}],{duration:350,fill:'forwards',easing:'ease-in'},true).finished.catch(()=>{});
       if(generation()!==epoch)return false;
       for(const o of targets){const el=document.querySelector(command.targetHand===undefined?`#player-${o}`:`#hand-${o}-${command.targetHand}`);animate(el,[{filter:'brightness(1)'},{filter:'brightness(1.4)',offset:.2},{filter:'brightness(1)'}],{duration:600});}
       for(const beat of beats)onBeat(beat);onBeat({type:'settle'});
       sound(id==='grace'?'heal':['lock','silence','ruin'].includes(id)?'curse':'item',.65);
-      if(!await wait(card,620))return false;
+      if(!await wait(card,1120))return false;
       await animate(card,[{opacity:1},{opacity:0}],{duration:180},true).finished.catch(()=>{});
       return generation()===epoch;
     }
@@ -57,7 +56,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,impa
     (nine?document.body:document.querySelector('.duel')).append(el);register(el);
     if(nine)el.classList.add('contact');
     const duration=actionDuration(old,next,command),beats=actionBeats(old,next,command);
-    const intro=skill?250:120,tail=nine?650:1300;
+    const intro=skill?250:120,tail=2000;
     const beatDuration=(duration-intro-tail)/Math.max(1,beats.length);
     const live=()=>generation()===epoch;
     const skillWait=async(ms)=>{await animate(el,[{opacity:1},{opacity:1}],{duration:ms,fill:'both'}).finished.catch(()=>{});return live();};
@@ -102,16 +101,19 @@ export function createCombatCinema({animate,register,generation,asset,sound,impa
       el.classList.toggle('blocked',!!beat?.blocked&&beat.amount===0);
       const fx=el.querySelector('.cinema-impact');
       animate(fx,[{opacity:0,transform:'scale(.2) rotate(-20deg)'},{opacity:.85,transform:'scale(1) rotate(0)',offset:.2},{opacity:0,transform:'scale(1.45) rotate(8deg)'}],{duration:Math.min(500,beatDuration),fill:'both'});
-      impact(['七伤拳','玄冥神掌','中毒'].includes(beat?.source)?'curse':family,beat?.owner??(skill?1-old.active:command.target));
+      // Damage is shown on the receiving hands and HP, without screen-wide slashes.
       sound(beat?.blocked&&beat.amount===0?'guard':nine?'nine':family,skill?1:.5);
       if(!await skillWait(beatDuration))return false;
     }
-    onBeat({type:'settle'});
+    onBeat({type:'settle',preserveActorHands:true});
     const summary=skillSummary(old,next,command);
     el.querySelector('.cinema-result').innerHTML=`${summary.hits?`<small>共 ${summary.hits} 击</small><strong class="damage-value">HP−${summary.damage}</strong><span class="damage-caption">累计实际伤害</span>`:''}${summary.effects.length?`<span class="effect-text">${summary.effects.map(escapeHtml).join(' · ')}</span>`:''}`;
     el.querySelector('.cinema-hit').textContent='';
     if(nine){el.classList.add('sealed');sound(won?'victory':'nine',1);}
-    if(!await skillWait(tail-200))return false;
+    if(!await skillWait(tail-850))return false;
+    onBeat({type:'reset-hands'});
+    notice(`${playerName(participants(),old.active)} · ${art.name}${summary.hits?` · 对手 HP −${summary.damage}`:''}${summary.effects.length?' · '+summary.effects.join(' · '):''}`,old.active,'effect');
+    if(!await skillWait(650))return false;
     await animate(el,[{opacity:1,transform:'translateX(0)'},{opacity:0,transform:'translateX(6%)'}],{duration:200,fill:'both'},true).finished.catch(()=>{});
     return live();
   };

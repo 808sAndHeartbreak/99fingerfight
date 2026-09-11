@@ -41,8 +41,8 @@ test('PVE saves retain difficulty and rule 9 saves are rejected',()=>{
 });
 test('event deltas identify shield loss, copied digits and inventory without treating duplicate items as a removal',()=>{
  const s=ready(),n=structuredClone(s);s.players[0].props=['wine','wine'];n.players[0].props=['wine'];s.players[1].hands=[5,2];n.players[1].hands=[1,2];n.players[1].foam=2;
- const changes=stateChanges(s,n);assert.equal(changes.filter(c=>c.kind==='inventory').length,1);assert.ok(changes.some(c=>c.owner===1&&c.hand===0&&c.label==='5 → 1'));assert.ok(changes.some(c=>c.key==='foam'));
+ const changes=stateChanges(s,n);assert.equal(changes.filter(c=>c.kind==='inventory').length,1);assert.ok(changes.some(c=>c.owner===1&&c.hand===0&&c.label==='[5] → [1]'));assert.ok(changes.some(c=>c.key==='foam'));
 });
 test('turn-start periodic damage gets reading time and the server can reserve that same duration',()=>{
- const s=ready();s.players[1].seven=2;s.players[1].poison=2;const n=run(s,{type:'end'});assert.equal(n.events.filter(e=>e.type==='damage').length,2);assert.equal(presentationDuration(s,n,{type:'end'}),2100);
+ const s=ready();s.players[1].seven=2;s.players[1].poison=2;const n=run(s,{type:'end'});assert.equal(n.events.filter(e=>e.type==='damage').length,2);assert.equal(presentationDuration(s,n,{type:'end'}),4200);
 });

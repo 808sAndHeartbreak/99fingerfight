@@ -31,8 +31,8 @@ export function handPreview(state, selected, owner, hand) {
     weapon: weapon?.id,
     text:
       selected.kind === "hand"
-        ? `碰这里 → ${number}`
-        : `${state.players[owner].hands[hand]} → ${number}`,
+        ? `碰这里 → [${number}]`
+        : `[${state.players[owner].hands[hand]}] → [${number}]`,
     note: (selected.kind==="hand" ? state.players[state.active].mirror?(state.players[state.active].echo?"镜像 × 回响：对手双手同值 · ":"镜像：改变对手目标手 · "):state.players[state.active].echo?"回响：己方双手同值 · ":"" : "") + (weapon ? `${affected === state.active ? "本回合可合成 · " : "对手回合可合成 · "}${matchingWeapons([number,other]).length>1?`${matchingWeapons([number,other]).length} 种技能`:weapon.name}` : number === 5 ? "获得护盾" : ""),
   };
 }
@@ -89,7 +89,7 @@ export function comboRoutes(state, owner, hand) {
     const targets=enemy.hands.flatMap((n,i)=> n===needed && !enemy.locks[i] ? [i ? "右手":"左手"] : []);
     const ready=desired !== null && !p.locks[hand] && targets.length>0 && state.phase==="action" && !state.calculated && !p.weapon && state.active===owner && state.winner===null;
     const satisfied=matchingWeapons(p.hands).some(w=>w.id===weapon.id);
-    return {weapon,ready,status:satisfied ? "配方已满足" : desired === null ? `另一手需 ${[...new Set(recipe)].join(" / ")}` : p.locks[hand] ? "此手已封印" : ready ? `碰${targets.join(" / ")} · 本回合` : `需碰数字 ${needed}`};
+    return {weapon,ready,status:satisfied ? "配方已满足" : desired === null ? `另一手需 ${[...new Set(recipe)].join(" / ")}` : p.locks[hand] ? "此手已封印" : ready ? `碰${targets.join(" / ")} · 本回合` : `需碰数字 [${needed}]`};
   });
 }
 export function forgeEvents(old, next, command) {

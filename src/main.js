@@ -242,13 +242,14 @@ function render() {
   if(mode==="online" && online.status==="connected" && !busy && !renderedRemoteReady && state.winner===null) Object.assign(guide,{title:"正在交接",detail:"演出结束后即可操作",step:"waiting"});
   if(remotePending && !busy && mode==="online" && online.status==="connected") Object.assign(guide,{title:"操作已发送",detail:"等待服务器确认",step:"waiting"});
 
+  if(mode==="tutorial" && !busy && !session.canProceed)guide.title="查看下方 [2] + [2] 图鉴";
   feedback.reveal(document.querySelector("#instruction"), guide.title);
   document.querySelector(".game-shell").dataset.step = guide.step;
   document.querySelector(".game-shell").dataset.actor = state.active;
   document.querySelector(".game-shell").dataset.phase = state.phase;
   const forgePanel=document.querySelector("#forge-options");
   forgePanel.hidden=busy || remotePending || !!selected || !humanTurn() || state.phase!=="action" || !!p.weapon || !synthesisOptions(state).length;
-  forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><h2>合成技能</h2><p>${p.hands.join(" + ")}</p></div><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${enabled && (mode!=="tutorial" || session.guide?.command.weapon===w.id) ? "" : "disabled"}>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span></button>`).join("")}</div>`;
+  forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><h2>合成技能</h2><p>${p.hands.map(n=>`[${n}]`).join(" + ")}</p></div><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${enabled && (mode!=="tutorial" || session.guide?.command.weapon===w.id) ? "" : "disabled"}>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span></button>`).join("")}</div>`;
   for(const owner of [0,1]) {
     const player=state.players[owner], usable=owner===state.active && enabled && state.phase==="action" && !p.weapon && !player.silenced;
     const supply=player.turns===0?1:supplyIn(player);
@@ -260,20 +261,20 @@ function render() {
   }
   const shelf=document.querySelector('#recipe-shelf');
   if(!shelf.children.length)shelf.innerHTML='<div class="reference-recipe shield-reference" tabindex="0" data-info="shield:0" aria-label="5 护盾"><b>5</b></div>'+[5,0,2,4,6,7,8,9].map(n=>{
-    return `<div class="reference-recipe" tabindex="0" data-number="${n}" data-info="recipe:${n}" aria-label="${n} 加 ${n} 配方"><b>${n} + ${n}</b></div>`;
+    return `<div class="reference-recipe" tabindex="0" data-number="${n}" data-info="recipe:${n}" aria-label="${n} 加 ${n} 配方"><b>[${n}] + [${n}]</b></div>`;
   }).join('');
   for(const el of shelf.children){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',!p.hands.every(v=>v===n)&&p.hands.includes(n));}
   document.querySelector("#primary-actions").innerHTML = `${selected ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"}</button>` : ""}`;
   const endButton=document.querySelector('#end-turn');
   endButton.hidden=state.winner!==null;
-  endButton.disabled=!enabled || state.phase!=="action" || !!p.weapon || (mode==='tutorial' && session.guide?.command.type!=='end');
-  endButton.classList.toggle('recommended',!hasTurnOptions(state) && !endButton.disabled);
+  endButton.disabled=!enabled || state.phase!=="action" || !!p.weapon || (mode==='tutorial' && (session.guide?.command.type!=='end' || !session.canProceed));
+  endButton.classList.toggle('recommended',(mode==='tutorial' || !hasTurnOptions(state)) && !endButton.disabled);
 
   document.querySelector(".game-shell").classList.toggle("is-busy", busy);
   document.querySelectorAll("#menu,#help").forEach((b) => (b.disabled = busy));
 
   renderTutorial();
-  stage?.sync(state, selected, enabled);
+  stage?.sync(state, selected, enabled, busy);
 }
 function showTutorialNote(){
   const done=session.done,g=session.guide;
@@ -290,7 +291,7 @@ function renderTutorial() {
   if(!dialog.open&&!session.notices.has(done?'done':session.step)&&(done||!['advance','attack'].includes(g.command.type))){showTutorialNote();return;}
   if(done){document.querySelector('#primary-actions').innerHTML='<button class="primary" id="tutorial-next">'+(session.chapter===LESSONS.length-1?'完成教学':'下一节')+'</button>';}
   if(!done){
-    const target=selected&&g.selectedTarget?g.selectedTarget:g.target;
+    const target=!session.canProceed?`[data-info="${g.requiresInfo}"]`:selected&&g.selectedTarget?g.selectedTarget:g.target;
     if(target)document.querySelectorAll(target).forEach(el=>{if(!el.disabled)el.classList.add('tutorial-target');});
   }
 }
@@ -305,28 +306,31 @@ async function animateCommand(command, old, next, contact) {
   if(command.type==="add") {
     const a=old.players[command.actor].hands[command.hand],b=old.players[1-command.actor].hands[command.targetHand];
     const resultOwner=old.players[command.actor].mirror?1-command.actor:command.actor;
-    document.querySelector('#instruction').innerHTML=`出手！数字加和，<span class="equation-team-${command.actor}">${a}</span> + <span class="equation-team-${1-command.actor}">${b}</span> → <span class="equation-team-${resultOwner}">${(a+b)%10}</span>`;
+    document.querySelector('#instruction').innerHTML=`出手！数字加和，<span class="equation-team-${command.actor}">[${a}]</span> + <span class="equation-team-${1-command.actor}">[${b}]</span> → <span class="equation-team-${resultOwner}">[${(a+b)%10}]</span>`;
   }
   if(command.type==="attack"||command.type==="prop"||["end","advance","forge"].includes(command.type)) {
-    cinema??=createCombatCinema({animate:feedback.animate,register:feedback.register,generation:feedback.generation,asset,sound:battleSound.play,impact:(kind,owner)=>stage?.skillImpact?.(kind,owner),participants});
+    cinema??=createCombatCinema({animate:feedback.animate,register:feedback.register,generation:feedback.generation,asset,sound:battleSound.play,participants,notice:feedback.notice,noticeRoot:feedback.noticeRoot});
     let visual=structuredClone(old);
     const completed=await cinema(old,next,command,beat=>{
       const before=structuredClone(visual);
       if(beat.type==="damage") {
         const target=visual.players[beat.owner];
         target.hp=Math.max(0,target.hp-beat.amount);
+        stage?.hit?.(beat.owner,beat.amount);
         if(beat.hands)target.hands=[...beat.hands];
         if(beat.foam!==undefined) {
           target.foam=beat.foam;
           const badge=document.querySelector(`[data-info="status:foam:${beat.owner}"]`);
           if(badge){if(beat.foam){badge.querySelector(".status-count").textContent=beat.foam;badge.setAttribute("aria-label",`泡沫盾墙，剩余 ${beat.foam} 次`);}else badge.remove();}
         }
-        stage?.sync(visual,null,false);
+        stage?.sync(visual,null,false,true);
         target.hands.forEach((n,h)=>{handElements[beat.owner][h].querySelector('.hand-value').textContent=n;});
       }
-      else if(beat.type==='settle') {
+      else if(beat.type==='settle' || beat.type==='reset-hands') {
+        const actorHands=[...visual.players[old.active].hands];
         visual=structuredClone(next);
-        stage?.sync(visual,null,false);
+        if(beat.preserveActorHands)visual.players[old.active].hands=actorHands;
+        stage?.sync(visual,null,false,true);
         visual.players.forEach((p,owner)=>p.hands.forEach((n,h)=>{handElements[owner][h].querySelector('.hand-value').textContent=n;}));
       }
       feedback.changes(before,visual);
@@ -368,7 +372,6 @@ async function send(command) {
   }
   remaining=Math.max(0,(deadline-Date.now())/1000);
   if(mode!=="tutorial" && remaining===0 && state.phase==="action" && !state.players[state.active].weapon && !["end","surrender"].includes(command.type))command={type:"end"};
-  feedback.clearNotices();
   busy = true;
   selected = null;
   stopAI();
@@ -676,7 +679,10 @@ async function drainRemote() {
   } finally {if(serial===actionSerial){remoteApplying=false;busy=false;render();}}
 }
 
-info = setupInfo(app, () => state, asset, participants, () => mode === "online");
+info = setupInfo(app, () => state, asset, participants, () => mode === "online", key => {
+  if(mode!=="tutorial" || !session.inspect(key))return;
+  const end=document.querySelector("#end-turn");end.disabled=false;end.classList.add("recommended");feedback.reveal(document.querySelector("#instruction"),"已查看配方，点击结束回合");renderTutorial();
+});
 listen(app, "click", (e) => {
   const tutorialAction=e.target.closest('button')?.id;
   if(mode==='tutorial') {
@@ -687,6 +693,8 @@ listen(app, "click", (e) => {
   }
 
   battleSound.unlock();
+  const recipe=e.target.closest(".reference-recipe");
+  if(recipe){info.show(recipe,true);return;}
   const detail=e.target.closest('.hand-shield');
   if(detail){info.show(detail,true);return;}
   const button = e.target.closest("button");

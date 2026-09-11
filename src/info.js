@@ -3,8 +3,8 @@ import { playerName, escapeHtml } from "./identity.js";
 import { PROPS, MAX_HP, WEAPONS, weaponById } from "./catalog.js";
 
 const PROP_INFO = {
-  add: "一只手数字 +1，9 变成 0。",
-  sub: "一只手数字 −1，0 变成 9。",
+  add: "一只手数字 +1，[9] 变成 [0]。",
+  sub: "一只手数字 −1，[0] 变成 [9]。",
   lock: "一只手不能参与触碰计算；所属玩家回合结束解除。道具仍能改变它的数字。每人最多封印一只手；已有封印时不能再对该玩家使用。",
 };
 export function describe(key, state, participants) {
@@ -12,7 +12,7 @@ export function describe(key, state, participants) {
   if(kind === "recipe" || kind === "combo") {
     const options=WEAPONS.filter(w=>w.recipe.every(n=>n===Number(id)));
     if(!options.length)return null;
-    return {title:`${id} + ${id}`,tag:"配方选项",stats:[],body:(kind==="combo"?`组合已满足，行动时可合成。${id==="5"?"55：免疫普通伤害，不消耗数字；真实伤害仍可生效。":""}<br><br>`:"")+options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:"行动时选择其中一种，双手归 1 并自动释放；每回合可计算一次，计算前后均可合成。"};
+    return {title:`[${id}] + [${id}]`,tag:"配方选项",stats:[],body:(kind==="combo"?`组合已满足，行动时可合成。${id==="5"?"[5] + [5]：免疫普通伤害，不消耗数字；真实伤害仍可生效。":""}<br><br>`:"")+options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:"行动时选择其中一种，自动释放，结算后双手归 [1]；每回合可计算一次，计算前后均可合成。"};
   }
   if (kind === "weapon") {
     const w = weaponById(id);
@@ -22,11 +22,11 @@ export function describe(key, state, participants) {
       image:w.image,
       tag: "合成武器",
       stats: [
-        ["合成", w.recipe.join(" · ")],
+        ["合成", w.recipe.map(n=>`[${n}]`).join(" + ")],
         ["使用", "自己的回合"],
       ],
       body: w.detail,
-      note: "合成后双手归 1 并自动释放；每回合计算一次，计算前后均可合成。",
+      note: "合成后自动释放，结算后双手归 [1]；每回合计算一次，计算前后均可合成。",
     };
   }
   if (kind === "prop") {
@@ -81,7 +81,7 @@ export function describe(key, state, participants) {
       title: `${owner === 0 ? "蓝方" : "红方"} · ${h === 0 ? "左手" : "右手"}`,
       tag: "手势信息",
       stats: [
-        ["当前数字", String(n)],
+        ["当前数字", `[${n}]`],
         ["状态", p.locks[h] ? "已封印" : n === 5 ? "护盾生效" : "可参与计算"],
       ],
       body: p.locks[h]
@@ -89,7 +89,7 @@ export function describe(key, state, participants) {
         : "行动时先选自己的手，再选对方的手。两手触碰后，通常主动手变为两数之和的个位数。回响会复制给己方双手，镜像会改为写入对手目标手。",
       note:
         n === 5
-          ? "单个 5：普通伤害减半并变为 1。双手 55：完全免疫普通伤害且数字不变，数字变化后立即失效。真实伤害不消耗防御。"
+          ? "单个 [5]：普通伤害减半并变为 [1]。双手 [5] + [5]：完全免疫普通伤害且数字不变，数字变化后立即失效。真实伤害不消耗防御。"
           : "双手同为 0、2、4、5、6、7、8、9 时有技能配方；悬停底部配方查看全部选项。",
     };
   }
@@ -99,11 +99,11 @@ export function describe(key, state, participants) {
       image: "ink-mono/foam.webp",
       tag: "被动效果",
       stats: [
-        ["条件", "单手为 5"],
+        ["条件", "单手为 [5]"],
         ["减伤", "50%"],
       ],
-      body: "单个 5 使普通伤害减半（向上取整），然后变为 1；双手 55 完全免疫普通伤害，不消耗数字且不限次数，数字变化后立即失效。",
-      note: "防御顺序：和平 → 55 → 盾墙 → 单个 5。真实伤害跳过护盾，仍受和平与肾上腺素影响；认真一拳先将双手变为 1 并清除盾墙。零伤害不消耗防御。",
+      body: "单个 [5] 使普通伤害减半（向上取整），然后变为 [1]；双手 [5] + [5] 完全免疫普通伤害，不消耗数字且不限次数，数字变化后立即失效。",
+      note: "防御顺序：和平 → [5] + [5] → 盾墙 → 单个 [5]。真实伤害跳过护盾，仍受和平与肾上腺素影响；认真一拳先将双手变为 [1] 并清除盾墙。零伤害不消耗防御。",
     };
   if (kind === "player") {
     const p = state.players[Number(id)];
@@ -132,7 +132,7 @@ export function describe(key, state, participants) {
   return null;
 }
 
-export function setupInfo(root, getState, asset, getParticipants = () => [], isRemote = () => false) {
+export function setupInfo(root, getState, asset, getParticipants = () => [], isRemote = () => false, onShow = () => {}) {
   const listeners = new AbortController();
   const listen = (element, event, callback) =>
     element.addEventListener(event, callback, { signal: listeners.signal });
@@ -149,7 +149,7 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
   }
   function show(button, pin = false) {
     if (
-      !pin &&
+      !root.querySelector(".is-tutorial") && !pin &&
       button?.matches(
         ".hand-hotspot.target:not([data-info='shield']),.hand-hotspot.selected:not([data-info='shield']),.prop-slot.selected .prop-use",
       )
@@ -191,6 +191,7 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
         : Math.min(innerHeight - box.height - 12, r.bottom + 12);
     pop.style.left = `${x}px`;
     pop.style.top = `${Math.max(12, y)}px`;
+    onShow(button.dataset.info);
   }
   listen(root, "pointerover", (e) => {
     if (e.pointerType === "touch" || pinned) return;

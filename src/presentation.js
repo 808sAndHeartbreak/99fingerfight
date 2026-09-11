@@ -2,7 +2,7 @@ import {stateChanges} from "./state-changes.js";
 import {TOUCH_DURATION_MS} from "./motion.js";
 import {PROPS,weaponById} from './catalog.js';
 import {phaseCue} from './phase-cue.js';
-export const ITEM_NOTICE_MS=2100, ITEM_SETTLE_MS=500;
+export const ITEM_NOTICE_MS=2800, ITEM_SETTLE_MS=1000;
 export const SKILL_MOTION=Object.freeze({
  serious:['punch','归一 · 破盾 · 真实伤害'],drunken:['swirl','醉拳 · 5～10 连击'],seven:['curse','七伤 · 七回合'],scissors:['slash','剪断 · 双手减一'],fan:['fan','花蝶 · 弃置道具'],claw:['slash','爪击 · 两段真实伤害'],buddha:['palm','神掌 · 三回合禁行动'],dragon:['dragon','降龙 · 重击'],sorrow:['palm','残血 · 反击'],dark:['curse','玄冥 · 永久侵蚀'],frag:['burst','爆破'],foam:['guard','盾墙 · 两次防御'],knuckles:['guard','指虎 · 永久强化'],peace:['guard','和平 · 免疫伤害'],serpent:['curse','双头蛇 · 虚弱与中毒'],steal:['steal','窃取 · 道具与增益'],dual:['gun','双枪 · 四连击'],sniper:['snipe','狙击 · 真实伤害'],taser:['bolt','电击 · 三回合禁行动'],unify:['nine','归一 · 累积九印']
 });
@@ -13,7 +13,7 @@ export function actionBeats(old,next,command) {
  if(command.type==='attack'){
   const id=old.players[old.active].weapon,p=next.players[old.active],e=next.players[1-old.active];
   if(next.winner===null||id==='unify') {
-   const labels={serious:old.players[old.active].resilience?'双手归一 · 破盾 · 本回合结束 · 坚韧免疫下回合跳过':'双手归一 · 破盾 · 本回合结束 · 下回合无法行动',seven:`七伤已施加 · 剩余 ${e.seven} 次`,scissors:`对手双手 → ${e.hands.join(' / ')}`,fan:'花蝶扇 · 道具已结算',buddha:old.players[1-old.active].resilience?'双手归一 · 坚韧免疫跳过':'双手归一 · 跳过三回合',dark:'玄冥 · 永久侵蚀',foam:`盾墙 → ${p.foam} 次`,knuckles:`指虎 ${p.knuckles} 层 · 每段技能 +${p.knuckles*10}`,peace:'双方和平 · 各自接下来三回合免疫伤害',serpent:'虚弱与中毒 · 五回合',steal:'道具与增益已转移',dual:`道具补充 → ${p.props.length}/3`,taser:old.players[1-old.active].resilience?'坚韧：免疫跳过':'对手跳过三回合',unify:p.nine===2?'九九归一':'减益已清除 · 九印 1 / 2'};
+   const labels={serious:old.players[old.active].resilience?'双手归一 · 破盾 · 本回合结束 · 坚韧免疫下回合跳过':'双手归一 · 破盾 · 本回合结束 · 下回合无法行动',seven:`七伤已施加 · 剩余 ${e.seven} 次`,scissors:`对手双手 → ${e.hands.map(n=>`[${n}]`).join(' / ')}`,fan:'花蝶扇 · 道具已结算',buddha:old.players[1-old.active].resilience?'双手归一 · 坚韧免疫跳过':'双手归一 · 跳过三回合',dark:'玄冥 · 永久侵蚀',foam:`盾墙 → ${p.foam} 次`,knuckles:`指虎 ${p.knuckles} 层 · 每段技能 +${p.knuckles*10}`,peace:'双方和平 · 各自接下来三回合免疫伤害',serpent:'虚弱与中毒 · 五回合',steal:'道具与增益已转移',dual:`道具补充 → ${p.props.length}/3`,taser:old.players[1-old.active].resilience?'坚韧：免疫跳过':'对手跳过三回合',unify:p.nine===2?'九九归一':'减益已清除 · 九印 1 / 2'};
    if(labels[id])beats.push({type:'effect',owner:old.active,label:labels[id]});
   }
  }
@@ -33,9 +33,9 @@ export function actionBeats(old,next,command) {
 export function actionDuration(old,next,c) {
  if(c.type==='add')return TOUCH_DURATION_MS * (old.players[old.active].echo?2:1);
  if(c.type==='forge')return 650;
- if(c.type==='attack')return old.players[old.active].weapon==='unify'?(next.winReason==='九九归一'?3200:1800):2450+Math.max(0,actionBeats(old,next,c).length-1)*220;
+ if(c.type==='attack')return old.players[old.active].weapon==='unify'?(next.winReason==='九九归一'?4400:3000):3650+Math.max(0,actionBeats(old,next,c).length-1)*400;
  if(c.type==='prop')return ITEM_NOTICE_MS+ITEM_SETTLE_MS;
- return actionBeats(old,next,c).length?600*actionBeats(old,next,c).length+900:stateChanges(old,next).length?900:0;
+ return actionBeats(old,next,c).length?900*actionBeats(old,next,c).length+1200:stateChanges(old,next).length?900:0;
 }
 export function presentationDuration(old,next,c) {
  const cue=phaseCue(old,next);

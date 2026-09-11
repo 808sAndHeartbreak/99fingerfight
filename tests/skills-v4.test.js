@@ -12,7 +12,7 @@ const damageEvents=s=>s.events.filter(e=>e.type==='damage');
 const cycle=s=>{while(s.active===1&&s.winner===null){const cs=legalCommands(s);s=run(s,cs.find(c=>c.type==='advance')||cs.find(c=>c.type==='decline')||cs.find(c=>c.type==='add')||cs[0]);}return s;};
 test('20 skills are explicitly selectable only for their recipe, with dedicated image assets',()=>{
  assert.equal(WEAPONS.length,20);
- for(const w of WEAPONS){let s=run(createGame(),{type:'advance'});s.players[0].hands=[...w.recipe];assert.ok(synthesisOptions(s).some(o=>o.id===w.id));s=run(s,{type:'forge',weapon:w.id});assert.deepEqual(s.players[0].hands,[1,1]);assert.equal(s.players[0].weapon,w.id);assert.equal(describe('weapon:'+w.id,s).image,w.image);assert.equal(attack(s).players[0].weapon,null);}
+ for(const w of WEAPONS){let s=run(createGame(),{type:'advance'});s.players[0].hands=[...w.recipe];assert.ok(synthesisOptions(s).some(o=>o.id===w.id));s=run(s,{type:'forge',weapon:w.id});assert.deepEqual(s.players[0].hands,w.recipe);assert.equal(s.players[0].weapon,w.id);assert.equal(describe('weapon:'+w.id,s).image,w.image);assert.equal(attack(s).players[0].weapon,null);}
 });
 test('ordinary single shield rounds up and is consumed; 55 remains indefinitely and follows digits',()=>{
  let s=fixture('scissors');s.players[1].hands=[5,0];let n=attack(s);assert.equal(n.players[1].hp,96);assert.deepEqual(n.players[1].hands,[0,9]);

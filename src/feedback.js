@@ -28,23 +28,29 @@ export function createFeedback() {
       });
     return animation;
   }
+  function noticeRoot() {
+    let stack=document.querySelector('.notice-stack');
+    if(!stack){stack=document.createElement('div');stack.className='notice-stack';document.querySelector('.duel').append(stack);nodes.add(stack);}
+    return stack;
+  }
   function notice(text, team, kind = "turn") {
+    const stack=noticeRoot();
     const el = document.createElement("div");
     el.className = `moment-notice ${kind}`;
     el.dataset.team = team;
     el.textContent = text;
-    document.querySelector(".duel").append(el);
+    stack.append(el);
     nodes.add(el);
     animate(
       el,
       [
-        { opacity: 0, transform: "translate(-50%,8px)" },
-        { opacity: 1, transform: "translate(-50%,0)", offset: 0.18 },
+        { opacity: 0, transform: "translateY(8px)" },
+        { opacity: 1, transform: "translateY(0)", offset: 0.18 },
         { opacity: 1, offset: 0.72 },
-        { opacity: 0, transform: "translate(-50%,-5px)" },
+        { opacity: 0, transform: "translateY(-5px)" },
       ],
       {
-        duration: kind === "forge" ? 1450 : 850,
+        duration: 4400,
         fill: "both",
         easing: "ease-out",
       },
@@ -54,22 +60,23 @@ export function createFeedback() {
   const counters=new WeakMap();
   function countTo(el,value) {
     counters.get(el)?.cancel();const from=Number(el.textContent)||0;
-    const a=animate(el,[{opacity:.7},{opacity:1}],{duration:420});counters.set(el,a);
+    const a=animate(el,[{opacity:.7},{opacity:1}],{duration:800});counters.set(el,a);
     const frame=()=>{if(!el.isConnected||counters.get(el)!==a||a.playState==='idle')return;
-      const t=Math.min(1,Number(a.currentTime||0)/420);el.textContent=Math.round(from+(value-from)*(1-(1-t)**3));
+      const t=Math.min(1,Number(a.currentTime||0)/800);el.textContent=Math.round(from+(value-from)*(1-(1-t)**3));
       if(t<1&&a.playState!=='finished')requestAnimationFrame(frame);else el.textContent=value;
     };requestAnimationFrame(frame);
   }
-  function changes(old,next,duration=650) {
+  function changes(old,next,duration=1800) {
     const all=stateChanges(old,next),duel=document.querySelector('.duel'),bounds=duel.getBoundingClientRect();
     const groups=new Map();
     for(const change of all){const id=`${change.owner}:${change.hand??change.kind}`;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(change);}
     for(const group of groups.values()){
       const c=group[0],target=document.querySelector(c.hand!==undefined?`#hand-${c.owner}-${c.hand} .hand-value`:c.kind==='inventory'?`#items-${c.owner}`:`#player-${c.owner} .status-strip`);
       if(!target)continue;const r=target.getBoundingClientRect();
-      const el=document.createElement('div');el.className=`change-marker ${c.hand!==undefined?'hand-change':c.kind+'-change'}`;el.dataset.team=c.owner;
+      const el=document.createElement('div');el.className=`change-marker ${c.hand!==undefined?'hand-change':c.kind+'-change'}`;el.dataset.team=c.owner;el.dataset.anchor=`${c.owner}:${c.hand??c.kind}`;
       el.innerHTML=group.map(c=>`<span>${c.id?`<img src="${new URL('assets/'+PROPS[c.id].image,document.baseURI).href}" alt="">`:''}${escapeHtml(c.label)}</span>`).join('');el.setAttribute('role','status');
       el.style.left=`${Math.max(65,Math.min(bounds.width-65,r.x+r.width/2-bounds.x))}px`;el.style.top=`${c.kind==='inventory'?r.y-bounds.y+12:r.bottom-bounds.y+6}px`;
+      const prior=[...duel.querySelectorAll('.change-marker')].filter(n=>n.dataset.anchor===el.dataset.anchor);el.style.top=`${parseFloat(el.style.top)+prior.length*35}px`;
       duel.append(el);nodes.add(el);
       animate(el,[{opacity:0,transform:'translate(-50%,6px) scale(.92)'},{opacity:1,transform:'translate(-50%,0) scale(1)',offset:.14},{opacity:1,offset:.8},{opacity:0,transform:'translate(-50%,-5px)'}],{duration,fill:'both'},true);
       animate(target,[{filter:'brightness(1)'},{filter:'brightness(1.5)',offset:.2},{filter:'brightness(1)'}],{duration:450});
@@ -91,18 +98,23 @@ export function createFeedback() {
         ).textContent = "封印";
     }
     next.players.forEach((p, owner) => {
+      for(const h of [0,1])if(old.players[owner].hands[h]===5 && p.hands[h]!==5){
+        const hand=document.querySelector(`#hand-${owner}-${h}`),ghost=document.createElement('span');ghost.className='shield-break';ghost.textContent='护盾消散';hand.append(ghost);nodes.add(ghost);
+        animate(ghost,[{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'scale(1.12)',offset:.15},{opacity:1,offset:.65},{opacity:0,transform:'scale(1.4) translateY(-15px)'}],{duration:1500,fill:'both'},true);
+      }
       const delta = p.hp - old.players[owner].hp;
       if (!delta) return;
       const player = document.querySelector(`#player-${owner}`);
       countTo(player.querySelector(".health-number b"),p.hp);
       player.querySelector(".hp-bar").setAttribute("aria-valuenow", p.hp);
       const bar=player.querySelector(".hp-bar i"),trail=player.querySelector('.hp-trail');
-      animate(bar,[{width:`${old.players[owner].hp/MAX_HP*100}%`},{width:`${p.hp/MAX_HP*100}%`}],{duration:420,fill:'forwards',easing:'ease-out'});
-      if(trail)animate(trail,[{width:`${old.players[owner].hp/MAX_HP*100}%`},{width:`${p.hp/MAX_HP*100}%`}],{duration:550,delay:160,fill:'forwards',easing:'ease-out'});
+      animate(bar,[{width:`${old.players[owner].hp/MAX_HP*100}%`},{width:`${p.hp/MAX_HP*100}%`}],{duration:800,fill:'forwards',easing:'ease-out'});
+      if(trail)animate(trail,[{width:`${old.players[owner].hp/MAX_HP*100}%`},{width:`${p.hp/MAX_HP*100}%`}],{duration:1100,delay:220,fill:'forwards',easing:'ease-out'});
       const el = document.createElement("b");
       el.className = `hp-delta ${delta > 0 ? "heal" : "damage"}`;
       el.textContent = `${delta > 0 ? "+" : ""}${delta}  ·  ${old.players[owner].hp} → ${p.hp}`;
       el.style.left = owner ? "82%" : "18%";
+      el.dataset.owner=owner;el.style.marginTop=`${document.querySelectorAll(`.hp-delta[data-owner="${owner}"]`).length*28}px`;
       document.querySelector(".scoreboard").append(el);
       nodes.add(el);
       animate(
@@ -113,7 +125,7 @@ export function createFeedback() {
           { opacity: 1, offset: 0.6 },
           { opacity: 0, transform: "translateY(-30px) scale(.9)" },
         ],
-        { duration: 950, fill: "both" },
+        { duration: 1800, fill: "both" },
         true,
       );
       if (delta < 0 && !reduced.matches)
@@ -152,10 +164,10 @@ export function createFeedback() {
     async phase(cue, asset) {
       if (!cue) return;
       if(cue.kind!=='finish') {
-        const banner=document.querySelector('.battle-banner');
-        animate(banner,[{filter:'brightness(1.25)'},{filter:'brightness(1)'}],{duration:650});
-        const flow=document.createElement('i');flow.className='turn-colour-flow';banner.append(flow);nodes.add(flow);
-        animate(flow,[{transform:'translateX(-110%)',opacity:0},{opacity:.5,offset:.2},{transform:'translateX(110%)',opacity:0}],{duration:850,easing:'ease-out'},true);
+        const banner=document.createElement('div');banner.className='turn-handoff';banner.dataset.team=cue.owner;banner.setAttribute('role','status');
+        banner.innerHTML=`<small>回合切换</small><strong>${escapeHtml(cue.detail)}</strong><span>${cue.title==='本回合无法行动'?cue.title:'准备行动'}</span>`;
+        document.querySelector('.duel').append(banner);nodes.add(banner);
+        await animate(banner,[{opacity:0,transform:`translateX(${cue.owner?35:-35}px)`},{opacity:1,transform:'translateX(0)',offset:.18},{opacity:1,offset:.8},{opacity:0,transform:'translateY(-8px)'}],{duration:cue.duration,fill:'both'},true).finished.catch(()=>{});
         return;
       }
       document.querySelectorAll(".phase-cut:not(.finish)").forEach(node=>node.remove());
@@ -177,7 +189,7 @@ export function createFeedback() {
     async forge({owner, weapon}, asset, next, participants) {
       notice(`${weapon.name} · 已合成`, owner, "forge");
     },
-    notice,
+    notice, noticeRoot,
     contact, changes,
     reveal(el, text) {
       if (el.textContent === text) return;

@@ -1,6 +1,6 @@
 import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
-export const RULES_VERSION = 10;
+export const RULES_VERSION = 11;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -162,8 +162,7 @@ export function applyCommand(state, command) {
       assert(w, "不满足该武器的组合条件");
       s.acted=true;
       p.weapon = w.id;
-      p.hands = [1,1];
-      log(s, `${name(s.active)}合成「${w.name}」，双手重置为 1。`);
+      log(s, `${name(s.active)}合成「${w.name}」，即将释放。`);
       continueAction(s);
       break;
     }
@@ -256,6 +255,8 @@ export function applyCommand(state, command) {
           if(p.nine===2) {s.winner=s.active;s.phase="over";s.winReason="九九归一";log(s,`${name(s.active)}九九归一，立即获胜！`);}
         }
       }
+      p.hands = [1,1];
+      log(s, `${name(s.active)}技能结算完成，双手归 [1]。`);
       p.weapon = null;
       if(id==='serious')endTurn(s);else continueAction(s);
       break;

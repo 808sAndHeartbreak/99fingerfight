@@ -144,8 +144,8 @@ export class DuelStage {
       if (!this.animation) h.root.position.copy(h.base);
     });
   }
-  sync(state, selected, enabled = true) {
-    this.state = state;
+  sync(state, selected, enabled = true, presenting = false) {
+    this.state = state;this.presenting=presenting;
     this.selection = selected;
     this.hands.forEach((h) => {
       const p = state.players[h.owner];
@@ -224,7 +224,7 @@ export class DuelStage {
     });
   }
   cancel() {
-    this.skillFx=null;
+    this.skillFx=null;this.hits=[0,0];
     if(this.ink?.uniforms.uPulse)this.ink.uniforms.uPulse.value=0;
     if (this.animation) {
       this.animation.resolve(false);
@@ -370,6 +370,9 @@ export class DuelStage {
       a.resolve(true);
     }
   }
+  hit(owner,amount) {
+    this.hits??=[0,0];this.hits[owner]=amount>0?.85:.4;
+  }
   skillImpact(kind,owner) {
     if(this.failed||this.reduced.matches)return;
     this.skillFx={left:.65};
@@ -392,12 +395,17 @@ export class DuelStage {
         this.ink.uniforms.uPulse.value=this.skillFx.left/.65;
         if(!this.skillFx.left)this.skillFx=null;
       }
+      if(this.hits)this.hits=this.hits.map(t=>Math.max(0,t-dt));
       this.hands.forEach((h, i) => {
         h.update(dt);
         if (!this.animation) {
           h.root.position.copy(h.base);
           if (!this.reduced.matches) {
-            h.root.position.y += Math.sin(this.time * 1.4 + i) * 0.065;
+            const active=!this.presenting && this.state?.active===h.owner && this.state?.phase==='action' && !this.state?.players[h.owner].weapon;
+            h.root.position.y += active?Math.sin(this.time * 2.2 + i*.3)*.13:0;
+            const hit=this.hits?.[h.owner]||0;
+            h.root.position.x+=(h.owner?1:-1)*Math.sin(Math.min(1,hit/.85)*Math.PI)*.65;
+            h.root.position.y+=Math.sin(hit*55)*hit*.1;
             h.root.rotation.y =
               (h.owner ? -0.28 : 0.28) + Math.sin(this.time * 0.6 + i) * 0.055;
           }
@@ -414,7 +422,7 @@ export class DuelStage {
       }
     }
     this.hands.forEach((h) => {
-      const p = (this.animation ? h.root.position : h.base)
+      const p = h.root.position
         .clone()
         .project(this.camera);
       this.onProject(

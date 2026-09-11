@@ -56,3 +56,40 @@ body:has(.combat-cinema.milestone) .game-shell { visibility:hidden; }
 }
 .change-marker span img { width:22px; height:22px; vertical-align:middle; object-fit:contain; margin-right:4px; }
 .inventory-change span { display:flex; align-items:center; justify-content:center; }
+
+/* Tutorial details must remain above the spotlight, including touch-pinned details. */
+#info-popover { z-index:230; }
+.game-shell .field-items { bottom:auto; top:140px; height:290px; }
+.cinema-impact { display:none!important; }
+.notice-stack { position:absolute; left:50%; top:100px; transform:translateX(-50%); width:min(420px,55%); display:flex; flex-direction:column; gap:8px; z-index:195; pointer-events:none; }
+.notice-stack .moment-notice { position:relative; inset:auto; width:100%; transform:none; margin:0; padding:10px 14px; border-radius:7px; background:#19243af5; color:#fff9ec; border-left:4px solid #6489ea; font-size:14px; font-weight:600; line-height:1.5; box-shadow:0 4px 16px #17203322; white-space:normal; }
+.notice-stack .moment-notice[data-team="1"] { border-left-color:#ef7767; }
+.turn-handoff { position:absolute; inset:30% 16% auto; padding:22px; z-index:205; text-align:center; background:#183456f5; color:#fff9ec; border-radius:8px; box-shadow:0 12px 40px #18273930; pointer-events:none; }
+.turn-handoff[data-team="1"] { background:#69332df5; }
+.turn-handoff small,.turn-handoff span { display:block; font-size:13px; opacity:.8; }
+.turn-handoff strong { display:block; font-size:30px; margin:7px 0; }
+.shield-break { position:absolute; inset:-20px -18px; border:4px solid #d4a743; border-radius:48%; color:#6b4a05; background:#fff2c122; font:700 14px/1.3 sans-serif; padding-top:10px; z-index:200; pointer-events:none; }
+@media(max-width:650px) {
+ .game-shell .field-items { top:125px; height:235px; }
+ .notice-stack { top:100px; width:calc(100% - 110px); gap:6px; }
+ .notice-stack .moment-notice { font-size:11px; padding:8px; }
+ .turn-handoff { inset:31% 12% auto; padding:18px 10px; }
+ .turn-handoff strong { font-size:24px; }
+ .shield-break { font-size:11px; }
+}
+
+.game-shell .notice-stack .item-receipt { position:relative; inset:auto; width:100%; transform:none; margin:0; }
+
+.reference-recipe b { white-space:nowrap; }
+@media(max-width:650px) { .game-shell .reference-recipe b { font-size:18px; } }
+
+@media(max-width:650px) {
+ .combat-cinema.skill.arena-skill { top:calc(50% + 30px); height:140px; }
+ .combat-cinema.skill.arena-skill .cinema-heading { top:8px; }
+ .combat-cinema.skill.arena-skill .cinema-heading h2 { font-size:20px; margin:2px 0; }
+ .combat-cinema.skill.arena-skill .cinema-result { bottom:8px; padding:5px; }
+ .combat-cinema.skill.arena-skill .cinema-heading small { font-size:8px; }
+ .combat-cinema.skill.arena-skill .cinema-hit { top:12px; font-size:10px; }
+ .combat-cinema.arena-skill .cinema-result .damage-value { font-size:26px; }
+ .combat-cinema.arena-skill .cinema-result .damage-caption { display:none; }
+}
