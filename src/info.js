@@ -3,7 +3,7 @@ import { playerName, escapeHtml } from "./identity.js";
 import { PROPS, MAX_HP, WEAPONS, weaponById } from "./catalog.js";
 
 const PROP_INFO = {
-  add: "一只手数字 +1，[9] 变成 [0]。",
+  add: "一只手数字 +1。",
   sub: "一只手数字 −1，[0] 变成 [9]。",
   lock: "一只手不能参与触碰计算；所属玩家回合结束解除。道具仍能改变它的数字。每人最多封印一只手；已有封印时不能再对该玩家使用。",
 };
@@ -195,7 +195,7 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
         : Math.min(innerHeight - box.height - 12, r.bottom + 12);
     pop.style.left = `${x}px`;
     pop.style.top = `${Math.max(12, y)}px`;
-    onShow(button.dataset.info);
+    onShow(button.dataset.info, pin);
   }
   listen(root, "pointerover", (e) => {
     if (e.pointerType === "touch" || pinned) return;

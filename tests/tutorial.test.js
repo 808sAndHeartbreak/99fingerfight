@@ -10,7 +10,7 @@ test('continuous attack tutorial follows real alternating turns and deterministi
  assert.deepEqual(s.state.players.map(p=>p.hands),[[4,6],[5,1]]);
  await assert.rejects(send(s),/图鉴/);assert.equal(s.inspect('recipe:6'),false);s.inspect('shield:0');
  await send(s);assert.equal(s.state.active,0);assert.deepEqual(s.state.players[0].props,['add']);await send(s);
- await send(s);assert.deepEqual(s.state.players[0].hands,[5,6]);await assert.rejects(send(s),/图鉴/);s.inspect('recipe:6');await send(s);assert.deepEqual(s.state.players[0].hands,[6,6]);
+ await send(s);assert.deepEqual(s.state.players[0].hands,[5,6]);assert.equal(s.canProceed,true);await send(s);assert.deepEqual(s.state.players[0].hands,[6,6]);
  await send(s);assert.deepEqual(s.state.players[0].hands,[6,6]);await send(s);
  assert.ok(s.done);assert.equal(s.state.players[1].hp,84);assert.deepEqual(s.state.players.map(p=>p.hands),[[1,1],[1,1]]);assert.equal(s.state.winner,null);
 });

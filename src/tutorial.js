@@ -2,18 +2,18 @@ import {createGame, applyCommand} from './engine.js';
 
 export const LESSONS = [
  {title:'走完一个攻防回合',result:'手雷原伤害 30，被 [5] 护盾减半，只扣 15 HP；格挡后 [5] 退为 [1]。真实伤害可以绕过数字护盾。把对手 HP 清空即可获胜。接着看看另一种胜利方式。',steps:[
-  {title:'先用 [3] 碰对手的 [1]',detail:'这段练习从 [3] / [6] 开始。选自己的 [3]，再碰对手任意一只 [1]，得到 [4]。',command:{type:'add',hand:0},target:'#hand-0-0',selectedTarget:'#hand-1-0, #hand-1-1'},
-  {title:'本回合已无可用操作',detail:'点击结束回合，交给对手。正式对局每回合有 30 秒，时间用完也会自动结束；动画期间暂停计时。',command:{type:'end'}},
+  {title:'先用 [3] 碰对手的 [1]',detail:'选自己的 [3]，再碰对手任意一只 [1]，得到 [4]。',command:{type:'add',hand:0},target:'#hand-0-0',selectedTarget:'#hand-1-0, #hand-1-1'},
+  {title:'本回合已无可用操作',detail:'正式对局每回合有 30 秒。手动点击按钮以提前结束回合',command:{type:'end'}},
   {title:'轮到对手',detail:'对手也会选择自己的手去碰你的手。',command:{type:'advance'},auto:true},
   {title:'对手用 [1] 碰你的 [4]',detail:'[1] + [4] = [5]，只有对手出手的数字改变，你的 [4] 不变。',command:{type:'add',hand:0,targetHand:0},auto:true},
-  {title:'先认识对手的护盾',detail:'查看下方 [5] 护盾图鉴：单个 [5] 格挡一半普通伤害，然后退为 [1]；真实伤害可绕过护盾。看完收起图鉴，对手继续。',command:{type:'end'},requiresInfo:'shield:0',auto:true},
+  {title:'先认识对手的护盾',detail:'点击查看下方 [5] 对应的护盾效果',command:{type:'end'},requiresInfo:'shield:0',auto:true},
   {title:'轮到你，收到道具',detail:'每隔三个己方回合随机获得一个道具，这次获得增幅。',command:{type:'advance'},auto:true},
-  {title:'用增幅把 [4] 变为 [5]',detail:'每隔三个己方回合随机获得一个道具。点左侧增幅，再点自己的 [4]，使它变为 [5]。道具与计算没有先后限制。',command:{type:'prop',slot:0,target:0,targetHand:0},target:'[data-prop="0"]',selectedTarget:'#hand-0-0'},
-  {title:'查看双 [6] 图鉴，再凑出组合',detail:'先查看下方 [6] + [6]：数字组合可合成不同技能。看完后，用自己的 [5] 碰对手的 [1]，得到双 [6]。',requiresInfo:'recipe:6',command:{type:'add',hand:0,targetHand:1},target:'#hand-0-0',selectedTarget:'#hand-1-1'},
+  {title:'试试增幅道具',detail:'每隔三个己方回合随机获得一个道具。现在点左侧的道具，再点自己的 [4] 试试',command:{type:'prop',slot:0,target:0,targetHand:0},target:'[data-prop="0"]',selectedTarget:'#hand-0-0'},
+  {title:'凑出双 [6]',detail:'用自己的 [5] 碰对手的 [1]，得到双 [6]，即可合成技能。',command:{type:'add',hand:0,targetHand:1},target:'#hand-0-0',selectedTarget:'#hand-1-1'},
   {title:'合成手雷，体验护盾',detail:'对手的 [5] 自动格挡一半普通伤害，格挡后变 [1]。选择碎片手雷，再确认释放；可点返回重新选择。',command:{type:'forge',weapon:'frag'},target:'[data-forge="frag"]'},
   {title:'观察伤害与护盾',detail:'结算后你的双手才会归 [1]。',command:{type:'attack'},auto:true},
  ]},
- {title:'两次归一，直接获胜',result:'九九归一，胜利！每回合计算一次，道具与合成顺序自由；做完后记得结束回合。现在可以开始正式对战了。',steps:[
+ {title:'两次归一，直接获胜',result:'',steps:[
   {title:'再看一种特殊胜利方式',detail:'累计使用两次归一，便能无视剩余 HP 获胜。这里模拟你已经凑到 [8] / [9]：先用 [8] 碰对手的 [1]，得到双 [9]。',command:{type:'add',hand:0},target:'#hand-0-0',selectedTarget:'#hand-1-0, #hand-1-1'},
   {title:'第一次使用归一',detail:'[9] + [9] 可以合成归一。它会清除自己的减益、让双方数字归 [1]，并记住这次使用。',command:{type:'forge',weapon:'unify'},target:'[data-forge="unify"]'},
   {title:'归一生效',detail:'第一次使用后，需要再次凑齐双 [9]。',command:{type:'attack'},auto:true},

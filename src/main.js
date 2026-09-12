@@ -64,7 +64,7 @@ function updateClockWarning(){const el=document.querySelector('#phase-time'),sec
 const humanTurn = () => mode === "online" ? online?.packet?.room?.seat === state.active : mode === "local" || state.active === 0;
 const team = (id) => (id === 0 ? "蓝方" : "红方");
 const audioCache = new Map();
-const audioSettings=createAudioSettings(asset("music/pixel.mp3"));
+const audioSettings=createAudioSettings(asset("music/pixel-afternoon-streets-8bit-loop.mp3"));
 const battleSound=createBattleSound(()=>sound,audioSettings);
 let cinema, aiWorker, aiJob=0, aiDifficulty='advanced';
 function stopAI(){clearTimeout(aiTimer);aiJob++;aiWorker?.terminate();aiWorker=null;}
@@ -94,7 +94,7 @@ app.innerHTML = `<main class="game-shell">
   <div class="paper-grain" aria-hidden="true"></div>
 
   <div id="network-notice" class="network-notice" role="status" hidden></div><span id="mode-label" hidden></span>
-  <section class="duel" aria-label="指尖对战场"><div class="arena-art" aria-hidden="true"><i class="arena-portrait blue"></i><i class="arena-portrait red"></i></div>
+  <section class="duel" aria-label="指尖对战场">
     <div class="scoreboard"><div id="player-0" class="player blue"></div><div class="round-block" aria-label="回合与倒计时"><span class="round-caption">回合 <b id="round-number">01</b></span><div class="phase-time" id="phase-time" role="timer" aria-live="off" aria-label="剩余时间"><span id="clock">30</span><small>秒</small></div><span id="turn-arrow" class="turn-arrow" aria-hidden="true">←</span><span id="phase-label" class="sr-only"></span></div><div id="player-1" class="player red"></div></div>
     <div id="stage" class="stage" data-motion="idle"><div class="hand-layer" id="hand-layer">${[0, 1].map((owner) => [0, 1].map((hand) => `<button id="hand-${owner}-${hand}" class="hand-hotspot ${owner ? "red" : "blue"}" data-owner="${owner}" data-hand="${hand}" aria-pressed="false"><span class="hand-corner"></span>${img("hand-1.webp", "fallback-hand")}<b class="hand-value">1</b><span class="hand-status"></span><span class="hand-shield" data-info="shield" data-info-only hidden></span><span class="sum-preview"></span></button>`).join("")).join("")}</div><div class="contact-fx" id="contact-fx" aria-hidden="true">${img("manga/contact.webp")}<b>碰!</b></div></div>
     <div id="combat-callout" class="combat-callout" aria-live="polite"></div>
@@ -251,7 +251,9 @@ function render(preserveInfo=false) {
   if(remotePending && !busy && mode==="online" && online.status==="connected") Object.assign(guide,{title:"",detail:"",step:"waiting"});
 
   if(mode==="tutorial" && !busy && !session.done && !selected)guide.title=session.guide.title;
-  if(mode==="tutorial" && !busy && !session.canProceed)guide.title=session.guide.requiresInfo.startsWith("shield")?"查看下方 [5] 护盾图鉴":"查看下方 [6] + [6] 图鉴";
+  if(mode==="tutorial" && !busy && !session.canProceed)guide.title="";
+  if(mode==="tutorial" && !session.done && session.guide.auto && session.canProceed)guide.title="";
+  if(!humanTurn() && mode!=="tutorial" && guide.step==="waiting" && !(mode==="online"&&online.status!=="connected"))guide.title="";
   feedback.reveal(document.querySelector("#instruction"), guide.title);
   document.querySelector(".game-shell").dataset.step = guide.step;
   document.querySelector(".game-shell").dataset.actor = state.active;
@@ -310,10 +312,11 @@ function renderTutorial() {
   const done=session.done,g=session.guide;
   document.querySelector('#end-turn').hidden=done || g.command.type!=='end' || g.auto;
   host.hidden=false;
-  host.innerHTML=`<small>教学指引 · ${session.chapter+1} / ${LESSONS.length} · ${session.lesson.title}</small><p>${done?session.lesson.result:g.detail}</p>`;
+  host.innerHTML=(done?session.lesson.result:g.detail)?`<p>${done?session.lesson.result:g.detail}</p>`:"";
+  host.hidden=!host.innerHTML || (!done && g.auto && session.canProceed);
   if(done){
     document.querySelector('.game-shell').dataset.step='complete';
-    feedback.reveal(document.querySelector('#instruction'),session.chapter===LESSONS.length-1?'两种胜利方式，都学会了':'练习完成');
+    feedback.reveal(document.querySelector('#instruction'),session.chapter===LESSONS.length-1?'':'练习完成');
     document.querySelector('#end-turn').hidden=true;
     document.querySelector('#primary-actions').innerHTML='<button class="primary" id="tutorial-next">'+(session.chapter===LESSONS.length-1?'完成教学':'继续学习')+'</button>';
   }
@@ -337,7 +340,7 @@ function exitTutorial() {
   started=false;closeDialog();startGame('ai');showMenu('play');
 }
 async function animateCommand(command, old, next, contact) {
-  if(command.type==="add") {
+  if(command.type==="add" && !(mode==="tutorial" && old.active===1)) {
     const a=old.players[command.actor].hands[command.hand],b=old.players[1-command.actor].hands[command.targetHand];
     const resultOwner=old.players[command.actor].mirror?1-command.actor:command.actor;
     document.querySelector('#instruction').innerHTML=`出手！数字加和，<span class="equation-team-${command.actor}">[${a}]</span> + <span class="equation-team-${1-command.actor}">[${b}]</span> → <span class="equation-team-${resultOwner}">[${(a+b)%10}]</span>`;
@@ -627,7 +630,7 @@ function showDeveloperSlide(){
   dialog.dataset.view="developer-slide";
 }
 function showTutorialIntro(){
- openDialog(`<div class="dialog-body tutorial-intro"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><h2>指尖上的博弈</h2><p>改变双手数值，形成手势组合，解锁不同能力。</p><div class="tutorial-goals"><b>清空对手 HP</b><span>或</span><b>九九归一</b></div><p>正式开局双方都是 [1] / [1]、99 HP。接下来模拟一段连续攻防：计算、对手行动、获得道具，再合成技能。最后演示两次归一的特殊胜利。</p><button class="primary" data-tutorial-confirm>开始教学</button></div>`);
+ openDialog(`<div class="dialog-body tutorial-intro"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><h2>指尖上的博弈</h2><p>改变双手数值，形成手势组合，解锁不同能力。</p><div class="tutorial-goals"><b>清空对手 HP</b><span>或</span><b>九九归一</b></div><button class="primary" data-tutorial-confirm>开始教学</button></div>`);
 }
 function showSettings() {
   settingsReturn=dialog.open?{view:dialog.dataset.view,page:dialog.dataset.page}:null;
@@ -639,7 +642,7 @@ function showResult() {
   const winner = state.winner;
   const lost = mode === "online" ? winner !== online.packet.room.seat : mode === "ai" && winner !== 0;
   openDialog(
-    `<div class="result-art">${img(`manga/${winner ? "red" : "blue"}.webp`)}<span aria-hidden="true">${lost ? "DEFEAT" : "VICTORY"}</span></div><div class="result-content"><div class="result-stamp">${lost ? "败北" : "胜利"}<i>!</i></div><h2>${name(winner)}<span>获胜</span></h2><p class="result-reason">第 ${Math.ceil(state.turn/2)} 回合 · ${state.winReason ? escapeHtml(state.winReason) : mode === "online" && online.packet.room.finishReason ? escapeHtml(online.packet.room.finishReason) : name(1-winner)+" HP 归零"}</p><div class="result-scores">${state.players.map((p,i)=>`<div class="${i===winner?'won':''}"><small>${name(i)}</small><strong>${p.hp}<span> HP</span></strong><b>${p.nine} / 2 归一</b></div>`).join('')}</div>${mode === "online" ? '<button class="primary" id="online">返回房间 / 再战 </button>' : `<button class="primary" data-mode="${mode}">再战一局 </button>`}<button class="text-button" data-close>查看战场</button></div>`,
+    `<div class="result-art"><span aria-hidden="true">${lost ? "DEFEAT" : "VICTORY"}</span></div><div class="result-content"><div class="result-stamp">${lost ? "败北" : "胜利"}<i>!</i></div><h2>${name(winner)}<span>获胜</span></h2><p class="result-reason">第 ${Math.ceil(state.turn/2)} 回合 · ${state.winReason ? escapeHtml(state.winReason) : mode === "online" && online.packet.room.finishReason ? escapeHtml(online.packet.room.finishReason) : name(1-winner)+" HP 归零"}</p><div class="result-scores">${state.players.map((p,i)=>`<div class="${i===winner?'won':''}"><small>${name(i)}</small><strong>${p.hp}<span> HP</span></strong><b>${p.nine} / 2 归一</b></div>`).join('')}</div>${mode === "online" ? '<button class="primary" id="online">返回房间 / 再战 </button>' : `<button class="primary" data-mode="${mode}">再战一局 </button>`}<button class="text-button" data-close>查看战场</button></div>`,
     `result-dialog manga-result ${lost ? "defeat" : "victory"} winner-${winner}`,
   );
 }
@@ -735,8 +738,8 @@ async function drainRemote() {
   } finally {if(serial===actionSerial){remoteApplying=false;busy=false;render();}}
 }
 
-info = setupInfo(app, () => state, asset, participants, () => mode === "online", key => {
-  if(mode!=="tutorial" || !session.inspect(key))return;
+info = setupInfo(app, () => state, asset, participants, () => mode === "online", (key, clicked) => {
+  if(mode!=="tutorial" || !clicked || !session.inspect(key))return;
   render(true);scheduleAI();
 },()=>{if(mode==='tutorial')scheduleAI();});
 listen(app, "click", (e) => {
@@ -974,12 +977,13 @@ let spotlightFrame=0,spotlightMarkup="";
 const spotlight=document.createElementNS('http://www.w3.org/2000/svg','svg');
 spotlight.id='tutorial-spotlight';spotlight.setAttribute('aria-hidden','true');document.body.append(spotlight);
 function updateSpotlight(){
-  spotlight.style.display=mode==='tutorial'&&!busy&&!dialog.open?'block':'none';
+  spotlight.style.display=mode==='tutorial'&&!busy&&!dialog.open&&!session.done&&(!session.guide.auto||!session.canProceed||!document.querySelector('#info-popover').hidden)?'block':'none';
   if(spotlight.style.display==='block'){
     const holes=[...document.querySelectorAll('.tutorial-target, .arena-actions, #forge-options, .scoreboard, .hud-tools')].filter(el=>el.getClientRects().length).map(el=>{
       const r=el.getBoundingClientRect();return `<rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" rx="8" fill="black"/>`;
     }).join('');
-    const markup=`<defs><mask id="tutorial-holes"><rect width="100%" height="100%" fill="white"/>${holes}</mask></defs><rect width="100%" height="100%" fill="#32343d" opacity=".22" mask="url(#tutorial-holes)"/>`;
+    const markers=[...document.querySelectorAll('.tutorial-target')].filter(el=>el.matches('.reference-recipe,.prop-use')).map(el=>{const r=el.getBoundingClientRect(),x=Math.max(58,Math.min(innerWidth-58,r.left+r.width/2)),y=Math.max(38,r.top-20);return `<g class="tutorial-click-cue"><rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" fill="none" stroke="#ffcf60" stroke-width="4"/><path d="M${x-9} ${y} L${x} ${y+12} L${x+9} ${y}" fill="#ffcf60"/><rect x="${x-52}" y="${y-30}" width="104" height="28" fill="#ffcf60"/><text x="${x}" y="${y-10}" text-anchor="middle" fill="#111a2e" font-size="16" font-weight="900">点击这里</text></g>`;}).join('');
+    const markup=`<defs><mask id="tutorial-holes"><rect width="100%" height="100%" fill="white"/>${holes}</mask></defs><rect width="100%" height="100%" fill="#060b19" opacity=".68" mask="url(#tutorial-holes)"/>${markers}`;
     if(markup!==spotlightMarkup){spotlight.innerHTML=markup;spotlightMarkup=markup;}
   }
   spotlightFrame=requestAnimationFrame(updateSpotlight);

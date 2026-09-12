@@ -24,16 +24,6 @@
     "output": "assets/manga/OFL.txt"
   },
   {
-    "source": "Generated character: blue.png",
-    "output": "assets/manga/blue.webp",
-    "method": "Generated illustration, compressed WebP runtime asset"
-  },
-  {
-    "source": "Generated character: red.png",
-    "output": "assets/manga/red.webp",
-    "method": "Generated illustration, compressed WebP runtime asset"
-  },
-  {
     "source": "User-provided dodgeball art: fonts\\NotoSansSC-Variable.ttf",
     "output": "assets/manga/NotoSansSC-subset.woff2",
     "method": "Subset to game UI characters; SIL OFL license in OFL.txt"

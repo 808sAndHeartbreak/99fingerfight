@@ -51,16 +51,20 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
     const nine=id==='unify',won=nine&&next.winReason==='九九归一';
     if(nine) {
       const ritual=document.createElement('section');ritual.className=`nine-finale ${won?'complete':''}`;ritual.dataset.team=old.active;ritual.setAttribute('role','status');
-      ritual.innerHTML=`<div class="nine-aura"></div><div class="nine-content"><small>${escapeHtml(playerName(participants(),old.active))} · ${old.active?'红方':'蓝方'}</small><div class="nine-orbit"><span>九</span><span>九</span><b>一</b></div><h2>${won?'九九归一':'归一'}</h2><p>${won?'胜 利':'再次使用，即可获胜'}</p><div class="nine-progress"><i class="lit"></i><i class="${won?'lit':''}"></i></div><footer>${won?`${escapeHtml(playerName(participants(),old.active))} 获胜`:'双方双手归 [1]，施法者清除减益'}</footer></div>`;
+      const half='M100 10 A90 90 0 0 0 100 190 A45 45 0 0 0 100 100 A45 45 0 0 1 100 10 Z';
+      ritual.innerHTML=`<div class="nine-content"><small>${escapeHtml(playerName(participants(),old.active))} · ${won?'第二次归一':'第一次归一'}</small><div class="taiji-orbit"><svg class="taiji" viewBox="0 0 200 200" role="img" aria-label="${won?'太极即将完整，第二次归一':'太极填充一半，第一次归一'}"><circle cx="100" cy="100" r="94" fill="none" stroke="currentColor" stroke-width="1"/><path class="taiji-half first ${won?'filled':''}" d="${half}"/><path class="taiji-half second" d="${half}" transform="rotate(180 100 100)"/><circle class="taiji-eye light" cx="100" cy="55" r="9"/><circle class="taiji-eye" cx="100" cy="145" r="9"/></svg><i class="taiji-wave"></i><i class="taiji-wave second-wave"></i></div><h2>${won?'九九归一':'归一'}</h2><p>${won?'2 / 2 · 胜利':'1 / 2 · 再次使用即可获胜'}</p><footer>${won?`${escapeHtml(playerName(participants(),old.active))} 获胜`:'双方双手归 [1]，清除自己的减益'}</footer></div>`;
       document.body.append(ritual);register(ritual);
-      const duration=actionDuration(old,next,command),orb=ritual.querySelector('.nine-orbit');
+      const duration=actionDuration(old,next,command),orb=ritual.querySelector('.taiji');
       animate(ritual,[{opacity:0},{opacity:1}],{duration:300,fill:'both'});sound('charge',.7);
-      orb.querySelectorAll('span').forEach((n,i)=>animate(n,[{opacity:0,transform:`translateX(${i?70:-70}px) scale(.7)`},{opacity:1,transform:`translateX(${i?60:-60}px) scale(1)`,offset:.25},{opacity:1,transform:`translateX(${i?60:-60}px) scale(1)`,offset:.58},{opacity:0,transform:'translateX(0) scale(.4)'}],{duration:1500,fill:'both'}));
-      animate(orb.querySelector('b'),[{opacity:0,transform:'scale(.6)'},{opacity:0,offset:.7},{opacity:1,transform:'scale(1)'}],{duration:1700,fill:'both'});
-      animate(ritual.querySelector('.nine-aura'),[{opacity:0,transform:'scale(.7)'},{opacity:.8,transform:'scale(1)',offset:.7},{opacity:.35,transform:'scale(1.1)'}],{duration,fill:'both'});
+      animate(orb,[{opacity:0,transform:'scale(.8) rotate(-30deg)'},{opacity:1,transform:'scale(1) rotate(0deg)'}],{duration:750,fill:'both',easing:'ease-out'});
+      animate(ritual.querySelector(won?'.taiji-half.second':'.taiji-half.first'),[{fill:'#1c2943'},{fill:won?'#e94936':'#fff0ce'}],{duration:1500,delay:100,fill:'both',easing:'ease-in-out'});
       if(!await wait(ritual,1700))return false;
       onBeat({type:'settle',preserveActorHands:true});sound('nine',.8);
       ritual.classList.add('resolved');
+      if(won) {
+        animate(orb,[{transform:'rotate(0deg)'},{transform:'rotate(360deg)'}],{duration:Math.max(650,duration-1950),fill:'both',easing:'cubic-bezier(.25,.05,.3,1)'});
+        ritual.querySelectorAll('.taiji-wave').forEach((wave,i)=>animate(wave,[{opacity:0,transform:'scale(.75)'},{opacity:.8,offset:.2},{opacity:0,transform:'scale(1.65)'}],{duration:1200,delay:i*200,fill:'both'}));
+      }
       for(const node of ritual.querySelectorAll('h2,p,.nine-progress,footer'))animate(node,[{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:450,fill:'both'});
       if(!await wait(ritual,duration-2350))return false;
       onBeat({type:'reset-hands'});
@@ -71,7 +75,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
     const el=document.createElement('section');
     el.className=`combat-cinema ${skill?'skill':'item'} arena-skill`;
     el.dataset.family=family;el.dataset.team=old.active;el.setAttribute('role','status');
-    el.innerHTML=`<div class="cinema-ink"></div><div class="cinema-portrait"><img src="${asset(`manga/${old.active?'red':'blue'}.webp`)}" alt=""></div><div class="cinema-heading"><small>${old.active?'红方':'蓝方'} · ${escapeHtml(playerName(participants(),old.active))} 使用</small><h2>${art.name}</h2><span class="skill-explanation">${escapeHtml(art.detail)}</span></div><img class="cinema-icon" src="${asset(art.image)}" alt=""><div class="cinema-impact" aria-hidden="true"><i></i><i></i><i></i><i></i></div><small class="cinema-hit" aria-hidden="true"></small><div class="cinema-result" aria-live="polite"></div>`;
+    el.innerHTML=`<div class="cinema-ink"></div><div class="cinema-heading"><small>${old.active?'红方':'蓝方'} · ${escapeHtml(playerName(participants(),old.active))} 使用</small><h2>${art.name}</h2><span class="skill-explanation">${escapeHtml(art.detail)}</span></div><img class="cinema-icon" src="${asset(art.image)}" alt=""><div class="cinema-impact" aria-hidden="true"><i></i><i></i><i></i><i></i></div><small class="cinema-hit" aria-hidden="true"></small><div class="cinema-result" aria-live="polite"></div>`;
     noticeRoot().append(el);register(el);
     animate(document.querySelector(`#player-${old.active}`),[{filter:'brightness(1)'},{filter:'brightness(1.35)',offset:.3},{filter:'brightness(1)'}],{duration:650});
     const duration=actionDuration(old,next,command),beats=actionBeats(old,next,command);
@@ -80,7 +84,6 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
     const live=()=>generation()===epoch;
     const skillWait=async(ms)=>{await animate(el,[{opacity:1},{opacity:1}],{duration:ms,fill:'both'}).finished.catch(()=>{});return live();};
     sound('charge',skill?1:.45);
-    animate(el.querySelector('.cinema-portrait'),[{transform:'translateX(-110%) skewX(-10deg)'},{transform:'translateX(0) skewX(-10deg)'}],{duration:intro,easing:'cubic-bezier(.12,.85,.18,1)',fill:'both'});
     animate(el.querySelector('.cinema-heading'),[{opacity:0,transform:'translateX(120px) rotate(-5deg)'},{opacity:1,transform:'translateX(0) rotate(-5deg)'}],{duration:intro,fill:'both'});
     animate(el.querySelector('.cinema-icon'),[{opacity:0,transform:'scale(2) rotate(30deg)'},{opacity:1,transform:'scale(1) rotate(-8deg)'}],{duration:intro,fill:'both',easing:'cubic-bezier(.15,.9,.2,1)'});
     if(!await skillWait(intro))return false;

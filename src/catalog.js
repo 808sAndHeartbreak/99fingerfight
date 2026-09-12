@@ -24,7 +24,7 @@ export const MAX_HP = 99;
 export const PROPS = Object.freeze({
   wine: {name:"酒", detail:"下一次直接技能攻击的首段伤害 +10；可叠层，出手时一次消耗全部层数", target:"self", image:"ink-mono/wine.webp"},
   adrenaline: {name:"肾上腺素", detail:"立即结束本回合；接下来 3 个己方回合，造成的所有伤害 +5、受到的所有伤害 −5，最低 0", target:"self", image:"ink-mono/adrenaline.webp"},
-  add: { name:"增幅", detail:"任意一只手 +1，[9] 变为 [0]", target:"hand", image:"ink-mono/add.webp" },
+  add: { name:"增幅", detail:"任意一只手数字 +1", target:"hand", image:"ink-mono/add.webp" },
   sub: { name:"退化", detail:"任意一只手 −1，[0] 变为 [9]", target:"hand", image:"ink-mono/sub.webp" },
   lock: { name:"封印", detail:"封印一只手，不能参与触碰计算，至其回合结束；每人最多封印一只手", target:"hand", image:"ink-mono/lock.webp" },
   civil: { name:"内战", detail:"所选手减去其拥有者另一只手的数字，不足时加 10", target:"hand", image:"ink-mono/civil.webp" },

@@ -24,7 +24,7 @@
 #dialog .settings-body input[type=range] { height:20px; accent-color:#ed4e37; }
 #dialog .settings-body output { color:#fff2d8; font-size:35px; }
 #dialog:has(.tutorial-intro) { width:min(820px,calc(100vw - 32px)); }
-#dialog .tutorial-intro { padding:42px; background:linear-gradient(100deg,#111a2efa 45%,#111a2ed9),url('/assets/manga/blue.webp') right 30%/45% auto no-repeat; }
+#dialog .tutorial-intro { padding:42px; background:#111a2e; }
 #dialog .tutorial-intro>p { max-width:600px; }
 #dialog .tutorial-goals { display:flex; align-items:center; gap:18px; margin:24px 0; }
 #dialog .tutorial-goals b { padding:12px 20px; background:#fff2d8; color:#111a2e; font:900 23px/1.3 'MangaSans',sans-serif; border:0; border-radius:0; transform:skew(-4deg); box-shadow:5px 5px 0 #d54534; }
@@ -48,7 +48,7 @@
 #dialog .lobby-header h2::after { display:none; }
 #dialog .network-state { margin:0; color:#b2c3e4; font:12px/1.5 'Microsoft YaHei',sans-serif; }
 #dialog .lobby-identity { min-width:0; padding-right:28px; border-right:1px solid #fff2d833; }
-#dialog .lobby-portrait { height:160px; background:url('/assets/manga/blue.webp') 50% 29%/cover; clip-path:polygon(0 0,100% 6%,93% 100%,0 95%); margin-bottom:18px; filter:saturate(.8); }
+#dialog .lobby-portrait { height:160px; background:none 50% 29%/cover; clip-path:polygon(0 0,100% 6%,93% 100%,0 95%); margin-bottom:18px; filter:saturate(.8); }
 #dialog .online-lobby label { font-size:15px; color:#fff2d8; margin:0 0 10px; }
 #dialog .online-lobby label small { display:block; color:#9dadc9; margin:5px 0 0; font-size:11px; }
 #dialog .lobby-identity .name-entry { display:flex; flex-wrap:wrap; gap:10px; }
@@ -176,3 +176,31 @@
  .result-dialog.manga-result .result-art { position:absolute; inset:0; height:100%; min-height:100%; }
  .result-dialog.manga-result .result-content { position:relative; padding:8vh 8vw 5vh; }
 }
+/* Focused teaching and progress-driven finale. */
+#tutorial-spotlight { z-index:240; }
+#info-popover { z-index:1000; }
+.tutorial-click-cue { animation:click-cue-breathe 1.2s ease-in-out infinite; }
+@keyframes click-cue-breathe { 0%,100% { opacity:1; } 50% { opacity:.55; } }
+.game-shell .reference-recipe.tutorial-target,.game-shell .prop-use.tutorial-target { background:#d33f30; outline:3px solid #ffcf60!important; outline-offset:3px; }
+.game-shell #tutorial-next { width:auto; min-width:150px; padding:13px 22px; }
+.game-shell .arena-actions .tutorial-guide:empty { display:none; }
+.shield-break { position:absolute; inset:6% 12%; border:0; border-radius:0; background:none; padding:0; filter:drop-shadow(0 0 7px #a5d8ff); }
+.shield-break svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+.shield-break polygon { fill:#c4e5ff80; stroke:#f3faff; stroke-width:1.8; }
+.nine-finale .nine-content { width:min(650px,96vw); padding:25px; }
+.nine-finale .nine-content>small { display:block; color:#fff1cf; font:700 clamp(17px,2vw,25px)/1.5 'MangaSans',sans-serif; }
+.taiji-orbit { position:relative; width:clamp(180px,32vh,350px); aspect-ratio:1; margin:24px auto; }
+.taiji { position:relative; z-index:1; display:block; width:100%; height:100%; overflow:visible; color:#ecd39b; filter:drop-shadow(0 0 22px #e6bf4e25); }
+.taiji-half { fill:#1c2943; stroke:#f1deb277; stroke-width:1; }
+.taiji-half.first.filled { fill:#fff0ce; }
+.taiji-eye { fill:#132038; }
+.taiji-eye.light { fill:#fff0ce; }
+.taiji-wave { position:absolute; inset:-8%; border:2px solid #f2d28d; border-radius:50%; opacity:0; box-shadow:0 0 24px #f5d78f55; }
+.nine-finale .nine-content h2 { margin:12px auto; font-size:clamp(40px,6vw,76px); }
+.nine-finale .nine-content p { font:700 clamp(20px,3vw,32px)/1.5 'MangaSans',sans-serif; }
+.nine-finale .nine-content footer { margin-top:16px; }
+.result-dialog.manga-result { display:grid; grid-template-columns:1fr; place-items:center; isolation:isolate; }
+.result-dialog.manga-result .result-art { position:absolute; inset:0; width:100%; height:100%; opacity:.12; pointer-events:none; z-index:-1; }
+.result-dialog.manga-result .result-content { width:min(780px,100%); padding:5vh 5vw; margin:auto; }
+@media(prefers-reduced-motion:reduce) { .tutorial-click-cue { animation:none; } }
+.game-shell .reference-recipe.tutorial-target::after,.game-shell .prop-use.tutorial-target::after { content:none; }

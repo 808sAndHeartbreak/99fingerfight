@@ -174,8 +174,8 @@
 /* Full-screen manga composition: portraits frame the play, never the hand targets. */
 .game-shell .arena-art { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; background:linear-gradient(90deg,#10172beb,#10172bf5 36% 64%,#10172beb),url('/assets/manga/menu-99.webp') center/cover; }
 .game-shell .arena-portrait { position:absolute; top:7%; bottom:0; width:35%; opacity:.22; background-position:50% 28%; background-size:cover; mix-blend-mode:luminosity; mask-image:linear-gradient(to bottom,#000 65%,transparent); }
-.game-shell .arena-portrait.blue { left:-4%; background-image:url('/assets/manga/blue.webp'); clip-path:polygon(0 0,95% 8%,77% 100%,0 100%); }
-.game-shell .arena-portrait.red { right:-4%; background-image:url('/assets/manga/red.webp'); clip-path:polygon(5% 8%,100% 0,100% 100%,23% 100%); }
+.game-shell .arena-portrait.blue { left:-4%; background-image:none; clip-path:polygon(0 0,95% 8%,77% 100%,0 100%); }
+.game-shell .arena-portrait.red { right:-4%; background-image:none; clip-path:polygon(5% 8%,100% 0,100% 100%,23% 100%); }
 .game-shell .player { border-width:2px; transform:skew(-4deg); }
 .game-shell .player>* { transform:skew(4deg); }
 .game-shell .player .hp-bar { transform:none; }
