@@ -33,12 +33,13 @@ export function createFeedback() {
     if(!stack){stack=document.createElement('div');stack.className='notice-stack';document.querySelector('.arena-center').prepend(stack);nodes.add(stack);}
     return stack;
   }
-  function notice(text, team, kind = "turn") {
+  function notice(text, team, kind = "turn", art = null) {
     const stack=noticeRoot();
     const el = document.createElement("div");
     el.className = `moment-notice ${kind}`;
     el.dataset.team = team;
-    el.textContent = text;
+    if(art)el.innerHTML=`<img class="notice-art" src="${new URL('assets/'+art.image,document.baseURI).href}" alt=""><div><strong>${escapeHtml(art.title)}</strong><span>${escapeHtml(text)}</span></div>`;
+    else el.textContent = text;
     stack.append(el);
     nodes.add(el);
     animate(
@@ -68,7 +69,7 @@ export function createFeedback() {
   }
   function changes(old,next,duration=1800) {
     const all=stateChanges(old,next);
-    for(const owner of [0,1]){const gained=all.filter(c=>c.owner===owner&&c.kind==='inventory'&&c.label.startsWith('＋'));if(gained.length)notice(`${owner?'红方':'蓝方'} 获得道具：${gained.map(c=>`${PROPS[c.id].name} · ${PROPS[c.id].detail}`).join('；')}`,owner,'supply');}
+    for(const c of all.filter(c=>c.kind==='inventory'&&c.label.startsWith('＋'))){const prop=PROPS[c.id];notice(prop.detail,c.owner,'supply',{image:prop.image,title:`${c.owner?'红方':'蓝方'} 获得 · ${prop.name}`});}
     const duel=document.querySelector('.duel'),bounds=duel.getBoundingClientRect();
     const groups=new Map();
     for(const change of all){const id=`${change.owner}:${change.hand??change.kind}`;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(change);}

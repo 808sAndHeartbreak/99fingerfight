@@ -17,6 +17,7 @@ import "./visual-polish.css";
 import "./turn-ui.css";
 import "./event-ui.css";
 import "./arena-layout.css";
+import "./arena-poster.css";
 import { WEAPONS, PROPS, MAX_HP, weaponById } from "./catalog.js";
 import { LocalSession } from "./session.js";
 import { chooseCommand, AI_LEVELS } from "./ai.js";

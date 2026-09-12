@@ -58,7 +58,7 @@ export function guidance(state, selected, human, busy) {
   if(selected?.kind==="hand" && canTouch)return result(p.mirror?(p.echo?"再选对手的一只手，加和后更新对手双手":"再选对手的一只手，加和后更新对手数字"):p.echo?"再选对手的一只手，加和后更新己方双手":"再选对手的一只手，加和后更新己方数字","target");
   const canProp=propCommands(state).length>0,canForge=matchingWeapons(p.hands).length>0;
   if(canForge)return result(canTouch?(canProp?"可合成技能、使用道具或碰手":"可合成技能，也可选手计算"):"可结束回合，也可合成技能","synthesis");
-  if(canTouch)return result(canProp?"使用道具，或选自己的手去碰对手":"选自己的一只手，去碰对手","source");
+  if(canTouch)return result(canProp?"用道具，或选手计算":"选自己的手，碰对手","source");
   if(canProp)return result(state.calculated?"可结束回合，也可继续用道具":"手被封印，可使用道具","items");
   return result("没有可用操作，结束回合","blocked");
 }

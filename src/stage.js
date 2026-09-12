@@ -83,10 +83,10 @@ export class DuelStage {
         shieldShape.quadraticCurveTo(-.7, 1.1, 0, 1.3);
         const shield = new THREE.Mesh(
           new THREE.ShapeGeometry(shieldShape),
-          new THREE.MeshBasicMaterial({color:COLORS[owner], transparent:true, opacity:.07, depthWrite:false, side:THREE.DoubleSide}),
+          new THREE.MeshBasicMaterial({color:COLORS[owner], transparent:true, opacity:.12, depthWrite:false, side:THREE.DoubleSide}),
         );
         const outline = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(shieldShape.getPoints(32)),
-          new THREE.LineBasicMaterial({color:COLORS[owner], transparent:true, opacity:.18, depthWrite:false}));
+          new THREE.LineBasicMaterial({color:COLORS[owner], transparent:true, opacity:.45, depthWrite:false}));
         shield.add(outline);
         shield.position.copy(base);
         this.scene.add(shield);

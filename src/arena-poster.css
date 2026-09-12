@@ -1,0 +1,173 @@
+/* Arena edition of the menu poster: indigo, cream type, hard ink and red intent. */
+.game-shell { --arena-ink:#0a1020; --arena-paper:#fff2d8; background:#0c1224; color:var(--arena-paper); }
+.game-shell .paper-grain { background:#10172b; opacity:1; }
+.game-shell .paper-grain::after { opacity:.035; }
+.game-shell .duel { background:radial-gradient(ellipse at 48% 45%,#252d51,#10172b 70%); }
+.game-shell .stage { top:145px; bottom:10px; }
+.game-shell .scoreboard { top:26px; width:88%; max-width:1440px; gap:clamp(25px,5vw,100px); grid-template-columns:minmax(0,1fr) 160px minmax(0,1fr); }
+.game-shell .player { position:relative; max-width:390px; padding:15px 20px 8px; border:1px solid #fff2d844; border-radius:0; background:#111a2e; box-shadow:7px 7px 0 #050916; color:#f4ecd9; }
+.game-shell .player.active { background:#244abe; border-color:#e9efff; box-shadow:7px 7px 0 #050916,inset 0 -4px 0 #91b3ff; }
+.game-shell .player.red.active { background:#bc302a; border-color:#ffe2cd; box-shadow:7px 7px 0 #050916,inset 0 -4px 0 #ff9b77; }
+.game-shell .player .player-head { height:55px; }
+.game-shell .player-identity>strong,.game-shell .player .player-name { color:#fff2d8; font-size:clamp(23px,2vw,35px); font-weight:900; text-shadow:2px 3px 0 #03091b66; }
+.game-shell .player .seat-label { color:#fff2d8; opacity:.8; }
+.game-shell .health-number { color:#fff2d8; }
+.game-shell .health-number::before { content:'HP'; font:700 13px Teko,sans-serif; color:#e4ddce; margin-right:5px; }
+.game-shell .health-number b { font-size:52px; line-height:1; color:#fff2d8; }
+.game-shell .health-number small { color:#d2d5df; opacity:.75; }
+.game-shell .player .hp-bar { height:9px; background:#050b1b; border:0; border-radius:0; margin-top:8px; }
+.game-shell .player .hp-bar i { background:#93b6ff; border-radius:0; }
+.game-shell .player.red .hp-bar i { background:#ffad92; }
+.game-shell .player .hp-bar::after { opacity:.25; }
+.game-shell .round-block .round-caption { color:#fff2d8; font-size:12px; font-weight:900; letter-spacing:.14em; }
+.game-shell .round-block .round-caption b { font:700 25px/1 Teko,sans-serif; }
+.game-shell .round-block .phase-time { min-width:108px; padding:5px 16px 0; background:#fff2d8; border:2px solid #fff2d8; border-radius:0; color:#111a30; box-shadow:6px 6px 0 #050916; transform:rotate(-3deg); }
+.game-shell .round-block .phase-time #clock { font:700 italic 76px/.95 Teko,sans-serif; text-shadow:none; }
+.game-shell .round-block .phase-time.warning { background:#ffd15e; color:#171426; border-color:#ffd15e; }
+.game-shell .round-block .phase-time.urgent { background:#e84432; color:#fff4dd; border-color:#fff4dd; }
+.game-shell .turn-arrow { color:#fff2d8; font-size:35px; font-weight:900; text-shadow:3px 3px 0 #0009; }
+.game-shell .arena-center { top:max(215px,calc(50% - 125px)); width:clamp(280px,23vw,360px); transform:translateX(-50%); gap:20px; }
+.game-shell .arena-center .arena-actions { gap:18px; }
+.game-shell:not(.is-tutorial) .arena-center:not(:has(.notice-stack:not(:empty))) .arena-actions { margin-top:55px; }
+.game-shell .arena-center .notice-stack { max-height:min(370px,calc(100svh - 430px)); overflow:auto; padding:5px 8px 10px 4px; }
+.game-shell .arena-actions #instruction { display:inline-block; width:auto; max-width:100%; margin:0; padding:8px 14px; background:#fff2d8; color:#111a2e; font-size:clamp(17px,1.4vw,24px); font-weight:900; line-height:1.5; box-shadow:5px 5px 0 #050916; transform:rotate(-2deg); text-shadow:none; }
+.game-shell .arena-actions .end-turn { position:relative; min-width:195px; min-height:62px; padding:14px 28px; border:2px solid #fff2d8; border-radius:0; color:#fff2d8; background:#151f35; font-size:23px; font-weight:900; transform:skew(-5deg); box-shadow:6px 7px 0 #060b19; animation:none; transition:translate .16s,background .16s,box-shadow .16s; }
+.game-shell .arena-actions .end-turn:not(:disabled):hover { background:#de392d; translate:4px -2px; }
+.game-shell .arena-actions .end-turn.recommended { background:#d6392e; color:#fff3dc; box-shadow:7px 8px 0 #060b19; }
+.game-shell .arena-actions .end-turn.urgent { min-width:230px; min-height:70px; font-size:27px; animation:poster-end-beat 2.8s ease-in-out infinite; }
+.game-shell .arena-actions .end-turn.urgent::after { content:'◀'; display:inline-block; margin-left:13px; font-size:18px; }
+.game-shell .arena-actions .end-turn:disabled { background:#192036; border-color:#727789; color:#9a9dad; opacity:.65; box-shadow:4px 5px 0 #080d1d; }
+.game-shell .arena-actions .primary-actions button { background:#151f35; border:2px solid #fff2d8; color:#fff2d8; border-radius:0; font-size:19px; font-weight:900; padding:12px 22px; transform:skew(-4deg); box-shadow:5px 5px 0 #060b19; }
+.game-shell .arena-actions .primary-actions button:hover { background:#cf352b; }
+.game-shell .field-items { width:100px; height:290px; background:#0d1527; border:1px solid #fff2d83a; border-radius:0; box-shadow:6px 7px 0 #05091699; padding:12px; }
+.game-shell .field-items.blue { left:4%; }
+.game-shell .field-items.red { right:4%; }
+.game-shell .field-items .prop-slot { background:#eee5d2; border:1px solid #fff5de; border-radius:0; box-shadow:3px 3px 0 #0006; }
+.game-shell .field-items .prop-slot.empty { background:#ffffff03; border:1px dashed #c5c9dd33; color:#8c96b044; box-shadow:none; }
+.game-shell .field-items .prop-use { color:#10182d; }
+.game-shell .field-items .prop-use b { font-size:13px; }
+.game-shell .field-items .prop-slot.selected { outline:3px solid #fff2d8; outline-offset:3px; transform:rotate(-4deg); }
+.game-shell .field-items.items-remaining { background:#382332; border-color:#f7745e; box-shadow:5px 6px 0 #050916; }
+.game-shell .field-items.items-usable { background:#1b2845; border-color:#9db8f0; box-shadow:6px 7px 0 #050916; }
+.game-shell .field-items.red.items-usable { background:#352333; border-color:#f08d79; }
+.game-shell .field-items.items-remaining { border-width:2px; }
+.game-shell .supply-dots i { background:#545f7b; }
+.game-shell .supply-dots i.filled { background:#fff2d8; }
+.game-shell .hand-hotspot .hand-value { background:#fff2d8; border:2px solid #0d1528; box-shadow:4px 5px 0 #030919; text-shadow:none; }
+.game-shell .hand-hotspot.selected .hand-value { color:#111a2e; background:#fff2d8; box-shadow:0 0 0 3px #fff2d8,6px 7px 0 #030919; }
+.game-shell .hand-hotspot .hand-status { color:#fff2d8; background:#101a31; }
+.game-shell .hand-shield { color:#fff2d8; background:#101a31dd; border:1px solid #c2d4ff77; }
+.game-shell .hand-shield img { background:#fff2d8; }
+.game-shell .reference-deck { background:#080f20; border-top:2px solid #fff2d87a; min-height:100px; padding:12px 4%; gap:30px; box-shadow:0 -8px 0 #080e1b44; }
+.game-shell .reference-deck .hud-tools { background:none; border:0; border-right:1px solid #fff2d844; box-shadow:none; padding:0 26px 0 0; gap:9px; }
+.game-shell .reference-deck .hud-tools button,.game-shell .reference-deck .hud-tools #history { min-height:48px; padding:10px 15px; background:#151f35; color:#fff2d8; border:1px solid #fff2d8; font-size:15px; font-weight:900; box-shadow:3px 4px 0 #000; }
+.game-shell .reference-deck .hud-tools button:hover { background:#d83c30; color:#fff2d8; }
+.game-shell .recipe-shelf { gap:12px; align-items:center; padding:7px 5px; }
+.game-shell .recipe-shelf { justify-content:space-between; }
+.game-shell .reference-deck .hud-tools :is(#history,#menu) { background:#151f35; color:#fff2d8; border-radius:0; transform:skew(-4deg); }
+.game-shell .reference-deck .hud-tools :is(#history,#menu):hover { background:#d83c30; }
+.game-shell.is-tutorial .arena-actions #instruction { font-size:clamp(19px,1.5vw,27px); }
+.game-shell .tutorial-target { outline-color:#fff2d8!important; animation:none; }
+.game-shell .hand-hotspot.tutorial-target { outline:none!important; box-shadow:none; filter:none; }
+.game-shell .hand-hotspot.tutorial-target .hand-value { background:#d93c30; color:#fff2d8; border-color:#fff2d8; animation:poster-end-beat 2.8s ease-in-out infinite; }
+.game-shell .hand-hotspot.tutorial-target .hand-value::before { content:'▼'; position:absolute; top:-30px; left:50%; translate:-50% 0; font:900 20px sans-serif; color:#fff2d8; }
+.game-shell .tutorial-target::after { background:#fff2d8; color:#10182d; }
+.game-shell #tutorial-next { animation:none; box-shadow:5px 6px 0 #050916; }
+.game-shell .reference-recipe { flex:1 0 70px; min-width:70px; height:66px; max-width:110px; border:1px solid #fff2d83b; border-radius:0; background:#192237; box-shadow:3px 4px 0 #0006; transform:skew(-4deg); transition:translate .16s,background .16s,border-color .16s; }
+.game-shell .reference-recipe .recipe-icon { width:30px; height:30px; background:#fff2d8; padding:2px; border-radius:0; transform:skew(4deg); }
+.game-shell .reference-recipe b { color:#fff2d8; font-size:13px; transform:skew(4deg); }
+.game-shell .reference-recipe:hover,.game-shell .reference-recipe:focus-visible { translate:0 -4px; border-color:#fff2d8; background:#af302b; outline:none; }
+.game-shell .reference-recipe.ready { background:#ac302d; border-color:#ffe2bd; box-shadow:3px 4px 0 #000; }
+.game-shell .reference-recipe.related { border-bottom:2px solid #7595db; }
+.game-shell.is-tutorial .arena-actions { background:none; box-shadow:none; border:0; }
+.game-shell .arena-actions .tutorial-guide { background:#101b30; color:#eee7d8; border:1px solid #6b80ac; border-left:4px solid #7298ff; padding:14px 17px; box-shadow:5px 6px 0 #040918; }
+.game-shell .tutorial-guide>small { display:block; color:#a6c0ff; font-size:12px; letter-spacing:.04em; }
+.game-shell .tutorial-guide p { color:#e4e4ec; font-family:'Microsoft YaHei','PingFang SC',sans-serif; font-size:13px; line-height:1.8; }
+.game-shell .arena-actions #forge-options { border:2px solid #fff2d8; background:#111a2e; border-radius:0; padding:16px; box-shadow:8px 8px 0 #050916; max-height:340px; }
+.game-shell .forge-heading h2 { font-size:24px; text-shadow:3px 3px 0 #bd332c; }
+.game-shell .arena-actions .forge-choices button { border:1px solid #fff2d8; border-radius:0; padding:10px; background:#f6edd9; box-shadow:3px 4px 0 #000; }
+.game-shell .arena-actions .forge-choices button:hover { background:#fff8e8; translate:3px -2px; }
+.game-shell .forge-choices button strong { font-size:19px; }
+.game-shell .forge-choices button>span:not(.skill-icon) { font-family:'Microsoft YaHei',sans-serif; font-size:12px; }
+.game-shell #forge-options.confirming h2 { font-size:34px; text-shadow:3px 3px 0 #b6382e; }
+.game-shell .forge-confirm-art { width:90px; height:90px; border-radius:0; box-shadow:6px 6px 0 #d83d30; }
+.game-shell .forge-detail { font-family:'Microsoft YaHei',sans-serif; font-size:14px; }
+.game-shell #confirm-forge { border-radius:0; border:2px solid #fff2d8; font-size:21px; font-weight:900; transform:skew(-4deg); }
+.game-shell #back-forge,.game-shell #cancel-forge { font-size:13px; }
+#info-popover { background:#111b31; color:#fff2d8; border:2px solid #fff2d8; box-shadow:8px 8px 0 #030918; border-radius:0; padding:20px; width:min(370px,calc(100vw - 24px)); }
+#info-popover h3 { color:#fff2d8; font-size:27px; font-weight:900; text-shadow:3px 3px 0 #ae342f; }
+#info-popover .info-heading img { background:#fff2d8; padding:4px; }
+#info-popover p { color:#e1e4ed; font-family:'Microsoft YaHei',sans-serif; font-size:13px; line-height:1.8; }
+#info-popover .info-tags { color:#aac0f0; }
+#info-popover .info-close { color:#fff2d8; }
+#info-popover .info-rules { color:#b9c7e4; border-color:#fff2d82e; }
+.game-shell .notice-stack .moment-notice { background:#111b31; border:1px solid #fff2d8; border-left:5px solid #6f9bff; border-radius:0; box-shadow:5px 6px 0 #050916; padding:14px 17px; font-size:15px; }
+.game-shell .notice-stack .moment-notice:has(.notice-art) { display:grid; grid-template-columns:46px minmax(0,1fr); gap:12px; align-items:center; }
+.game-shell .notice-art { width:46px; height:46px; padding:3px; background:#fff2d8; transform:rotate(-5deg); box-shadow:3px 3px 0 #bd3c32; }
+.game-shell .moment-notice strong { display:block; font-size:20px; line-height:1.4; margin-bottom:5px; }
+.game-shell .moment-notice span { display:block; font:12px/1.7 'Microsoft YaHei',sans-serif; color:#d5dceb; }
+.game-shell .notice-stack .item-receipt { background:#111b31; border:1px solid #fff2d8; border-radius:0; clip-path:none; padding:16px; box-shadow:5px 6px 0 #050916; }
+.game-shell .item-receipt strong { color:#fff2d8; font-size:27px; text-shadow:3px 3px 0 #a4322b; }
+.game-shell .item-receipt small { color:#b6c6e8; }
+.game-shell .item-receipt b { color:#ffd67d; font-size:23px; }
+.game-shell .notice-stack .combat-cinema.skill.arena-skill { background:#111b31; border:2px solid #fff2d8; border-left:6px solid var(--strike); border-radius:0; box-shadow:7px 8px 0 #050916; padding:18px; }
+.game-shell .notice-stack .arena-skill .cinema-heading h2 { font-size:35px; text-shadow:3px 4px 0 #b73830; }
+.game-shell .notice-stack .arena-skill .cinema-result .damage-value { font:700 italic 48px/1 Teko,sans-serif; color:#fff2d8; text-shadow:3px 3px 0 #cc3d32; }
+.game-shell .notice-stack .arena-skill .cinema-result .effect-text { font:13px/1.75 'Microsoft YaHei',sans-serif; }
+.game-shell .notice-stack .arena-skill .cinema-icon { background:#fff2d8; border-radius:0; rotate:-5deg; box-shadow:4px 4px 0 #b93b32; }
+.game-shell .turn-handoff { top:175px; border:2px solid #fff2d8; border-radius:0; background:#162444; box-shadow:6px 6px 0 #050916; padding:9px 26px; max-width:340px; }
+.game-shell .turn-handoff[data-team='1'] { background:#a72c2a; }
+.game-shell .turn-handoff strong { font-size:23px; color:#fff2d8; font-weight:900; }
+.game-shell .hp-delta { color:#fff2d8; background:#c9362d; padding:4px 10px; text-shadow:2px 2px 0 #070d20; border:1px solid #fff2d8; }
+.game-shell .hp-delta.heal { background:#236c65; }
+.game-shell .change-marker>span { background:#101a30; color:#fff2d8; border-color:#fff2d866; }
+.nine-finale { background:radial-gradient(ellipse at 50% 48%,#29335a,#080f20 75%); }
+.nine-aura { rotate:-8deg; border:0; background:#d83d2c; clip-path:polygon(0 20%,100% 0,88% 87%,12% 100%); opacity:.3; box-shadow:none; }
+.nine-aura::before,.nine-aura::after { display:none; }
+.nine-content h2 { font-size:clamp(46px,7vw,110px); border:3px solid #fff2d8; box-shadow:12px 13px 0 #d7392f; transform:rotate(-5deg); }
+.nine-content p { font-size:clamp(20px,2.5vw,38px); font-weight:900; }
+@keyframes poster-end-beat { 0%,100% { translate:0 0; box-shadow:6px 7px 0 #060b19; } 50% { translate:0 -3px; box-shadow:8px 11px 0 #060b19,0 0 0 3px #f6e7c62a; } }
+@media(min-width:1500px) { .game-shell .field-items { width:115px; height:330px; } .game-shell .field-items .prop-use b { font-size:15px; } .game-shell .arena-actions .tutorial-guide p { font-size:15px; } }
+@media(max-width:850px) { .game-shell .scoreboard { width:94%; gap:18px; grid-template-columns:minmax(0,1fr) 105px minmax(0,1fr); } .game-shell .player { padding:10px; } .game-shell .health-number b { font-size:38px; } .game-shell .field-items.blue { left:12px; } .game-shell .field-items.red { right:12px; } }
+@media(max-width:650px) {
+ .game-shell .scoreboard { top:14px; width:calc(100% - 20px); gap:10px; grid-template-columns:minmax(0,1fr) 75px minmax(0,1fr); }
+ .game-shell .player { padding:8px 7px 4px; box-shadow:4px 4px 0 #050916; }
+ .game-shell .player .player-head { height:auto; }
+ .game-shell .player-identity>strong,.game-shell .player .player-name { font-size:18px; }
+ .game-shell .health-number b { font-size:34px; }
+ .game-shell .health-number::before { font-size:10px; }
+ .game-shell .round-block .phase-time { min-width:67px; padding:5px 9px 0; box-shadow:4px 4px 0 #050916; }
+ .game-shell .round-block .phase-time #clock { font-size:48px; }
+ .game-shell .round-block .round-caption { font-size:9px; letter-spacing:0; }
+ .game-shell .round-block .round-caption b { font-size:18px; }
+ .game-shell .turn-arrow { font-size:27px; }
+ .game-shell .arena-center { width:230px; top:clamp(325px,calc(50% - 20px),400px); gap:12px; }
+ .game-shell .arena-center .notice-stack { max-height:310px; }
+ .game-shell .arena-actions #instruction { font-size:15px; padding:7px 10px; }
+ .game-shell.is-tutorial .arena-actions #instruction { font-size:16px; }
+ .game-shell.is-tutorial .arena-actions:has(#forge-options:not([hidden])) .tutorial-guide { display:none; }
+ .game-shell .arena-actions .tutorial-guide { padding:10px 12px; }
+ .game-shell .tutorial-guide p { font-size:11px; }
+ .game-shell .tutorial-guide>small { font-size:10px; }
+ .game-shell .arena-actions .end-turn { min-width:165px; min-height:50px; font-size:19px; }
+ .game-shell .arena-actions .end-turn.urgent { min-width:185px; min-height:57px; font-size:22px; }
+ .game-shell .field-items { width:59px; height:235px; padding:7px; }
+ .game-shell .field-items.blue { left:8px; } .game-shell .field-items.red { right:8px; }
+ .game-shell .field-items .prop-use b { font-size:10px; }
+ .game-shell .reference-deck { gap:14px; padding:10px 8px; min-height:90px; }
+ .game-shell .reference-deck .hud-tools { gap:6px; padding-right:12px; }
+ .game-shell .reference-deck .hud-tools button,.game-shell .reference-deck .hud-tools #history { padding:6px 8px; min-height:32px; font-size:11px; }
+ .game-shell .recipe-shelf { gap:9px; justify-content:flex-start; }
+ .game-shell .reference-recipe { flex-basis:60px; min-width:60px; height:61px; }
+ .game-shell .reference-recipe b { font-size:11px; }
+ .game-shell .arena-actions #forge-options { padding:10px; max-height:210px; }
+ .game-shell #forge-options.confirming h2 { font-size:26px; }
+ .game-shell .forge-detail { font-size:12px; }
+ .game-shell #confirm-forge { font-size:17px; }
+ .game-shell .notice-stack .arena-skill .cinema-heading h2 { font-size:26px; }
+ .game-shell .notice-stack .arena-skill .cinema-result .damage-value { font-size:38px; }
+ .game-shell .notice-stack .arena-skill .cinema-result .effect-text { font-size:12px; }
+ .game-shell .turn-handoff { top:167px; padding:8px 17px; }
+ .game-shell .turn-handoff strong { font-size:18px; }
+}
+@media(prefers-reduced-motion:reduce) { .game-shell .arena-actions .end-turn.urgent,.game-shell .hand-hotspot.tutorial-target .hand-value { animation:none; } .game-shell .reference-recipe { transition:none; } }

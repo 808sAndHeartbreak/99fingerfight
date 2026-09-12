@@ -187,9 +187,7 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
           innerWidth - box.width - 12,
           Math.max(12, r.left + r.width / 2 - box.width / 2),
         );
-    const y = mobile
-      ? Math.max(12, innerHeight - box.height - 16)
-      : r.top > box.height + 18
+    const y = r.top > box.height + 18
         ? r.top - box.height - 12
         : Math.min(innerHeight - box.height - 12, r.bottom + 12);
     pop.style.left = `${x}px`;
@@ -214,6 +212,7 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
   });
   listen(root, "focusin", (e) => {
     const b = e.target.closest("[data-info]");
+    if(b && !b.matches(':focus-visible'))return;
     if (
       b?.matches(
         '.hand-hotspot.available,.hand-hotspot.target,.prop-use[aria-disabled="false"]',
