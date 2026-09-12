@@ -37,6 +37,7 @@ export function createHand(color, mirrored = false) {
     color: 0x111827,
     side: THREE.BackSide,
   });
+  const edges=[];
   function piece(geometry, material, position, parent = model, outline = true) {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(...position);
@@ -44,7 +45,7 @@ export function createHand(color, mirrored = false) {
     if (outline) {
       const edge = new THREE.Mesh(geometry, ink);
       edge.scale.setScalar(1.055);
-      mesh.add(edge);
+      mesh.add(edge);edges.push(edge);
     }
     return mesh;
   }
@@ -171,6 +172,11 @@ export function createHand(color, mirrored = false) {
               new THREE.Vector3(0, lengths[i] * 0.62 + 0.01, 0.015),
             );
       return root.worldToLocal(point);
+    },
+    setSelected(chosen) {
+      ink.color.set(chosen ? color : 0x111827);
+      edges.forEach(edge=>edge.scale.setScalar(chosen?1.095:1.055));
+      skin.emissive.set(color);skin.emissiveIntensity=chosen?.08:0;
     },
     update(dt) {
       const alpha = 1 - Math.exp(-16 * dt);

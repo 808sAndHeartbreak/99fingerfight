@@ -1,4 +1,3 @@
-import { PROPS, WEAPONS } from "./catalog.js";
 import { calculationOutcome } from "./engine.js";
 import { propContactNumber } from "./guidance.js";
 import * as THREE from "three";
@@ -74,18 +73,6 @@ export class DuelStage {
           owner ? -0.28 : 0.28,
           owner ? 1.17 : -1.17,
         );
-        const halo = new THREE.Mesh(
-          new THREE.RingGeometry(1.04, 1.065, 80),
-          new THREE.MeshBasicMaterial({
-            color: COLORS[owner],
-            transparent: true,
-            opacity: 0.18,
-            side: THREE.DoubleSide,
-          }),
-        );
-        halo.position.copy(base);
-        halo.position.z = -0.7;
-        this.scene.add(halo);
         const shieldShape = new THREE.Shape();
         shieldShape.moveTo(0, 1.3);
         shieldShape.quadraticCurveTo(.7, 1.1, 1.1, .9);
@@ -105,7 +92,7 @@ export class DuelStage {
         this.scene.add(shield);
         shield.visible = false;
         this.scene.add(model.root);
-        this.hands.push({ ...model, owner, hand, base, halo, shield });
+        this.hands.push({ ...model, owner, hand, base, shield });
       }
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(host);
@@ -136,7 +123,7 @@ export class DuelStage {
     this.hands.forEach((h) => {
       h.base.set(
         (h.owner ? 1 : -1) * viewWidth * .21,
-        ((h.owner === 0 ? h.hand : 1-h.hand) ? -1 : 1) * viewHeight * .24,
+        ((h.owner === 0 ? h.hand : 1-h.hand) ? -1 : 1) * viewHeight * (width<650?.32:.24),
         0,
       );
       h.restScale = Math.min(1.15, viewWidth / 13.5, viewHeight / 5.5);
@@ -150,29 +137,9 @@ export class DuelStage {
     this.hands.forEach((h) => {
       const p = state.players[h.owner];
       h.setNumber(p.hands[h.hand]);
-      const combo = WEAPONS.some(w=>w.recipe[0]===p.hands[0] && w.recipe[1]===p.hands[1]);
-      const chosen =
-        selected?.kind === "hand" &&
-        selected.hand === h.hand &&
-        state.active === h.owner;
-      h.trim.emissiveIntensity = p.locks[h.hand] ? 0 : chosen ? 0.15 : 0;
-      const propTarget =
-        selected?.kind === "prop" &&
-        PROPS[state.players[state.active].props[selected.slot]]?.target === "hand" &&
-        (state.players[state.active].props[selected.slot]!=="lock" || !p.locks.some(Boolean));
-      const canSelect =
-        enabled &&
-        !p.locks[h.hand] &&
-        state.phase === "action" && !state.calculated &&
-        !state.players[state.active].weapon &&
-        (state.active === h.owner || selected?.kind === "hand");
-      h.halo.material.opacity = chosen
-        ? 0.85
-        : canSelect || (enabled && propTarget)
-          ? 0.48
-          : combo ? 0.34 : 0.04;
-      h.actionable = canSelect || (enabled && propTarget);
-      h.halo.scale.setScalar(chosen ? 1.15 : 1);
+      const chosen=selected?.kind==='hand' && selected.hand===h.hand && state.active===h.owner;
+      h.setSelected(chosen);
+      h.trim.emissiveIntensity=p.locks[h.hand]?0:chosen?.2:0;
       h.shield.visible = p.hands[h.hand] === 5;
     });
   }
@@ -272,7 +239,7 @@ export class DuelStage {
       const heroScale = Math.min(this.mobile ? 1.5 : 2.1, viewWidth / 7.2);
       this.hands.forEach((h) => {
         h.root.visible = h.role !== "idle" || focus < 0.1;
-        h.halo.visible = focus < 0.1;
+
         h.shield.visible =
           focus < 0.1 && this.state.players[h.owner].hands[h.hand] === 5;
       });
@@ -402,18 +369,14 @@ export class DuelStage {
           h.root.position.copy(h.base);
           if (!this.reduced.matches) {
             const active=!this.presenting && this.state?.active===h.owner && this.state?.phase==='action' && !this.state?.players[h.owner].weapon;
-            h.root.position.y += active?Math.sin(this.time * 2.2 + i*.3)*.13:0;
+            h.root.position.y += active?Math.sin(this.time * .95 + i*.3)*.075:0;
             const hit=this.hits?.[h.owner]||0;
             h.root.position.x+=(h.owner?1:-1)*Math.sin(Math.min(1,hit/.85)*Math.PI)*.65;
             h.root.position.y+=Math.sin(hit*55)*hit*.1;
             h.root.rotation.y =
-              (h.owner ? -0.28 : 0.28) + Math.sin(this.time * 0.6 + i) * 0.055;
+              (h.owner ? -0.28 : 0.28) + Math.sin(this.time * .35 + i) * .025;
           }
         }
-        if (!this.animation) h.halo.visible = true;
-        if(h.actionable && this.state?.active===h.owner && !this.selection && !this.presenting)h.halo.material.opacity=this.reduced.matches?.65:.55+Math.sin(this.time*3)*.18;
-        h.halo.position.copy(h.base);
-        h.halo.position.z = -0.65;
         h.shield.position.copy(h.root.position);
         h.shield.position.z = -.45;
         h.shield.scale.setScalar(h.restScale * (this.reduced.matches ? 1 : 1 + Math.sin(this.time * 1.5) * .015));

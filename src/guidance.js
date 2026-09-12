@@ -46,10 +46,10 @@ export function guidance(state, selected, human, busy) {
   const canTouch=state.phase==="action" && !state.calculated && !p.weapon && touchCommands(state).length>0;
   const result=(title,step)=>({title,step,canTouch});
   if(state.winner!==null)return result("对局结束","over");
-  if(busy)return result("正在结算","resolving");
+  if(busy)return result("","resolving");
   if(!human)return result("等待对手出手","waiting");
   if(state.phase==="start")return result(state.skipping?"本回合无法行动":"回合开始","start");
-  if(p.weapon)return result("技能释放中","battle");
+  if(p.weapon)return result("","battle");
   if(selected?.kind==="prop"){
     const id=p.props[selected.slot],prop=PROPS[id];
     if(!prop)return result("重新选择道具","source");

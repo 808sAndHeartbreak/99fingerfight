@@ -30,7 +30,7 @@ export function createFeedback() {
   }
   function noticeRoot() {
     let stack=document.querySelector('.notice-stack');
-    if(!stack){stack=document.createElement('div');stack.className='notice-stack';document.querySelector('.duel').append(stack);nodes.add(stack);}
+    if(!stack){stack=document.createElement('div');stack.className='notice-stack';document.querySelector('.arena-center').prepend(stack);nodes.add(stack);}
     return stack;
   }
   function notice(text, team, kind = "turn") {
@@ -163,11 +163,11 @@ export function createFeedback() {
     },
     async phase(cue) {
       if(!cue)return;
-      if(cue.kind==='finish'&&cue.title==='九九归一'){
-        await animate(document.querySelector('.battle-banner'),[{opacity:1},{opacity:1}],{duration:cue.duration}).finished.catch(()=>{});return;
+      if(cue.kind==='finish'){
+        await animate(document.querySelector('.round-block'),[{opacity:1},{opacity:1}],{duration:cue.duration}).finished.catch(()=>{});return;
       }
-      const el=document.createElement('div');el.className=`turn-handoff ${cue.kind==='finish'?'match-finished':''}`;el.dataset.team=cue.owner;el.setAttribute('role','status');
-      el.innerHTML=`<small>${cue.kind==='finish'?'对局结束':'回合切换'}</small><strong>${escapeHtml(cue.detail)}</strong><span>${cue.kind==='finish'?escapeHtml(cue.title):cue.title==='本回合无法行动'?cue.title:'准备行动'}</span>`;
+      const el=document.createElement('div');el.className='turn-handoff';el.dataset.team=cue.owner;el.setAttribute('role','status');
+      el.innerHTML=`<strong>${escapeHtml(cue.detail)}</strong>${cue.title==='本回合无法行动'?'<span>本回合无法行动</span>':''}`;
       document.querySelector('.duel').append(el);nodes.add(el);
       await animate(el,[{opacity:0,transform:`translateX(${cue.owner?30:-30}px)`},{opacity:1,transform:'translateX(0)',offset:.18},{opacity:1,offset:.82},{opacity:0}],{duration:cue.duration,fill:'both'},true).finished.catch(()=>{});
     },

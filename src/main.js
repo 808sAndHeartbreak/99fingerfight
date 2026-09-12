@@ -16,6 +16,7 @@ import "./battle-layout.css";
 import "./visual-polish.css";
 import "./turn-ui.css";
 import "./event-ui.css";
+import "./arena-layout.css";
 import { WEAPONS, PROPS, MAX_HP, weaponById } from "./catalog.js";
 import { LocalSession } from "./session.js";
 import { chooseCommand, AI_LEVELS } from "./ai.js";
@@ -88,15 +89,16 @@ function play(id) {
 app.innerHTML = `<main class="game-shell">
   <div class="paper-grain" aria-hidden="true"></div>
 
-  <div id="network-notice" class="network-notice" role="status" hidden></div><section id="tutorial-guide" class="tutorial-guide" hidden aria-label="新手教学"></section><section class="battle-banner" aria-label="当前操作"><div class="turn-overview"><div class="round-inline"><span class="round-caption">回合 <b id="round-number">01</b></span><strong id="phase-label"></strong></div><div class="turn-controls"><div class="phase-time" id="phase-time" role="timer" aria-live="off" aria-label="剩余时间"><span id="clock">30</span><small>秒</small></div><button id="end-turn" class="end-turn">结束回合</button></div></div><div class="turn-instruction"><h1 id="instruction" aria-live="polite"></h1></div><div id="primary-actions" class="primary-actions"></div><nav class="hud-tools" aria-label="游戏工具"><button id="history">对局记录</button><button id="menu">菜单 ☰</button></nav><span id="mode-label" hidden></span></section><section class="duel" aria-label="指尖对战场">
-    <div class="scoreboard"><div id="player-0" class="player blue"></div><div class="round-block"></div><div id="player-1" class="player red"></div></div>
+  <div id="network-notice" class="network-notice" role="status" hidden></div><span id="mode-label" hidden></span>
+  <section class="duel" aria-label="指尖对战场">
+    <div class="scoreboard"><div id="player-0" class="player blue"></div><div class="round-block" aria-label="回合与倒计时"><span class="round-caption">回合 <b id="round-number">01</b></span><div class="phase-time" id="phase-time" role="timer" aria-live="off" aria-label="剩余时间"><span id="clock">30</span><small>秒</small></div><span id="turn-arrow" class="turn-arrow" aria-hidden="true">←</span><span id="phase-label" class="sr-only"></span></div><div id="player-1" class="player red"></div></div>
     <div id="stage" class="stage" data-motion="idle"><div class="hand-layer" id="hand-layer">${[0, 1].map((owner) => [0, 1].map((hand) => `<button id="hand-${owner}-${hand}" class="hand-hotspot ${owner ? "red" : "blue"}" data-owner="${owner}" data-hand="${hand}" aria-pressed="false"><span class="hand-corner"></span>${img("hand-1.webp", "fallback-hand")}<b class="hand-value">1</b><span class="hand-status"></span><span class="hand-shield" data-info="shield" data-info-only hidden></span><span class="sum-preview"></span></button>`).join("")).join("")}</div><div class="contact-fx" id="contact-fx" aria-hidden="true">${img("manga/contact.webp")}<b>碰!</b></div></div>
     <div id="combat-callout" class="combat-callout" aria-live="polite"></div>
     <div class="field-note" aria-hidden="true"></div>
     <div id="items-0" class="field-items blue" aria-label="蓝方道具"></div><div id="items-1" class="field-items red" aria-label="红方道具"></div>
-    <section id="forge-options" class="forge-options" hidden aria-label="合成选项"></section>
+    <div class="arena-center"><section class="arena-actions" aria-label="当前操作"><div class="turn-instruction"><h1 id="instruction" aria-live="polite"></h1></div><section id="tutorial-guide" class="tutorial-guide" hidden aria-label="新手教学"></section><section id="forge-options" class="forge-options" hidden aria-label="合成选项"></section><div id="primary-actions" class="primary-actions"></div><button id="end-turn" class="end-turn">结束回合</button></section></div>
   </section>
-  <section class="reference-deck" aria-label="常驻组合图鉴"><header><span id="render-status"></span></header><div id="recipe-shelf" class="recipe-shelf" tabindex="0" aria-label="横向滚动查看组合"></div></section>
+  <section class="reference-deck" aria-label="常驻组合图鉴"><nav class="hud-tools" aria-label="游戏工具"><button id="history">对局记录</button><button id="menu">菜单 ☰</button></nav><span id="render-status" hidden></span><div id="recipe-shelf" class="recipe-shelf" tabindex="0" aria-label="横向滚动查看组合"></div></section>
 </main><div id="menu-backdrop" class="game-menu menu-backdrop" aria-hidden="true" inert>${menuMarkup("home")}</div><dialog id="dialog"></dialog><aside id="info-popover" role="tooltip" hidden></aside><div id="toast" class="toast" role="status"></div>`;
 
 document.querySelector('#recipe-shelf').addEventListener('wheel',event=>{
@@ -221,7 +223,7 @@ function render() {
   document
     .querySelector("#phase-time")
     .classList.toggle("urgent", remaining <= 5);
-  document.querySelector("#phase-time small").textContent=mode==="tutorial"?"练习":busy?"暂停":"秒";
+  document.querySelector("#phase-time small").textContent=mode==="tutorial"?"练习":"秒";
   renderPlayer(0);
   renderPlayer(1);
   renderHands();
@@ -235,25 +237,28 @@ function render() {
   ).padStart(2, "0");
   const p = state.players[state.active],
     enabled = !busy && !remotePending && humanTurn() && state.winner === null && (mode !== "online" || online.status === "connected" && online.serverNow() >= (online.packet?.room?.readyAt || 0));
-  document.querySelector("#phase-label").textContent = state.winner !== null ? "对局结束" : busy
-    ? `${team(state.active)} · 演出中`
-    : `${humanTurn() ? (mode !== "local" ? "你的回合" : `${team(state.active)}回合`) : "对手回合"}`;
+  document.querySelector("#phase-label").textContent=state.winner!==null?'对局结束':`${team(state.active)}的回合`;
+  document.querySelector('#turn-arrow').textContent=state.active?'→':'←';
+  document.querySelector('.round-block').dataset.team=state.active;
+  document.querySelector('#turn-arrow').hidden=state.winner!==null;
   const guide = mode==="online"&&online.status!=="connected"&&state.winner===null ? {title:"正在恢复对局",detail:"连接恢复后继续操作",step:"waiting"} : guidance(state, selected, humanTurn(), busy);
-  if(mode==="online" && online.status==="connected" && !busy && !renderedRemoteReady && state.winner===null) Object.assign(guide,{title:"正在交接",detail:"演出结束后即可操作",step:"waiting"});
-  if(remotePending && !busy && mode==="online" && online.status==="connected") Object.assign(guide,{title:"操作已发送",detail:"等待服务器确认",step:"waiting"});
+  if(mode==="online" && online.status==="connected" && !busy && !renderedRemoteReady && state.winner===null) Object.assign(guide,{title:"",detail:"",step:"waiting"});
+  if(remotePending && !busy && mode==="online" && online.status==="connected") Object.assign(guide,{title:"",detail:"",step:"waiting"});
 
+  if(mode==="tutorial" && !busy && !session.done && !selected)guide.title=session.guide.title;
   if(mode==="tutorial" && !busy && !session.canProceed)guide.title="查看下方 [2] + [2] 图鉴";
   feedback.reveal(document.querySelector("#instruction"), guide.title);
   document.querySelector(".game-shell").dataset.step = guide.step;
   document.querySelector(".game-shell").dataset.actor = state.active;
   document.querySelector(".game-shell").dataset.phase = state.phase;
   const forgePanel=document.querySelector("#forge-options");
-  forgePanel.hidden=!enabled || busy || remotePending || !!selected || !humanTurn() || state.phase!=="action" || !!p.weapon || !synthesisOptions(state).length;
-  forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><h2>合成技能</h2><p>${p.hands.map(n=>`[${n}]`).join(" + ")}</p></div><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${enabled && (mode!=="tutorial" || session.guide?.command.weapon===w.id) ? "" : "disabled"}>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span></button>`).join("")}</div>`;
+  forgePanel.hidden=(mode==="tutorial" && session.guide?.command.type!=="forge") || !enabled || busy || remotePending || !!selected || !humanTurn() || state.phase!=="action" || !!p.weapon || !synthesisOptions(state).length;
+  forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><h2>合成技能</h2><p>${p.hands.map(n=>`[${n}]`).join(" + ")}</p></div><div class="forge-choices">${synthesisOptions(state).filter(w=>mode!=="tutorial" || session.guide?.command.weapon===w.id).map(w=>`<button data-forge="${w.id}" ${enabled && (mode!=="tutorial" || session.guide?.command.weapon===w.id) ? "" : "disabled"}>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span></button>`).join("")}</div>`;
   for(const owner of [0,1]) {
     const player=state.players[owner], usable=owner===state.active && enabled && state.phase==="action" && !p.weapon && !player.silenced;
     const supply=player.turns===0?1:supplyIn(player);
     document.querySelector(`#items-${owner}`).classList.toggle("items-usable",usable&&player.props.length>0);
+    document.querySelector(`#items-${owner}`).classList.toggle("items-remaining",usable && state.calculated && propCommands(state).length>0 && !synthesisOptions(state).length);
     document.querySelector(`#items-${owner}`).innerHTML=`<div class="supply-dots" data-info="supply:${owner}" tabindex="0" aria-label="道具补给：${supply} 回合后">${[1,2,3].map(n=>`<i class="${n<=3-supply?'filled':''}"></i>`).join('')}</div>`+[0,1,2].map(slot=>{
       const id=player.props[slot], mine=owner===state.active && humanTurn();
       return id ? `<div class="prop-slot ${mine&&selected?.kind==='prop'&&selected.slot===slot?'selected':''}"><button class="prop-use" ${mine?`data-prop="${slot}"`:'data-info-only'} data-info="prop:${id}:${owner}" aria-disabled="${!usable || !propCommands(state).some(c=>c.slot===slot)}" aria-label="${mine?'使用':'查看'}${PROPS[id].name}">${propArt(id)}<b>${PROPS[id].name}</b></button>${mine&&selected?.kind==='prop'&&selected.slot===slot&&PROPS[id].target!=='hand'?`<button class="prop-confirm" id="use-prop" ${usable?'':'disabled'}>确认使用</button>`:''}</div>` : '<div class="prop-slot empty" aria-label="空道具位"><span>＋</span></div>';
@@ -275,7 +280,7 @@ function render() {
   document.querySelector('.game-shell').classList.toggle('needs-calculation',enabled && state.phase==='action' && !state.calculated && !p.weapon && !selected && (mode!=='tutorial' || session.guide?.command.type==='add'));
 
   document.querySelector(".game-shell").classList.toggle("is-busy", busy);
-  document.querySelectorAll("#menu,#help").forEach((b) => (b.disabled = busy));
+  document.querySelectorAll("#menu,#help").forEach((b) => (b.disabled = busy && mode!=="tutorial"));
 
   renderTutorial();
   stage?.sync(state, selected, enabled, busy);
@@ -292,8 +297,15 @@ function renderTutorial() {
   document.querySelectorAll('.tutorial-target').forEach(el=>el.classList.remove('tutorial-target'));
   if(mode!=="tutorial"||busy)return;
   const done=session.done,g=session.guide;
-  if(!dialog.open&&!session.notices.has(done?'done':session.step)&&(done||!['advance','attack'].includes(g.command.type))){showTutorialNote();return;}
-  if(done){document.querySelector('#primary-actions').innerHTML='<button class="primary" id="tutorial-next">'+(session.chapter===LESSONS.length-1?'完成教学':'下一节')+'</button>';}
+  document.querySelector('#end-turn').hidden=done || g.command.type!=='end';
+  host.hidden=false;
+  host.innerHTML=`<small>练习 ${session.chapter+1} / ${LESSONS.length} · ${session.lesson.title}</small><p>${done?session.lesson.result:g.detail}</p>${!done&&session.step===0?`<details><summary>本次预设局面</summary><p>${session.lesson.setup}</p></details>`:''}`;
+  if(done){
+    document.querySelector('.game-shell').dataset.step='complete';
+    feedback.reveal(document.querySelector('#instruction'),session.chapter===LESSONS.length-1?'两种胜利方式，都学会了':'练习完成');
+    document.querySelector('#end-turn').hidden=true;
+    document.querySelector('#primary-actions').innerHTML='<button class="primary" id="tutorial-next">'+(session.chapter===LESSONS.length-1?'完成教学':`继续 · ${LESSONS[session.chapter+1].title}`)+'</button>';
+  }
   if(!done){
     const target=!session.canProceed?`[data-info="${g.requiresInfo}"]`:selected&&g.selectedTarget?g.selectedTarget:g.target;
     if(target)document.querySelectorAll(target).forEach(el=>{if(!el.disabled)el.classList.add('tutorial-target');});
@@ -302,6 +314,8 @@ function renderTutorial() {
 
 function nextTutorial(chapter) {
   closeDialog();startGame('tutorial',chapter);
+  feedback.reveal(document.querySelector('#instruction'),session.guide.title);
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.querySelector('.duel').animate([{opacity:.25},{opacity:1}],{duration:550,easing:'ease-out'});
 }
 function exitTutorial() {
   started=false;closeDialog();startGame('ai');showMenu('play');
@@ -578,7 +592,7 @@ function showDeveloperSlide(){
   dialog.dataset.view="developer-slide";
 }
 function showTutorialIntro(){
- openDialog(`<div class="dialog-body tutorial-intro"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><h2>指尖上的博弈</h2><p>改变双手数值，形成手势组合，解锁不同能力。</p><div class="tutorial-goals"><b>清空对手 HP</b><span>或</span><b>九九归一</b></div><p>以策略战胜对手。</p><button class="primary" data-tutorial-confirm>开始教学</button></div>`);
+ openDialog(`<div class="dialog-body tutorial-intro"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><h2>指尖上的博弈</h2><p>改变双手数值，形成手势组合，解锁不同能力。</p><div class="tutorial-goals"><b>清空对手 HP</b><span>或</span><b>九九归一</b></div><p>在同一个练习场，依次体验计算、道具、护盾和两种胜利方式。每项会准备新的数字与道具，场内提示会带你完成操作。</p><button class="primary" data-tutorial-confirm>开始教学</button></div>`);
 }
 function showSettings() {
   openDialog(`<div class="dialog-body settings-body"><button class="dialog-close" data-close aria-label="关闭设置">×</button><h2>声音设置</h2>${['music','effects'].map(k=>`<label class="volume-row">${k==='music'?'背景音乐':'游戏音效'}<output id="volume-${k}">${Math.round(audioSettings.values[k]*100)}%</output><input aria-label="${k==='music'?'背景音乐':'游戏音效'}" type="range" min="0" max="100" value="${Math.round(audioSettings.values[k]*100)}" data-volume="${k}"></label>`).join('')}<button class="primary" data-close>返回</button></div>`);
@@ -926,10 +940,10 @@ spotlight.id='tutorial-spotlight';spotlight.setAttribute('aria-hidden','true');d
 function updateSpotlight(){
   spotlight.style.display=mode==='tutorial'&&!busy&&!dialog.open?'block':'none';
   if(spotlight.style.display==='block'){
-    const holes=[...document.querySelectorAll('.tutorial-target, #tutorial-guide, #cancel, #tutorial-next')].filter(el=>el.getClientRects().length).map(el=>{
+    const holes=[...document.querySelectorAll('.tutorial-target, .arena-actions, .scoreboard, .hud-tools')].filter(el=>el.getClientRects().length).map(el=>{
       const r=el.getBoundingClientRect();return `<rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" rx="8" fill="black"/>`;
     }).join('');
-    const markup=`<defs><mask id="tutorial-holes"><rect width="100%" height="100%" fill="white"/>${holes}</mask></defs><rect width="100%" height="100%" fill="#32343d" opacity=".84" mask="url(#tutorial-holes)"/>`;
+    const markup=`<defs><mask id="tutorial-holes"><rect width="100%" height="100%" fill="white"/>${holes}</mask></defs><rect width="100%" height="100%" fill="#32343d" opacity=".22" mask="url(#tutorial-holes)"/>`;
     if(markup!==spotlightMarkup){spotlight.innerHTML=markup;spotlightMarkup=markup;}
   }
   spotlightFrame=requestAnimationFrame(updateSpotlight);

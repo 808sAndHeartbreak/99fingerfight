@@ -110,3 +110,9 @@ test('touch instruction identifies the actual recipient under echo and mirror',(
  s.players[0].mirror=true;assert.match(guidance(s,selected,true,false).title,/对手双手/);
  assert.equal(guidance(s,selected,false,false).step,'waiting');
 });
+
+test('animation feedback does not repeat internal processing labels in the action prompt',()=>{
+ const s=createGame();s.phase='action';
+ assert.equal(guidance(s,null,true,true).title,'');
+ s.players[0].weapon='scissors';assert.equal(guidance(s,null,true,false).title,'');
+});

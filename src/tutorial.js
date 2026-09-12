@@ -1,7 +1,7 @@
 import {createGame, applyCommand} from './engine.js';
 
 export const LESSONS = [
-  {title:'触碰与计算', setup:'练习场已把你的左手设为 [8]，对手双手设为 [4]。正式对局双方从 [1] / [1]、99 生命开始。', result:'[8] + [4] = 12 → 留个位 [2]。只有主动碰出的手改变。每回合可计算一次，准备好后点击结束回合。', steps:[
+  {title:'触碰与计算', setup:'练习场已把你的左手设为 [8]，对手双手设为 [4]。正式对局双方从 [1] / [1]、99 生命开始。', result:'[8] + [4] = 12 → 留个位 [2]。只有主动碰出的手改变。你已完成计算并结束回合，箭头现在指向对手。接下来换一个预设局面，练习道具与合成。', steps:[
     {title:'用自己的 [8] 碰对手任意一只手', detail:'先点自己的 [8]，再点对手的 [4]。结果只保留个位。', command:{type:'add',hand:0,targetHand:0}, target:'#hand-0-0', selectedTarget:'#hand-1-0, #hand-1-1'},
     {title:'数字组合能合成不同技能', detail:'数字能组成不同技能。先悬停或点击下方 [2] + [2] 图鉴查看剪刀，再点击「结束回合」。', command:{type:'end'}, requiresInfo:'recipe:2', target:'#end-turn'},
   ]},
