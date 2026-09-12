@@ -1,4 +1,4 @@
-import { applyCommand, legalCommands } from "./engine.js";
+import { applyCommand, legalCommands, calculationOutcome } from "./engine.js";
 import { WEAPONS, weaponById, matchingWeapons } from "./catalog.js";
 
 function skillValue(w,p) {
@@ -40,7 +40,10 @@ function simulate(s,c) {
 }
 function moves(s) {
  const legal=legalCommands(s);
- return legal.filter(c=>c.type!=='prop'||s.players[s.active].props[c.slot]!=='lock'||c.target!==s.active);
+ return legal.filter(c=>{
+  if(c.type==='add')return calculationOutcome(s,c).writes.some(w=>s.players[w.owner].hands[w.hand]!==w.value);
+  return c.type!=='prop'||s.players[s.active].props[c.slot]!=='lock'||c.target!==s.active;
+ });
 }
 function ranked(s,actor) {
  return moves(s).map(c=>{const next=simulate(s,c);return {c,next,value:score(next,actor)-(c.type==='end'&&!s.calculated?2:0)};}).sort((a,b)=>b.value-a.value);

@@ -2,7 +2,7 @@
 
 独立网页回合对战游戏，支持教学、本地人机 / 双人、在线匹配、房间、重连与再战。无需 Unity 或其他素材目录。
 
-本项目根目录为 `D:\code\99 fingerfight`，GitHub 为 https://github.com/808sAndHeartbreak/99fingerfight 。请保留整个项目；`public/` 仅含静态素材，不能单独构建或运行联机游戏。当前规则版本 12、协议版本 2，前后端必须配套发布。
+本项目根目录为 `D:\code\99 fingerfight`，GitHub 为 https://github.com/808sAndHeartbreak/99fingerfight 。请保留整个项目；`public/` 仅含静态素材，不能单独构建或运行联机游戏。当前规则版本 13、协议版本 2，前后端必须配套发布。
 
 ## 启动
 

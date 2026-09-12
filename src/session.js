@@ -38,7 +38,7 @@ export class LocalSession {
   }
   async send(command, {timeout=false}={}) {
     if (this.#disposed) throw new Error("对局已关闭");
-    if(command.type==="end" && !timeout && !canEndTurn(this.#state))throw new Error("先用自己的手计算一次");
+    if(command.type==="end" && !timeout && !canEndTurn(this.#state))throw new Error("当前不能结束回合");
     this.#state = applyCommand(this.#state, command);
     this.#commands.push(structuredClone(command));
     for (const listener of this.#listeners) listener(this.getSnapshot());

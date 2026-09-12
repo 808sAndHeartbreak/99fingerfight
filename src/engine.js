@@ -1,7 +1,7 @@
 import {effectDetail,defenseDetail} from "./effect-copy.js";
 import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
-export const RULES_VERSION = 12;
+export const RULES_VERSION = 13;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -17,7 +17,7 @@ function draw(s, p, source="道具效果") {
   const id=propForTicket(randomInt(s, PROP_WEIGHT_TOTAL)), owner=s.players.indexOf(p);
   p.props.push(id);
   s.events.push({type:"draw",owner,item:id,source});
-  log(s,`${name(owner)}${source}获得「${PROPS[id].name}」。`);
+  log(s,`${name(owner)}${source}获得「${PROPS[id].name}」：${PROPS[id].detail}。`);
   return id;
 }
 export const supplyIn = p => (3 - (p.turns % 3)) % 3 + 1;
@@ -290,7 +290,7 @@ export function propCommands(s) {
   });
   return commands;
 }
-export const canEndTurn = s => s.winner===null && s.phase==="action" && !s.players[s.active].weapon && (s.calculated || !touchCommands(s).length);
+export const canEndTurn = s => s.winner===null && s.phase==="action" && !s.players[s.active].weapon;
 
 export function legalCommands(s) {
   if(s.winner!==null)return [];

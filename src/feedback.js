@@ -1,6 +1,6 @@
 import {stateChanges} from "./state-changes.js";
 import { MAX_HP, PROPS } from "./catalog.js";
-import { escapeHtml } from "./identity.js";
+import { escapeHtml, playerName } from "./identity.js";
 /** Ephemeral visual feedback, independently paused and cancelled with the match. */
 export function createFeedback() {
   let epoch=0;
@@ -45,12 +45,12 @@ export function createFeedback() {
       el,
       [
         { opacity: 0, transform: "translateY(8px)" },
-        { opacity: 1, transform: "translateY(0)", offset: 0.18 },
-        { opacity: 1, offset: 0.72 },
+        { opacity: 1, transform: "translateY(0)", offset: 0.05 },
+        { opacity: 1, offset: 0.92 },
         { opacity: 0, transform: "translateY(-5px)" },
       ],
       {
-        duration: 4400,
+        duration: 7000,
         fill: "both",
         easing: "ease-out",
       },
@@ -67,7 +67,9 @@ export function createFeedback() {
     };requestAnimationFrame(frame);
   }
   function changes(old,next,duration=1800) {
-    const all=stateChanges(old,next),duel=document.querySelector('.duel'),bounds=duel.getBoundingClientRect();
+    const all=stateChanges(old,next);
+    for(const owner of [0,1]){const gained=all.filter(c=>c.owner===owner&&c.kind==='inventory'&&c.label.startsWith('＋'));if(gained.length)notice(`${owner?'红方':'蓝方'} 获得道具：${gained.map(c=>`${PROPS[c.id].name} · ${PROPS[c.id].detail}`).join('；')}`,owner,'supply');}
+    const duel=document.querySelector('.duel'),bounds=duel.getBoundingClientRect();
     const groups=new Map();
     for(const change of all){const id=`${change.owner}:${change.hand??change.kind}`;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(change);}
     for(const group of groups.values()){
@@ -172,7 +174,7 @@ export function createFeedback() {
       await animate(el,[{opacity:0,transform:`translateX(${cue.owner?30:-30}px)`},{opacity:1,transform:'translateX(0)',offset:.18},{opacity:1,offset:.82},{opacity:0}],{duration:cue.duration,fill:'both'},true).finished.catch(()=>{});
     },
     async forge({owner, weapon}, asset, next, participants) {
-      notice(`${weapon.name} · 已合成`, owner, "forge");
+      notice(`${playerName(participants,owner)} 合成 ${weapon.name}，立即释放`, owner, "forge");
     },
     notice, noticeRoot,
     contact, changes,

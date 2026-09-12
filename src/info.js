@@ -126,13 +126,13 @@ export function describe(key, state, participants) {
         ["每回合", "30 秒，动画时暂停"],
         ["技能", "合成后自动释放"],
       ],
-      body: "道具、计算、合成没有先后限制。每回合最多计算一次，合成后自动释放技能。先完成一次计算，才可点击倒计时旁的结束回合；无法计算时可直接结束。",
+      body: "道具、计算、合成没有先后限制。每回合最多计算一次，合成后自动释放技能。可随时点击双手中间的结束回合；建议先完成计算，再考虑结束。",
       note: "超时自动结束回合；计算后结束按钮亮起，没有可用操作时加强提示。本地对局在查看菜单、说明或切到后台时暂停，触碰演出期间不扣操作时间。",
     };
   return null;
 }
 
-export function setupInfo(root, getState, asset, getParticipants = () => [], isRemote = () => false, onShow = () => {}) {
+export function setupInfo(root, getState, asset, getParticipants = () => [], isRemote = () => false, onShow = () => {}, onHide = () => {}) {
   const listeners = new AbortController();
   const listen = (element, event, callback) =>
     element.addEventListener(event, callback, { signal: listeners.signal });
@@ -141,13 +141,16 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
     timer,
     pinned = false;
   function hide() {
+    const wasVisible=!pop.hidden;
     clearTimeout(timer);
     anchor?.removeAttribute("aria-describedby");
     anchor = null;
     pinned = false;
     pop.hidden = true;
+    if(wasVisible)onHide();
   }
   function show(button, pin = false) {
+    if(pinned && !pin)return;
     if (
       !root.querySelector(".is-tutorial") && !pin &&
       button?.matches(

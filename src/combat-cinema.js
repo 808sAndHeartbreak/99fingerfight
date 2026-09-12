@@ -24,7 +24,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
         ? `[${old.players[command.target].hands[command.targetHand]}] → [${next.players[command.target].hands[command.targetHand]}]`
         : beats.filter(b=>b.type==='effect').map(b=>b.label).join(' · ');
       const duel=document.querySelector('.duel'),card=document.createElement('aside');card.className='item-receipt';card.dataset.owner=owner;card.setAttribute('role','status');
-      card.innerHTML=`<img src="${asset(art.image)}" alt=""><div><small>${escapeHtml(playerName(participants(),owner))} 使用 · ${escapeHtml(names)}</small><strong>${art.name}</strong><b>${escapeHtml(result)}</b></div>`;
+      card.innerHTML=`<img src="${asset(art.image)}" alt=""><div><small>${escapeHtml(playerName(participants(),owner))} 使用 · ${escapeHtml(names)}</small><strong>${art.name}</strong><span class="item-purpose">${escapeHtml(art.detail)}</span><b>${escapeHtml(result)}</b></div>`;
       noticeRoot().append(card);register(card);
       const bounds=duel.getBoundingClientRect(),source=document.querySelector(`#items-${owner} .prop-slot:nth-of-type(${command.slot+2}) .prop-use`),icon=card.querySelector('img');
       const to=icon.getBoundingClientRect(),from=source?.getBoundingClientRect()||to;
@@ -35,7 +35,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
       sound('release',.65);
       await animate(flight,[{opacity:1,transform:`translate(calc(-50% + ${from.x+from.width/2-to.x-to.width/2}px),calc(-50% + ${from.y+from.height/2-to.y-to.height/2}px)) scale(.55)`},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}],{duration:350,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'}).finished.catch(()=>{});
       if(generation()!==epoch)return false;
-      if(!await wait(card,1800))return false;
+      if(!await wait(card,3000))return false;
       const target=document.querySelector(command.targetHand===undefined?`#player-${command.target}`:`#hand-${command.target}-${command.targetHand}`),r=target.getBoundingClientRect();
       await animate(flight,[{opacity:1,transform:'translate(-50%,-50%) scale(1)'},{opacity:0,transform:`translate(calc(-50% + ${r.x+r.width/2-to.x-to.width/2}px),calc(-50% + ${r.y+r.height/2-to.y-to.height/2}px)) scale(.2)`}],{duration:350,fill:'forwards',easing:'ease-in'},true).finished.catch(()=>{});
       if(generation()!==epoch)return false;
@@ -121,7 +121,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
 
     if(!await skillWait(650))return false;
     if(!await skillWait(200))return false;
-    animate(el,[{opacity:1},{opacity:1,offset:.85},{opacity:0}],{duration:2000,fill:'both'},true);
+    animate(el,[{opacity:1},{opacity:1,offset:.85},{opacity:0}],{duration:5000,fill:'both'},true);
     return live();
   };
 }

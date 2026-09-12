@@ -131,7 +131,7 @@ export class MatchHub {
       check(['prop','forge','add','attack','end','surrender'].includes(message.command.type),'无效指令');
       check(r.state.phase!=='start','回合正在开始');
       check(message.command.type==='end'||message.command.type==='surrender'||this.now()<r.deadlineAt,'回合时间已到，请等待交接');
-      if(message.command.type==='end')check(canEndTurn(r.state),'先用自己的手计算一次');
+      if(message.command.type==='end')check(canEndTurn(r.state),'当前不能结束回合');
       const c={...message.command,actor:r.seats.indexOf(u.id)};
       event=this.step(r,c);r.cache[cacheKey]=true;
       const keys=Object.keys(r.cache);if(keys.length>256)delete r.cache[keys[0]];

@@ -15,7 +15,7 @@ test('hover arithmetic belongs to the item owner and respects HP and inventory c
 test('turn introduction and item receipts retain their presentation durations',()=>{
  const s=createGame();assert.equal(phaseCue(null,s).duration,1400);
  s.phase='action';s.players[0].props=['grace'];const c={type:'prop',slot:0,target:0,actor:0,revision:s.revision};const next=applyCommand(s,c);
- assert.equal(presentationDuration(s,next,c),3800);
+ assert.equal(presentationDuration(s,next,c),5000);
  assert.match(describe('supply:1',s).body,/将在 1 个己方回合开始时获得一个随机道具/);
 });
 
