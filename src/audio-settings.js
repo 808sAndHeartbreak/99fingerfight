@@ -1,5 +1,5 @@
 export function createAudioSettings(url) {
- const values={music:.5,effects:.5};
+ const values={music:.25,effects:.5};
  try{const saved=JSON.parse(localStorage.getItem('ff-audio')||'null');for(const k of Object.keys(values))if(Number.isFinite(saved?.[k]))values[k]=Math.max(0,Math.min(1,saved[k]));}catch{}
  const music=new Audio(url);music.dataset.soundtrack='bgm';music.hidden=true;document.body.append(music);music.loop=true;music.preload='metadata';music.volume=values.music*.28;
  let unlocked=false;

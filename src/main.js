@@ -93,16 +93,19 @@ app.innerHTML = `<main class="game-shell">
   <div class="paper-grain" aria-hidden="true"></div>
 
   <div id="network-notice" class="network-notice" role="status" hidden></div><span id="mode-label" hidden></span>
-  <section class="duel" aria-label="指尖对战场">
+  <section class="duel" aria-label="指尖对战场"><div class="arena-art" aria-hidden="true"><i class="arena-portrait blue"></i><i class="arena-portrait red"></i></div>
     <div class="scoreboard"><div id="player-0" class="player blue"></div><div class="round-block" aria-label="回合与倒计时"><span class="round-caption">回合 <b id="round-number">01</b></span><div class="phase-time" id="phase-time" role="timer" aria-live="off" aria-label="剩余时间"><span id="clock">30</span><small>秒</small></div><span id="turn-arrow" class="turn-arrow" aria-hidden="true">←</span><span id="phase-label" class="sr-only"></span></div><div id="player-1" class="player red"></div></div>
     <div id="stage" class="stage" data-motion="idle"><div class="hand-layer" id="hand-layer">${[0, 1].map((owner) => [0, 1].map((hand) => `<button id="hand-${owner}-${hand}" class="hand-hotspot ${owner ? "red" : "blue"}" data-owner="${owner}" data-hand="${hand}" aria-pressed="false"><span class="hand-corner"></span>${img("hand-1.webp", "fallback-hand")}<b class="hand-value">1</b><span class="hand-status"></span><span class="hand-shield" data-info="shield" data-info-only hidden></span><span class="sum-preview"></span></button>`).join("")).join("")}</div><div class="contact-fx" id="contact-fx" aria-hidden="true">${img("manga/contact.webp")}<b>碰!</b></div></div>
     <div id="combat-callout" class="combat-callout" aria-live="polite"></div>
     <div class="field-note" aria-hidden="true"></div>
     <div id="items-0" class="field-items blue" aria-label="蓝方道具"></div><div id="items-1" class="field-items red" aria-label="红方道具"></div>
-    <div class="arena-center"><section class="arena-actions" aria-label="当前操作"><div class="turn-instruction"><h1 id="instruction" aria-live="polite"></h1></div><section id="tutorial-guide" class="tutorial-guide" hidden aria-label="新手教学"></section><section id="forge-options" class="forge-options" hidden aria-label="合成选项"></section><div id="primary-actions" class="primary-actions"></div><button id="end-turn" class="end-turn">结束回合</button></section></div>
+    <div class="arena-center"><section class="arena-actions" aria-label="当前操作"><div class="turn-instruction"><h1 id="instruction" aria-live="polite"></h1></div><section id="tutorial-guide" class="tutorial-guide" hidden aria-label="新手教学"></section><div id="primary-actions" class="primary-actions"></div><button id="end-turn" class="end-turn">结束回合</button></section></div>
+    <section id="forge-options" class="forge-options" hidden aria-label="合成选项"></section>
   </section>
   <section class="reference-deck" aria-label="常驻组合图鉴"><nav class="hud-tools" aria-label="游戏工具"><button id="history">对局记录</button><button id="menu">菜单 ☰</button></nav><span id="render-status" hidden></span><div id="recipe-shelf" class="recipe-shelf" tabindex="0" aria-label="横向滚动查看组合"></div></section>
 </main><div id="menu-backdrop" class="game-menu menu-backdrop" aria-hidden="true" inert>${menuMarkup("home")}</div><dialog id="dialog"></dialog><aside id="info-popover" role="tooltip" hidden></aside><div id="toast" class="toast" role="status"></div>`;
+
+document.querySelector('#recipe-shelf').addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)&&event.target.matches('.reference-recipe')){event.preventDefault();event.target.click();}},{signal:listeners.signal});
 
 document.querySelector('#recipe-shelf').addEventListener('wheel',event=>{
   const shelf=event.currentTarget;
@@ -257,7 +260,7 @@ function render(preserveInfo=false) {
   const forgeAvailable=enabled && !selected && humanTurn() && state.phase==='action' && !p.weapon && synthesisOptions(state).length>0 && (mode!=='tutorial'||session.guide?.command.type==='forge');
   const forgePanel=document.querySelector('#forge-options'),chosen=forgeUi.choice&&weaponById(forgeUi.choice);
   forgePanel.hidden=!forgeAvailable || forgeUi.hidden;
-  forgePanel.innerHTML=forgePanel.hidden?'':chosen?`<div class="forge-confirm-art">${img(chosen.image,'skill-icon')}</div><small class="forge-eyebrow">${p.hands.map(n=>`[${n}]`).join(' + ')} · 合成技能</small><h2>${chosen.name}</h2><p class="forge-detail">${chosen.detail}</p><p class="forge-note">确认后立即释放，结算后双手归 [1]</p><div class="forge-buttons"><button id="confirm-forge">确认释放</button><button id="back-forge">返回</button><button id="cancel-forge">取消</button></div>`:`<div class="forge-heading"><h2>合成技能</h2><button id="cancel-forge">暂不合成</button></div><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${mode==='tutorial'&&session.guide?.command.weapon!==w.id?'disabled':''}>${img(w.image,'skill-icon')}<strong>${w.name}</strong><span>${w.detail}</span></button>`).join('')}</div>`;
+  forgePanel.innerHTML=forgePanel.hidden?'':chosen?`<div class="forge-confirm-art">${img(chosen.image,'skill-icon')}</div><small class="forge-eyebrow">${p.hands.map(n=>`[${n}]`).join(' + ')} · 合成技能</small><h2>${chosen.name}</h2><p class="forge-detail">${chosen.detail}</p><p class="forge-note">确认后立即释放，结算后双手归 [1]</p><div class="forge-buttons"><button id="confirm-forge">确认释放</button><button id="back-forge">返回</button></div>`:`<div class="forge-heading"><div><small class="forge-eyebrow">${p.hands.map(n=>`[${n}]`).join(" + ")} · 数字合成</small><h2>选择你的技能</h2></div><button id="cancel-forge">放弃合成</button></div><p class="forge-intro">${mode==='tutorial'?`本次练习选择${weaponById(session.guide.command.weapon).name}；其他技能可在正式对局使用。`:'选择一种技能，确认后立即释放；结算后双手归 [1]。'}</p><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${mode==='tutorial'&&session.guide?.command.weapon!==w.id?'disabled':''}>${img(w.image,'skill-icon')}<strong>${w.name}</strong><span>${w.detail}</span></button>`).join('')}</div>`;
   forgePanel.classList.toggle('confirming',!!chosen);
   for(const owner of [0,1]) {
     const player=state.players[owner], usable=owner===state.active && enabled && state.phase==="action" && !p.weapon && !player.silenced;
@@ -270,8 +273,8 @@ function render(preserveInfo=false) {
     }).join('');
   }
   const shelf=document.querySelector('#recipe-shelf');
-  if(!shelf.children.length)shelf.innerHTML=`<div class="reference-recipe shield-reference" tabindex="0" data-info="shield:0" aria-label="5 护盾">${img('ink-mono/foam.webp','recipe-icon')}<b>[5]</b></div>`+[5,0,2,4,6,7,8,9].map(n=>{
-    return `<div class="reference-recipe" tabindex="0" data-number="${n}" data-info="recipe:${n}" aria-label="${n} 加 ${n} 配方">${img(WEAPONS.find(w=>w.recipe.every(v=>v===n)).image,'recipe-icon')}<b>[${n}] + [${n}]</b></div>`;
+  if(!shelf.children.length)shelf.innerHTML=`<div class="reference-recipe shield-reference" role="button" tabindex="0" data-info="shield:0" aria-label="5 护盾"><b>[5]</b></div>`+[5,0,2,4,6,7,8,9].map(n=>{
+    return `<div class="reference-recipe" role="button" tabindex="0" data-number="${n}" data-info="recipe:${n}" aria-label="${n} 加 ${n} 配方"><b>[${n}] + [${n}]</b></div>`;
   }).join('');
   for(const el of shelf.children){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',!p.hands.every(v=>v===n)&&p.hands.includes(n));}
   document.querySelector("#primary-actions").innerHTML = `${selected?.kind==='prop' ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"}</button>` : ""}`;
@@ -734,7 +737,7 @@ listen(app, "click", (e) => {
 
   battleSound.unlock();
   const recipe=e.target.closest(".reference-recipe");
-  if(recipe){info.show(recipe,true);return;}
+  if(recipe){battleSound.play('inspect',.5);info.show(recipe,true);return;}
   const detail=e.target.closest('.hand-shield');
   if(detail){info.show(detail,true);return;}
   const button = e.target.closest("button");
@@ -745,11 +748,11 @@ listen(app, "click", (e) => {
     return;
   }
   if(button.dataset.editName!==undefined){showNameEditor(Number(button.dataset.editName));return;}
-  if(button.id==='back-forge'){forgeUi.choice=null;render();return;}
-  if(button.id==='cancel-forge'){forgeUi.choice=null;forgeUi.hidden=true;render();return;}
-  if(button.id==='open-forge'){forgeUi.hidden=false;render();return;}
+  if(button.id==='back-forge'){battleSound.play('back',.5);forgeUi.choice=null;render();return;}
+  if(button.id==='cancel-forge'){battleSound.play('back',.5);forgeUi.choice=null;forgeUi.hidden=true;render();return;}
+  if(button.id==='open-forge'){battleSound.play('inspect',.5);forgeUi.hidden=false;render();return;}
   if(button.id==='confirm-forge'){if(forgeUi.choice)send({type:'forge',weapon:forgeUi.choice});return;}
-  if (button.dataset.forge) { forgeUi.choice=button.dataset.forge;render();return; }
+  if (button.dataset.forge) { battleSound.play('select',.6);forgeUi.choice=button.dataset.forge;render();return; }
   if (button.dataset.hand !== undefined) {
     if(mode==='tutorial' && !session.canProceed)return;
     const owner = Number(button.dataset.owner),
@@ -963,7 +966,7 @@ spotlight.id='tutorial-spotlight';spotlight.setAttribute('aria-hidden','true');d
 function updateSpotlight(){
   spotlight.style.display=mode==='tutorial'&&!busy&&!dialog.open?'block':'none';
   if(spotlight.style.display==='block'){
-    const holes=[...document.querySelectorAll('.tutorial-target, .arena-actions, .scoreboard, .hud-tools')].filter(el=>el.getClientRects().length).map(el=>{
+    const holes=[...document.querySelectorAll('.tutorial-target, .arena-actions, #forge-options, .scoreboard, .hud-tools')].filter(el=>el.getClientRects().length).map(el=>{
       const r=el.getBoundingClientRect();return `<rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" rx="8" fill="black"/>`;
     }).join('');
     const markup=`<defs><mask id="tutorial-holes"><rect width="100%" height="100%" fill="white"/>${holes}</mask></defs><rect width="100%" height="100%" fill="#32343d" opacity=".22" mask="url(#tutorial-holes)"/>`;

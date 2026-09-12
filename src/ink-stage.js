@@ -60,7 +60,7 @@ export function createInkStage() {
         float skillShape=uSkill<1.5?wave:uSkill<2.5?cut:uSkill<3.5?bolt:wave*teeth;
         float skillInk=skillShape*uPulse*step(.001,uPulse);
         col=mix(col,team,skillInk);
-        float alpha=.96;
+        float alpha=.79;
         gl_FragColor=vec4(col,alpha);
       }`,
   });

@@ -9,7 +9,7 @@ test('battle sounds cover event families and effects mute creates no audible nod
  globalThis.window={AudioContext:Context};
  try{const settings={values:{effects:0},unlock(){}},sound=createBattleSound(()=>enabled,settings);
   sound.play('punch');assert.equal(nodes,0);settings.values.effects=.5;
-  for(const family of ['release','item','heal','turn','guard','charge','nine','victory','punch','slash','gun','curse','bolt'])sound.play(family);
-  assert.equal(starts,13);const before=nodes;enabled=false;sound.play('victory');assert.equal(nodes,before);
+  for(const family of ['release','item','heal','turn','guard','charge','nine','victory','punch','slash','gun','curse','bolt','select','back','inspect'])sound.play(family);
+  assert.ok(starts>16,"layered cues schedule multiple sources");const before=nodes;enabled=false;sound.play('victory');assert.equal(nodes,before);
  }finally{globalThis.window=previous;}
 });

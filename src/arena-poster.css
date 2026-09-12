@@ -171,3 +171,99 @@
  .game-shell .turn-handoff strong { font-size:18px; }
 }
 @media(prefers-reduced-motion:reduce) { .game-shell .arena-actions .end-turn.urgent,.game-shell .hand-hotspot.tutorial-target .hand-value { animation:none; } .game-shell .reference-recipe { transition:none; } }
+/* Full-screen manga composition: portraits frame the play, never the hand targets. */
+.game-shell .arena-art { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; background:linear-gradient(90deg,#10172beb,#10172bf5 36% 64%,#10172beb),url('/assets/manga/menu-99.webp') center/cover; }
+.game-shell .arena-portrait { position:absolute; top:7%; bottom:0; width:35%; opacity:.22; background-position:50% 28%; background-size:cover; mix-blend-mode:luminosity; mask-image:linear-gradient(to bottom,#000 65%,transparent); }
+.game-shell .arena-portrait.blue { left:-4%; background-image:url('/assets/manga/blue.webp'); clip-path:polygon(0 0,95% 8%,77% 100%,0 100%); }
+.game-shell .arena-portrait.red { right:-4%; background-image:url('/assets/manga/red.webp'); clip-path:polygon(5% 8%,100% 0,100% 100%,23% 100%); }
+.game-shell .player { border-width:2px; transform:skew(-4deg); }
+.game-shell .player>* { transform:skew(4deg); }
+.game-shell .player .hp-bar { transform:none; }
+.game-shell .reference-deck { min-height:90px; }
+.game-shell .reference-recipe { height:48px; max-width:122px; }
+.game-shell .reference-recipe b { font:600 24px/1 Teko,'MangaSans',sans-serif; white-space:nowrap; letter-spacing:.025em; }
+.game-shell .shield-reference { max-width:66px; flex-basis:56px; min-width:56px; border-right:3px solid #8799bb; }
+.game-shell .reference-deck .hud-tools button { letter-spacing:.04em; }
+/* The synthesis sheet is independent of the narrow in-play message column. */
+.game-shell #forge-options,.game-shell.is-tutorial #forge-options { position:absolute; inset:54% auto auto 50%; transform:translate(-50%,-50%); z-index:205; width:min(1120px,calc(100% - 240px)); max-height:none; min-height:0; margin:0; padding:32px; overflow:visible; background:#121b30; border:2px solid #fff2d8; border-top:6px solid #f14b38; border-radius:0; box-shadow:12px 14px 0 #040a18,0 0 0 100vmax #060b1a88; animation:skill-sheet-in .25s ease-out both; }
+.game-shell #forge-options[hidden] { display:none; }
+.game-shell:has(#forge-options:not([hidden])) .arena-actions { visibility:hidden; }
+.game-shell #forge-options .forge-heading { display:flex!important; align-items:center; justify-content:space-between; gap:20px; padding:0; border:0; margin:0 0 18px; }
+.game-shell #forge-options .forge-heading h2 { margin:8px 0 0; font:900 clamp(28px,3vw,44px)/1.2 'MangaSans',sans-serif; color:#fff2d8; text-shadow:3px 4px #ab302a; transform:rotate(-2deg); }
+.game-shell #forge-options .forge-eyebrow { font-size:16px; letter-spacing:.06em; color:#b1c5eb; }
+.game-shell #forge-options .forge-intro { color:#d5dcec; font:14px/1.7 'Microsoft YaHei',sans-serif; margin:0 0 22px; }
+.game-shell #forge-options .forge-choices,.game-shell #forge-options .forge-choices:has(>button:only-child) { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); width:100%; gap:18px; overflow:visible; }
+.game-shell #forge-options .forge-choices button { position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:16px; padding:22px; min-height:285px; border:2px solid #fff2d8; border-radius:0; background:#fff0d6; color:#111b30; box-shadow:6px 7px 0 #020815; transition:translate .18s,background .18s,box-shadow .18s; }
+.game-shell #forge-options .forge-choices button:hover:not(:disabled),.game-shell #forge-options .forge-choices button:focus-visible { background:#fff9ea; translate:0 -6px; transform:rotate(-1deg); box-shadow:7px 10px 0 #ef4937; outline:0; }
+.game-shell #forge-options .forge-choices .skill-icon { width:104px; height:104px; object-fit:contain; background:none; }
+.game-shell #forge-options .forge-choices strong { font:900 26px/1.3 'MangaSans',sans-serif; color:#131c31; }
+.game-shell #forge-options .forge-choices button>span { display:block; -webkit-line-clamp:unset; overflow:visible; font:14px/1.8 'Microsoft YaHei',sans-serif; color:#303c53; }
+.game-shell #forge-options .forge-choices button:disabled { opacity:.6; }
+.game-shell #forge-options #cancel-forge,.game-shell #forge-options #back-forge { flex:none; min-width:128px; min-height:48px; padding:12px 22px; background:#202c45; border:2px solid #fff2d8; color:#fff2d8; font:900 18px/1.3 'MangaSans',sans-serif; text-decoration:none; border-radius:0; transform:skew(-4deg); box-shadow:4px 5px 0 #050b18; }
+.game-shell #forge-options :is(#cancel-forge,#back-forge):hover { background:#c13a30; }
+.game-shell #forge-options.confirming { display:grid; grid-template-columns:240px minmax(0,1fr); gap:18px 42px; width:min(900px,calc(100% - 240px)); padding:44px; }
+.game-shell #forge-options.confirming .forge-confirm-art { grid-column:1; grid-row:1/6; align-self:center; width:220px; height:240px; margin:0; padding:18px; background:#fff2d8; transform:rotate(-5deg); box-shadow:10px 12px 0 #e44332; }
+.game-shell #forge-options.confirming :is(.forge-eyebrow,h2,.forge-detail,.forge-note,.forge-buttons) { grid-column:2; margin:0; }
+.game-shell #forge-options.confirming h2 { font:900 44px/1.3 'MangaSans',sans-serif; }
+.game-shell #forge-options .forge-detail { font:17px/1.8 'Microsoft YaHei',sans-serif; }
+.game-shell #forge-options .forge-note { font:13px/1.7 'Microsoft YaHei',sans-serif; color:#b3c1db; }
+.game-shell #forge-options .forge-buttons { display:flex; gap:16px; margin-top:12px; }
+.game-shell #forge-options #confirm-forge { padding:16px; font-size:24px; background:#df3f30; border:2px solid #fff2d8; }
+#info-popover.recipe-detail { width:min(960px,calc(100vw - 32px)); max-height:calc(100svh - 30px); padding:26px; border-top:5px solid #ed4937; }
+#info-popover.recipe-detail h3 { font:600 40px/1 Teko,'MangaSans',sans-serif; }
+#info-popover .recipe-gallery { display:grid; grid-template-columns:repeat(auto-fit,minmax(175px,1fr)); gap:22px; }
+#info-popover .recipe-gallery article { min-width:0; padding:16px; background:#fff0d6; color:#131c31; box-shadow:4px 5px 0 #050b18; }
+#info-popover .recipe-gallery img { display:block; width:90px; height:90px; object-fit:contain; margin-bottom:14px; }
+#info-popover .recipe-gallery h4 { color:#131c31; font:900 23px/1.4 'MangaSans',sans-serif; margin:0 0 10px; }
+#info-popover .recipe-gallery p { color:#303c53; font-size:14px; line-height:1.8; margin:0; }
+#info-popover .recipe-footnote { margin-bottom:0; font-size:12px; }
+#info-popover .recipe-intro { margin:12px 0 20px; }
+@keyframes skill-sheet-in { from { opacity:0; translate:0 16px; } to { opacity:1; translate:0 0; } }
+@media(max-width:1100px) {
+ .game-shell #forge-options,.game-shell.is-tutorial #forge-options { width:calc(100% - 40px); padding:22px; }
+ .game-shell #forge-options.confirming { width:calc(100% - 60px); }
+ .game-shell #forge-options .forge-choices button { padding:15px; min-height:250px; gap:10px; }
+ .game-shell #forge-options .forge-choices .skill-icon { width:76px; height:76px; }
+}
+@media(max-width:650px) {
+ .game-shell .arena-portrait { width:50%; opacity:.16; }
+ .game-shell .reference-recipe { height:45px; min-width:70px; }
+ .game-shell .reference-recipe b { font-size:21px; }
+ .game-shell .shield-reference { min-width:40px; }
+ .game-shell #forge-options,.game-shell.is-tutorial #forge-options { top:51%; width:calc(100% - 24px); padding:16px; }
+ .game-shell #forge-options .forge-heading { gap:10px; margin-bottom:12px; }
+ .game-shell #forge-options .forge-heading h2 { font-size:25px; }
+ .game-shell #forge-options .forge-eyebrow { font-size:12px; }
+ .game-shell #forge-options #cancel-forge,.game-shell #forge-options #back-forge { min-width:90px; min-height:44px; padding:10px; font-size:15px; }
+ .game-shell #forge-options .forge-intro { font-size:12px; margin-bottom:12px; }
+ .game-shell #forge-options .forge-choices,.game-shell #forge-options .forge-choices:has(>button:only-child) { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+ .game-shell #forge-options .forge-choices button { min-height:0; padding:12px; gap:8px; }
+ .game-shell #forge-options .forge-choices .skill-icon { width:54px; height:54px; }
+ .game-shell #forge-options .forge-choices strong { font-size:19px; }
+ .game-shell #forge-options .forge-choices button>span { font-size:11px; line-height:1.7; }
+ .game-shell #forge-options.confirming { grid-template-columns:86px minmax(0,1fr); gap:16px; padding:22px; width:calc(100% - 24px); }
+ .game-shell #forge-options.confirming .forge-confirm-art { width:76px; height:86px; grid-row:1/3; padding:6px; }
+ .game-shell #forge-options.confirming h2 { font-size:29px; }
+ .game-shell #forge-options.confirming :is(.forge-detail,.forge-note,.forge-buttons) { grid-column:1/-1; }
+ .game-shell #forge-options .forge-detail { font-size:14px; }
+ .game-shell #forge-options #confirm-forge { font-size:21px; }
+ #info-popover.recipe-detail { width:calc(100vw - 24px); padding:18px; }
+ #info-popover .recipe-gallery { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+ #info-popover .recipe-gallery article { padding:12px; }
+ #info-popover .recipe-gallery img { width:48px; height:48px; margin-bottom:8px; }
+ #info-popover .recipe-gallery h4 { font-size:18px; }
+ #info-popover .recipe-gallery p { font-size:11px; line-height:1.65; }
+ #info-popover .recipe-intro { margin:8px 0 12px; font-size:12px; }
+}
+@media(prefers-reduced-motion:reduce) { .game-shell #forge-options { animation:none; } .game-shell #forge-options .forge-choices button { transition:none; } }
+@media(min-width:651px) and (max-height:850px) {
+ .game-shell #forge-options,.game-shell.is-tutorial #forge-options { top:59%; padding:20px; }
+ .game-shell #forge-options .forge-heading h2 { font-size:30px; }
+ .game-shell #forge-options .forge-heading { margin-bottom:12px; }
+ .game-shell #forge-options .forge-intro { margin-bottom:14px; }
+ .game-shell #forge-options .forge-choices button { min-height:210px; padding:16px; gap:10px; }
+ .game-shell #forge-options .forge-choices .skill-icon { width:70px; height:70px; }
+ .game-shell #forge-options .forge-choices strong { font-size:23px; }
+ .game-shell #forge-options.confirming { padding:28px; }
+ .game-shell #forge-options.confirming .forge-confirm-art { width:180px; height:195px; }
+}

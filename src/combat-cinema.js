@@ -110,6 +110,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
       animate(fx,[{opacity:0,transform:'scale(.2) rotate(-20deg)'},{opacity:.85,transform:'scale(1) rotate(0)',offset:.2},{opacity:0,transform:'scale(1.45) rotate(8deg)'}],{duration:Math.min(500,beatDuration),fill:'both'});
       // Damage is shown on the receiving hands and HP, without screen-wide slashes.
       sound(beat?.blocked&&beat.amount===0?'guard':nine?'nine':family,skill?1:.5);
+      if(beat?.blocked && beat.amount>0)sound('guard',.45);
       if(!await skillWait(beatDuration-(beat?.type==='damage'?300:0)))return false;
     }
     onBeat({type:'settle',preserveActorHands:true});

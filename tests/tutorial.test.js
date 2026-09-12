@@ -23,7 +23,7 @@ test('special demonstration actually uses unify twice with an explicit narrated 
 });
 test('wrong targets and stale commands cannot skip the continuous guidance',async()=>{
  const s=new TutorialSession(),before=s.getSnapshot();
- await assert.rejects(s.send({type:'add',hand:0,targetHand:1,actor:0,revision:0}));assert.deepEqual(s.getSnapshot(),before);
+ await assert.rejects(s.send({type:'add',hand:1,targetHand:1,actor:0,revision:0}));assert.deepEqual(s.getSnapshot(),before);
  await assert.rejects(s.send({type:'add',hand:0,targetHand:0,actor:0,revision:99}));assert.equal(s.step,0);
  await send(s);s.inspect('recipe:2');await send(s);
  await assert.rejects(s.send({type:'add',hand:0,targetHand:1,actor:1,revision:s.state.revision}));
@@ -33,4 +33,10 @@ test('retry is isolated and tutorial shortcuts never enter normal game rules',as
  assert.deepEqual(fresh.state.players[0].hands,[8,9]);assert.equal(fresh.state.players[0].nine,0);
  const normal=createGame();assert.deepEqual(normal.players[0].hands,[1,1]);assert.throws(()=>applyCommand(normal,{type:'demo',actor:0,revision:0}),/未知指令/);
  assert.equal(LESSONS.length,2);
+});
+
+for(const targetHand of [0,1])test(`first tutorial accepts opposing hand ${targetHand} and preserves opponent response`,async()=>{
+ const s=new TutorialSession();await s.send({type:'add',hand:0,targetHand,actor:0,revision:0});
+ assert.deepEqual(s.state.players.map(p=>p.hands),[[4,6],[1,1]]);await send(s);await send(s);await send(s);
+ assert.deepEqual(s.state.players.map(p=>p.hands),[[4,6],[5,1]]);assert.equal(s.guide.requiresInfo,'shield:0');
 });

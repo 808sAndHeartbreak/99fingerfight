@@ -12,7 +12,7 @@ export function describe(key, state, participants) {
   if(kind === "recipe" || kind === "combo") {
     const options=WEAPONS.filter(w=>w.recipe.every(n=>n===Number(id)));
     if(!options.length)return null;
-    return {title:`[${id}] + [${id}]`,tag:"配方选项",stats:[],body:(kind==="combo"?`组合已满足，行动时可合成。${id==="5"?"[5] + [5]：免疫普通伤害，不消耗数字；真实伤害仍可生效。":""}<br><br>`:"")+options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:"行动时选择其中一种，自动释放，结算后双手归 [1]；每回合可计算一次，计算前后均可合成。"};
+    return {title:`[${id}] + [${id}]`,tag:"配方选项",options,stats:[],body:(kind==="combo"?`组合已满足，行动时可合成。${id==="5"?"[5] + [5]：免疫普通伤害，不消耗数字；真实伤害仍可生效。":""}<br><br>`:"")+options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:"行动时选择其中一种，自动释放，结算后双手归 [1]；每回合可计算一次，计算前后均可合成。"};
   }
   if (kind === "weapon") {
     const w = weaponById(id);
@@ -132,6 +132,8 @@ export function describe(key, state, participants) {
   return null;
 }
 
+function idRecipeCopy(key){return key.endsWith(':5')?'双 [5] 可免疫普通伤害；合成会消耗这组数字。':'同一组数字，选择一种技能。'}
+
 export function setupInfo(root, getState, asset, getParticipants = () => [], isRemote = () => false, onShow = () => {}, onHide = () => {}) {
   const listeners = new AbortController();
   const listen = (element, event, callback) =>
@@ -174,9 +176,10 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
     button.setAttribute("aria-describedby", "info-popover");
     const kind=button.dataset.info.split(':')[0];
     const stats=data.stats.filter(([label])=>!['阶段','使用'].includes(label));
+    pop.classList.toggle('recipe-detail',!!data.options);
     pop.setAttribute('role',pin?'dialog':'tooltip');
     pop.setAttribute('aria-label',data.title);
-    pop.innerHTML = `${pin?'<button class="info-close" aria-label="关闭详情">×</button>':''}<div class="info-heading">${data.image?`<img src="${asset(data.image)}" alt="">`:''}<div><h3>${escapeHtml(data.title)}</h3><div class="info-tags">${stats.map(([label,value])=>`<span>${kind==='prop'||kind==='weapon'||kind==='status'?'':label+' '}${escapeHtml(value)}</span>`).join('')}</div></div></div><p>${data.body}</p>${pin&&data.note?`<details class="info-rules"><summary>规则细节</summary><p class="info-note">${data.note}</p></details>`:''}`;
+    pop.innerHTML = `${pin?'<button class="info-close" aria-label="关闭详情">×</button>':''}<div class="info-heading">${data.image?`<img src="${asset(data.image)}" alt="">`:''}<div><h3>${escapeHtml(data.title)}</h3><div class="info-tags">${stats.map(([label,value])=>`<span>${kind==='prop'||kind==='weapon'||kind==='status'?'':label+' '}${escapeHtml(value)}</span>`).join('')}</div></div></div><div class="info-content">${data.options?`<p class="recipe-intro">${idRecipeCopy(button.dataset.info)}</p><div class="recipe-gallery">${data.options.map(w=>`<article><img src="${asset(w.image)}" alt=""><h4>${escapeHtml(w.name)}</h4><p>${escapeHtml(w.detail)}</p></article>`).join('')}</div><p class="recipe-footnote">确认合成后自动释放，结算后双手归 [1]。</p>`:`<p>${data.body}</p>`}</div>${pin&&data.note?`<details class="info-rules"><summary>规则细节</summary><p class="info-note">${data.note}</p></details>`:''}`;
     pop.hidden = false;
     const r = button.getBoundingClientRect(),
       box = pop.getBoundingClientRect();
