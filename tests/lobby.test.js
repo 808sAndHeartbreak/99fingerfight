@@ -43,3 +43,14 @@ test('entry saves a pending name before matchmaking and leaves newer edits intac
  await c.saveDraft();await c.request('queue');
  assert.equal(calls[0][0],'name');assert.equal(calls[0][1].name,'阿青');assert.equal(calls[1][0],'queue');assert.equal(c.nameDraft,null);
 });
+
+test('closing a client cancels pending work and ignores callbacks from the old socket',async()=>{
+ const previous={window:globalThis.window,location:globalThis.location,WebSocket:globalThis.WebSocket};
+ class FakeSocket{static OPEN=1;readyState=1;send(){}close(){this.readyState=3;}}
+ globalThis.window={sessionStorage:{getItem:()=>null}};globalThis.location={href:'http://localhost/',protocol:'http:'};globalThis.WebSocket=FakeSocket;
+ try{const client=new OnlineClient(()=>{},()=>{});client.connect();const old=client.socket;client.status='connected';
+ const pending=client.request('create');const rejected=assert.rejects(pending,/已关闭/);client.close();await rejected;
+ assert.equal(client.pending.size,0);assert.equal(client.status,'offline');old.onclose({code:1000});old.onmessage({data:JSON.stringify({type:'welcome',token:'late'})});
+ assert.equal(client.status,'offline');assert.equal(client.socket,null);assert.equal(client.timer,undefined);
+ }finally{Object.assign(globalThis,previous);}
+});

@@ -236,7 +236,7 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
     if (e.target.closest("button")) hide();
   });
   listen(document, "keydown", (e) => {
-    if (e.key === "Escape") hide();
+    if (e.key === "Escape" && !pop.hidden) { e.preventDefault(); hide(); }
   });
   listen(document, "pointerdown", (e) => {
     if (pinned && !pop.contains(e.target) && !anchor?.contains(e.target))

@@ -1,0 +1,178 @@
+/* Shared scene language: ink, warm paper, vermilion and editorial-scale type. */
+#dialog.leave-dialog { background:#111a2e; color:#fff2d8; border:2px solid #fff2d8; border-top:5px solid #e94936; box-shadow:12px 14px 0 #03091899; }
+#dialog.leave-dialog h2 { color:#fff2d8; font:900 36px/1.3 'MangaSans',sans-serif; text-shadow:3px 3px 0 #bd372f; }
+#dialog.leave-dialog p { color:#d2daeb; line-height:1.8; }
+#dialog.leave-dialog .primary { padding:16px 24px; background:#d94031; color:#fff2d8; border:2px solid #fff2d8; border-radius:0; font:900 22px/1.3 'MangaSans',sans-serif; }
+#dialog.leave-dialog .text-button { display:block; margin-top:16px; padding:14px 24px; background:#1c2942; color:#fff2d8; border:1px solid #abb9d0; border-radius:0; }
+#dialog:has(.battle-menu,.settings-body,.tutorial-intro,.tutorial-transition,.match-history,#player-name-form) { background:#111a2e; border:2px solid #fff2d8; border-top:5px solid #e94936; color:#fff2d8; border-radius:0; box-shadow:12px 14px 0 #03091899; }
+#dialog .scene-kicker { display:block; color:#a8bbdf; font:600 15px/1 Teko,sans-serif; letter-spacing:.14em; }
+#dialog :is(.battle-menu,.settings-body,.tutorial-intro,.tutorial-transition,.match-history) h2 { color:#fff2d8; font-family:'MangaSans',sans-serif; font-size:clamp(32px,4vw,54px); line-height:1.2; text-shadow:3px 4px 0 #bd372f; margin:12px 0 22px; transform:rotate(-2deg); }
+#dialog :is(.battle-menu,.settings-body,.tutorial-intro,.tutorial-transition,.match-history) p { color:#d2daeb; font:15px/1.9 'Microsoft YaHei',sans-serif; }
+#dialog :is(.battle-menu,.settings-body,.tutorial-intro,.tutorial-transition) .primary { background:#df4131; color:#fff2d8; border:2px solid #fff2d8; border-radius:0; padding:15px 24px; min-height:52px; font:900 21px/1.3 'MangaSans',sans-serif; box-shadow:5px 6px 0 #050a17; transform:skew(-4deg); }
+#dialog :is(.battle-menu,.settings-body,.tutorial-intro,.tutorial-transition) button:hover:not(:disabled) { background:#ee503b; color:#fff2d8; }
+#dialog button:focus-visible { outline:3px solid #f6c85f; outline-offset:4px; }
+#dialog .dialog-close { z-index:3; width:38px; height:38px; padding:0; border:1px solid #fff2d8; border-radius:0; background:#17243c; color:#fff2d8; font-size:25px; }
+#dialog .pause-context { margin-bottom:28px; border-left:3px solid #8ba8e6; padding-left:14px; }
+#dialog .live-context { border-color:#ec5540; color:#ffd5bd; }
+#dialog.pause-dialog { width:min(560px,calc(100vw - 32px)); }
+#dialog .battle-menu { padding:36px 42px; }
+#dialog .battle-menu>button:not(.dialog-close) { width:94%; padding:14px 20px; margin:12px 0; border:1px solid #fff2d895; border-radius:0; clip-path:none; transform:skew(-4deg); font:900 21px/1.3 'MangaSans',sans-serif; background:#1c2942; color:#fff2d8; box-shadow:4px 5px 0 #050b18; transition:translate .16s,background .16s; }
+#dialog .battle-menu>button:not(.dialog-close):hover { translate:5px 0; }
+#dialog .battle-menu .resume-choice { width:100%!important; padding:20px!important; font-size:27px!important; background:#de4233!important; border:2px solid #fff2d8!important; margin-bottom:24px!important; }
+#dialog .resume-choice span { float:right; }
+#dialog .settings-body .volume-row { color:#fff2d8; font-family:'MangaSans',sans-serif; margin:28px 0 36px; }
+#dialog .settings-body input[type=range] { height:20px; accent-color:#ed4e37; }
+#dialog .settings-body output { color:#fff2d8; font-size:35px; }
+#dialog:has(.tutorial-intro) { width:min(820px,calc(100vw - 32px)); }
+#dialog .tutorial-intro { padding:42px; background:linear-gradient(100deg,#111a2efa 45%,#111a2ed9),url('/assets/manga/blue.webp') right 30%/45% auto no-repeat; }
+#dialog .tutorial-intro>p { max-width:600px; }
+#dialog .tutorial-goals { display:flex; align-items:center; gap:18px; margin:24px 0; }
+#dialog .tutorial-goals b { padding:12px 20px; background:#fff2d8; color:#111a2e; font:900 23px/1.3 'MangaSans',sans-serif; border:0; border-radius:0; transform:skew(-4deg); box-shadow:5px 5px 0 #d54534; }
+#dialog .tutorial-goals span { color:#aebad2; }
+#dialog .tutorial-intro .primary { width:auto; min-width:230px; margin-top:12px; }
+#dialog .tutorial-transition { border:0; }
+#dialog .match-history { padding:36px; }
+#dialog .match-history section { border-color:#fff2d830; margin-top:22px; }
+#dialog .match-history h3 { display:inline-block; padding:4px 12px; color:#131c31; background:#fff2d8; font-size:20px; transform:skew(-4deg); }
+#dialog .history-phase { display:block; margin:10px 0; }
+#dialog .history-phase ul { color:#d8e1f3; padding-left:20px; font:14px/1.85 'Microsoft YaHei',sans-serif; }
+#dialog .history-phase li { padding-block:4px; }
+#dialog .record-damage { color:#ff9981; background:#592f35; padding:1px 5px; }
+#dialog .record-heal { color:#aee9bf; background:#203e38; padding:1px 5px; }
+/* Lobby has two jobs: your identity on the left, the next action on the right. */
+#dialog.online-dialog { width:min(1080px,calc(100vw - 64px)); max-height:calc(100svh - 40px); border:2px solid #fff2d8; border-top:5px solid #ed4834; background:#111a2e; box-shadow:12px 14px 0 #040a1890; padding:0; }
+#dialog .online-lobby { display:grid; grid-template-columns:minmax(220px,.7fr) minmax(0,1.3fr); grid-template-rows:auto 1fr; gap:20px 40px; padding:34px 42px; background:#111a2e; color:#fff2d8; border:0; }
+#dialog .online-lobby::before,#dialog .online-lobby::after { display:none; }
+#dialog .lobby-header { grid-column:1/-1; padding:0 45px 15px 0; border-bottom:1px solid #fff2d833; }
+#dialog .lobby-header h2 { font:900 clamp(32px,4vw,52px)/1.2 'MangaSans',sans-serif; color:#fff2d8; margin:10px 0 12px; text-shadow:3px 4px 0 #ad342c; transform:rotate(-2deg); }
+#dialog .lobby-header h2::after { display:none; }
+#dialog .network-state { margin:0; color:#b2c3e4; font:12px/1.5 'Microsoft YaHei',sans-serif; }
+#dialog .lobby-identity { min-width:0; padding-right:28px; border-right:1px solid #fff2d833; }
+#dialog .lobby-portrait { height:160px; background:url('/assets/manga/blue.webp') 50% 29%/cover; clip-path:polygon(0 0,100% 6%,93% 100%,0 95%); margin-bottom:18px; filter:saturate(.8); }
+#dialog .online-lobby label { font-size:15px; color:#fff2d8; margin:0 0 10px; }
+#dialog .online-lobby label small { display:block; color:#9dadc9; margin:5px 0 0; font-size:11px; }
+#dialog .lobby-identity .name-entry { display:flex; flex-wrap:wrap; gap:10px; }
+#dialog .lobby-identity .name-entry input { flex:1 1 100%; width:100%; min-width:0; }
+#dialog .online-lobby input { background:#091225; border:1px solid #abb9d0; color:#fff2d8; border-radius:0; min-height:47px; padding:10px 12px; font-size:17px; }
+#dialog .online-lobby input:focus { outline:2px solid #f0bf65; outline-offset:2px; }
+#dialog .lobby-content { min-width:0; }
+#dialog .lobby-content>.primary,#dialog .lobby-content>.secondary { width:100%; padding:15px; font-size:23px; border:2px solid #fff2d8; background:#d94031; color:#fff2d8; transform:skew(-4deg); border-radius:0; box-shadow:5px 5px 0 #050918; }
+#dialog .online-lobby .secondary { background:#1c2b47; color:#fff2d8; border:1px solid #fff2d8; border-radius:0; padding:10px 18px; }
+#dialog .online-options { display:flex; flex-direction:column; gap:15px; margin:0; padding:0; border:0; }
+#dialog .online-options .menu-choice { margin:0; min-height:86px; padding:16px 22px; border:2px solid #fff2d8; background:#1a263f; color:#fff2d8; border-radius:0; transform:skew(-4deg); box-shadow:5px 6px 0 #050a18; }
+#dialog .online-options .menu-choice>span { font:900 28px/1.2 'MangaSans',sans-serif; }
+#dialog .online-options .menu-choice small { display:block; color:#bdc9df; font:12px/1.5 'Microsoft YaHei',sans-serif; margin-top:8px; }
+#dialog .online-options .menu-choice:first-child { background:#c43b32; }
+#dialog .online-options .menu-choice:hover:not(:disabled) { background:#ee503b; translate:4px 0; }
+#dialog .online-lobby .text-button { color:#c2cce0; padding:12px 0; margin-top:12px; font-size:14px; }
+#dialog .online-lobby .text-button:hover { color:#fff2d8; }
+#dialog .online-error:empty { display:none; }
+#dialog .online-error { color:#ffb4a0; font-size:14px; line-height:1.6; }
+#dialog .room-code { margin:0 0 22px; padding:0; display:grid; grid-template-columns:1fr auto; gap:3px 16px; border:0; background:none; }
+#dialog .room-code>span { color:#aabbd8; font-size:12px; }
+#dialog .room-code strong { grid-column:1; font:600 clamp(35px,4vw,58px)/1 Teko,sans-serif; letter-spacing:.06em; color:#fff2d8; }
+#dialog #copy-room { grid-column:2; grid-row:1/3; align-self:center; min-height:44px; background:#fff2d8; color:#14203a; border:0; border-radius:0; font-weight:900; padding:12px; }
+#dialog .room-players { gap:14px; margin-bottom:24px; }
+#dialog .room-players .room-seat { position:relative; background:#182b50; padding:20px 15px; border:1px solid #6683b7; border-top:4px solid #597bd9; box-shadow:4px 5px 0 #050b1a; }
+#dialog .room-players .seat-1 { background:#352333; border-color:#ad615d; border-top-color:#e34c3c; }
+#dialog .room-players .room-seat.ready { border-color:#fff2d8; }
+#dialog .room-players small { color:#b0c0dc; font:600 12px Teko,sans-serif; letter-spacing:.05em; }
+#dialog .room-players b { color:#fff2d8; font:900 24px/1.5 'MangaSans',sans-serif; min-height:36px; margin:10px 0; }
+#dialog .room-players span { color:#bdcbe1; font-size:13px; }
+#dialog .room-players .ready span { color:#fff2d8; }
+#dialog .lobby-hint { color:#b8c5df; font:13px/1.7 'Microsoft YaHei',sans-serif; text-align:center; margin-top:15px; }
+#dialog .match-search { border:0; margin:0; padding:25px 0 30px; }
+#dialog .search-orbit { position:relative; width:115px; height:115px; border:3px solid #fff2d8; border-radius:0; background:#df4333; color:#fff2d8; font:700 italic 66px/115px Teko,sans-serif; margin:0 auto 28px; transform:rotate(-8deg); box-shadow:9px 10px 0 #050a17; animation:search-breathe 3s ease-in-out infinite; }
+#dialog .match-search b { font:900 28px/1.4 'MangaSans',sans-serif; color:#fff2d8; }
+#dialog .match-search span { color:#b3c4e2; font-size:13px; margin-top:10px; }
+/* The final score explains the outcome even after the effect has disappeared. */
+.result-dialog.manga-result .result-content { width:54%; margin-left:auto; padding:8vh 5vw; }
+.result-dialog.manga-result .result-art { width:51%; }
+.result-dialog.manga-result .result-stamp { font-size:clamp(76px,10vw,150px); }
+.result-dialog.manga-result .result-reason { color:#d2dcec; font-size:17px; line-height:1.7; }
+.result-scores { display:flex; gap:24px; border-block:1px solid #fff2d845; padding:20px 0; margin:28px 0; }
+.result-scores>div { flex:1; min-width:0; border-left:3px solid #5a6b89; padding-left:16px; }
+.result-scores>div.won { border-color:#f1c666; }
+.result-scores small { display:block; color:#c8d1e5; font:15px/1.5 'Microsoft YaHei',sans-serif; overflow-wrap:anywhere; }
+.result-scores strong { display:block; font:600 50px/1.2 Teko,sans-serif; color:#fff2d8; }
+.result-scores strong span { font-size:18px; }
+.result-scores b { color:#9fafd0; font:13px/1.5 'Microsoft YaHei',sans-serif; }
+.result-dialog .result-content .primary { background:#e34634; border:2px solid #fff2d8; color:#fff2d8; font:900 25px/1.3 'MangaSans',sans-serif; padding:17px 28px; border-radius:0; transform:skew(-4deg); box-shadow:6px 7px 0 #040a16; }
+.result-dialog .result-content .text-button { display:block; margin-top:20px; color:#fff2d8; }
+/* A readable announcement, then a compact result: direction and consequence stay together. */
+.game-shell .arena-center .notice-stack:has(.arena-skill) { width:min(460px,calc(100vw - 220px)); max-height:min(500px,calc(100svh - 295px)); }
+.game-shell .notice-stack .combat-cinema.skill.arena-skill { display:grid; grid-template-columns:82px minmax(0,1fr); gap:12px 18px; padding:20px; min-height:0; height:auto; }
+.game-shell .notice-stack .arena-skill .cinema-heading { grid-column:2; position:static; transform:none!important; padding:0; }
+.game-shell .notice-stack .arena-skill .cinema-heading small { font:12px/1.5 'Microsoft YaHei',sans-serif; color:#afc1e3; }
+.game-shell .notice-stack .arena-skill .cinema-heading h2 { font-size:30px; margin:7px 0; }
+.game-shell .notice-stack .arena-skill .skill-explanation { display:block; background:none; padding:0; transform:none; color:#d9e2f4; font:13px/1.75 'Microsoft YaHei',sans-serif; }
+.game-shell .notice-stack .arena-skill .cinema-icon { position:static; grid-row:1; grid-column:1; width:80px; height:90px; object-fit:contain; margin:0; }
+.game-shell .notice-stack .arena-skill .cinema-result { position:static; grid-column:1/-1; padding:12px 0 0; border-top:1px solid #fff2d833; }
+.game-shell .notice-stack .arena-skill .cinema-hit { position:static; grid-column:1/-1; text-align:right; color:#cbd4e6; }
+.game-shell .notice-stack .arena-skill .cinema-hit:empty { display:none; }
+.game-shell .notice-stack .arena-skill.resolved-summary .skill-explanation { display:none; }
+.game-shell .notice-stack .arena-skill.resolved-summary .cinema-icon { width:60px; height:65px; }
+.game-shell .notice-stack .arena-skill.resolved-summary { grid-template-columns:60px minmax(0,1fr); }
+.game-shell .notice-stack .arena-skill.resolved-summary .cinema-heading h2 { font-size:25px; }
+.game-shell .notice-stack .arena-skill.resolved-summary .damage-caption { display:none; }
+.game-shell .arena-actions #instruction:empty { display:none; }
+.game-shell .reference-recipe[aria-describedby] { background:#c03b30; border-color:#fff2d8; translate:0 -4px; }
+@keyframes search-breathe { 0%,100% { translate:0 0; } 50% { translate:0 -7px; } }
+@media(max-height:850px) and (min-width:801px) {
+ #dialog .online-lobby { padding:24px 32px; gap:18px 30px; }
+ #dialog .lobby-portrait { height:120px; }
+ #dialog .lobby-header h2 { font-size:38px; }
+ #dialog .online-options .menu-choice { min-height:76px; padding:12px 20px; }
+ .result-dialog.manga-result .result-content { padding:5vh 5vw; }
+ .result-dialog.manga-result .result-stamp { font-size:95px; }
+ .result-scores { margin:18px 0; padding:14px 0; }
+ .result-dialog.manga-result h2 { margin:16px 0 10px; }
+}
+@media(max-width:800px) {
+ #dialog.online-dialog { width:calc(100vw - 28px); }
+ #dialog .online-lobby { grid-template-columns:1fr; gap:20px; padding:26px; }
+ #dialog .lobby-header { grid-column:1; }
+ #dialog .lobby-identity { padding:0; border:0; }
+ #dialog .lobby-portrait { display:none; }
+ #dialog .lobby-identity .name-entry { flex-wrap:nowrap; }
+ #dialog .lobby-identity .name-entry input { flex:1; }
+ #dialog .online-lobby.has-room .lobby-identity,#dialog .online-lobby.is-searching .lobby-identity { display:none; }
+ #dialog .online-options .menu-choice { min-height:74px; }
+ .result-dialog.manga-result .result-content { width:100%; padding:12vh 8vw 6vh; }
+ .result-dialog.manga-result .result-art { width:100%; opacity:.22; }
+ .result-dialog.manga-result .result-stamp { font-size:110px; }
+ #dialog .tutorial-intro { padding:30px; }
+ #dialog .tutorial-goals { gap:12px; flex-wrap:wrap; }
+ #dialog .tutorial-goals b { font-size:20px; padding:12px; }
+ #dialog .battle-menu { padding:30px; }
+}
+@media(max-width:650px) {
+ .game-shell .arena-center .notice-stack:has(.arena-skill) { width:calc(100vw - 36px); max-height:380px; }
+ .game-shell .notice-stack .combat-cinema.skill.arena-skill { padding:15px; gap:8px 12px; grid-template-columns:54px minmax(0,1fr); }
+ .game-shell .notice-stack .arena-skill .cinema-icon { width:54px; height:65px; }
+ .game-shell .notice-stack .arena-skill .cinema-heading h2 { font-size:25px; }
+ .game-shell .notice-stack .arena-skill .skill-explanation { font-size:12px; }
+ #dialog .lobby-header h2 { font-size:34px; }
+ #dialog .online-options .menu-choice>span { font-size:24px; }
+ #dialog .room-players b { font-size:21px; }
+ #dialog .room-players .room-seat { padding:16px 12px; }
+ #dialog .match-history { padding:26px; }
+}
+@media(prefers-reduced-motion:reduce) {
+ #dialog .search-orbit { animation:none; }
+ #dialog .battle-menu>button:not(.dialog-close),#dialog .online-options .menu-choice { transition:none; }
+}
+#dialog.online-dialog { max-width:min(1080px,calc(100vw - 64px)); }
+#dialog .online-lobby .text-button { min-height:44px; padding:10px 16px; border:1px solid #7889aa; border-radius:0; background:#17243c; text-decoration:none; }
+#dialog .lobby-identity #name-form { border:0; padding:0; margin:0; }
+@media(max-width:800px) { #dialog.online-dialog { max-width:calc(100vw - 28px); } }
+/* Children fill their grid tracks; percentage widths here would shrink the layout twice. */
+.result-dialog.manga-result { grid-template-columns:44% 56%; }
+.result-dialog.manga-result .result-art { width:100%; }
+.result-dialog.manga-result .result-content { width:100%; margin-inline:0; }
+.result-dialog.manga-result .result-content h2 { font-size:clamp(28px,3.1vw,46px); }
+@media(max-width:800px) {
+ .result-dialog.manga-result { display:block; overflow-y:auto; }
+ .result-dialog.manga-result .result-art { position:absolute; inset:0; height:100%; min-height:100%; }
+ .result-dialog.manga-result .result-content { position:relative; padding:8vh 8vw 5vh; }
+}

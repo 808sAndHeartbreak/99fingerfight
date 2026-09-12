@@ -71,7 +71,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
     const el=document.createElement('section');
     el.className=`combat-cinema ${skill?'skill':'item'} arena-skill`;
     el.dataset.family=family;el.dataset.team=old.active;el.setAttribute('role','status');
-    el.innerHTML=`<div class="cinema-ink"></div><div class="cinema-portrait"><img src="${asset(`manga/${old.active?'red':'blue'}.webp`)}" alt=""></div><div class="cinema-heading"><small>${old.active?'红方':'蓝方'} · ${escapeHtml(playerName(participants(),old.active))} 使用</small><h2>${art.name}</h2><span>${skill?SKILL_MOTION[id][1]:'道具生效'}</span></div><img class="cinema-icon" src="${asset(art.image)}" alt=""><div class="cinema-impact" aria-hidden="true"><i></i><i></i><i></i><i></i></div><small class="cinema-hit" aria-hidden="true"></small><div class="cinema-result" aria-live="polite"></div>`;
+    el.innerHTML=`<div class="cinema-ink"></div><div class="cinema-portrait"><img src="${asset(`manga/${old.active?'red':'blue'}.webp`)}" alt=""></div><div class="cinema-heading"><small>${old.active?'红方':'蓝方'} · ${escapeHtml(playerName(participants(),old.active))} 使用</small><h2>${art.name}</h2><span class="skill-explanation">${escapeHtml(art.detail)}</span></div><img class="cinema-icon" src="${asset(art.image)}" alt=""><div class="cinema-impact" aria-hidden="true"><i></i><i></i><i></i><i></i></div><small class="cinema-hit" aria-hidden="true"></small><div class="cinema-result" aria-live="polite"></div>`;
     noticeRoot().append(el);register(el);
     animate(document.querySelector(`#player-${old.active}`),[{filter:'brightness(1)'},{filter:'brightness(1.35)',offset:.3},{filter:'brightness(1)'}],{duration:650});
     const duration=actionDuration(old,next,command),beats=actionBeats(old,next,command);
@@ -97,7 +97,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
       }
       if(beat) {
         el.querySelector('.cinema-result').innerHTML=beat.type==='damage'
-          ? `<small class="damage-kind">${beat.owner?'红方':'蓝方'}${beat.trueDamage?' · 无视护盾':''}</small><strong class="damage-value">${beat.amount?'HP−'+beat.amount:'未扣血'}</strong>${beat.blocked?`<span class="effect-text">${escapeHtml(defenseDetail(beat))}</span>`:''}` : `<strong class="effect-text">${escapeHtml(beat.label)}</strong>`;
+          ? `<small class="damage-kind">${escapeHtml(playerName(participants(),beat.owner))}${beat.trueDamage?' · 无视护盾':''}</small><strong class="damage-value">${beat.amount?'HP−'+beat.amount:'未扣血'}</strong>${beat.blocked?`<span class="effect-text">${escapeHtml(defenseDetail(beat))}</span>`:''}` : `<strong class="effect-text">${escapeHtml(beat.label)}</strong>`;
         const hits=beats.filter(b=>b.type==='damage');
         el.querySelector('.cinema-hit').textContent=beat.type==='damage'&&hits.length>1?`第 ${hits.indexOf(beat)+1} / ${hits.length} 击`:'';
         onBeat(beat);
@@ -115,12 +115,13 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
     }
     onBeat({type:'settle',preserveActorHands:true});
     const summary=skillSummary(old,next,command);
-    el.querySelector('.cinema-result').innerHTML=`${summary.hits?`<small>${1-old.active?'红方':'蓝方'}${summary.hits>1?` · 共 ${summary.hits} 击`:''}</small><strong class="damage-value">${summary.damage?'HP−'+summary.damage:'未扣血'}</strong><span class="damage-caption">累计实际伤害</span>`:''}${summary.effects.length?`<span class="effect-text">${summary.effects.map(escapeHtml).join(' · ')}</span>`:''}`;
+    el.querySelector('.cinema-result').innerHTML=`${summary.hits?`<small>${escapeHtml(playerName(participants(),1-old.active))}${summary.hits>1?` · 共 ${summary.hits} 击`:''}</small><strong class="damage-value">${summary.damage?'HP−'+summary.damage:'未扣血'}</strong><span class="damage-caption">累计实际伤害</span>`:''}${summary.effects.length?`<span class="effect-text">${summary.effects.map(escapeHtml).join(' · ')}</span>`:''}`;
     el.querySelector('.cinema-hit').textContent='';
     if(!await skillWait(tail-850))return false;
     onBeat({type:'reset-hands'});
 
     if(!await skillWait(650))return false;
+    el.classList.add('resolved-summary');
     if(!await skillWait(200))return false;
     animate(el,[{opacity:1},{opacity:1,offset:.85},{opacity:0}],{duration:5000,fill:'both'},true);
     return live();

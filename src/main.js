@@ -18,6 +18,7 @@ import "./turn-ui.css";
 import "./event-ui.css";
 import "./arena-layout.css";
 import "./arena-poster.css";
+import "./scene-ui.css";
 import { WEAPONS, PROPS, MAX_HP, weaponById } from "./catalog.js";
 import { LocalSession } from "./session.js";
 import { chooseCommand, AI_LEVELS } from "./ai.js";
@@ -260,6 +261,7 @@ function render(preserveInfo=false) {
   const forgeAvailable=enabled && !selected && humanTurn() && state.phase==='action' && !p.weapon && synthesisOptions(state).length>0 && (mode!=='tutorial'||session.guide?.command.type==='forge');
   const forgePanel=document.querySelector('#forge-options'),chosen=forgeUi.choice&&weaponById(forgeUi.choice);
   forgePanel.hidden=!forgeAvailable || forgeUi.hidden;
+  for(const el of document.querySelectorAll('#stage,.field-items'))el.inert=!forgePanel.hidden;
   forgePanel.innerHTML=forgePanel.hidden?'':chosen?`<div class="forge-confirm-art">${img(chosen.image,'skill-icon')}</div><small class="forge-eyebrow">${p.hands.map(n=>`[${n}]`).join(' + ')} · 合成技能</small><h2>${chosen.name}</h2><p class="forge-detail">${chosen.detail}</p><p class="forge-note">确认后立即释放，结算后双手归 [1]</p><div class="forge-buttons"><button id="confirm-forge">确认释放</button><button id="back-forge">返回</button></div>`:`<div class="forge-heading"><div><small class="forge-eyebrow">${p.hands.map(n=>`[${n}]`).join(" + ")} · 数字合成</small><h2>选择你的技能</h2></div><button id="cancel-forge">放弃合成</button></div><p class="forge-intro">${mode==='tutorial'?`本次练习选择${weaponById(session.guide.command.weapon).name}；其他技能可在正式对局使用。`:'选择一种技能，确认后立即释放；结算后双手归 [1]。'}</p><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${mode==='tutorial'&&session.guide?.command.weapon!==w.id?'disabled':''}>${img(w.image,'skill-icon')}<strong>${w.name}</strong><span>${w.detail}</span></button>`).join('')}</div>`;
   forgePanel.classList.toggle('confirming',!!chosen);
   for(const owner of [0,1]) {
@@ -567,7 +569,7 @@ function closeDialog() {
   deadline = Date.now() + remaining * 1000;
   scheduleAI();
 }
-let menuEntrance=0,menuLoaded=false;
+let menuEntrance=0,menuLoaded=false,settingsReturn=null,nameEditorReturn=false;
 async function showMenu(page = "home") {
   if(mode === "online" || online?.packet?.room || online?.packet?.queued) {showOnline();return;}
   if(typeof page !== "string")page="home";
@@ -586,7 +588,12 @@ async function showMenu(page = "home") {
   root.classList.remove('menu-entering');buttons.forEach(b=>b.disabled=false);dialog.setAttribute('tabindex','-1');dialog.focus({preventScroll:true});
 }
 function dismissDialog() {
-  if(dialog.dataset.view==="menu"){if(dialog.dataset.page!=="home")showMenu(dialog.dataset.page==="local"?"play":"home");return;}
+  if(dialog.dataset.view==='settings'){
+    if(settingsReturn?.view==='battle'){showBattleMenu();return;}
+    if(settingsReturn?.view==='menu'){showMenu(settingsReturn.page||'home');return;}
+  }
+  if(dialog.dataset.view==='name-editor' && nameEditorReturn){showBattleMenu();return;}
+  if(dialog.dataset.view==="menu"){if(dialog.dataset.page!=="home")showMenu(dialog.dataset.page==="difficulty"?"local":dialog.dataset.page==="local"?"play":"home");return;}
   if(dialog.dataset.view==="tutorial-note"){closeDialog();render();return;}
   if(dialog.dataset.view==="developer-slide"){showDeveloper();dialog.querySelector("[data-developer-slide]").focus({preventScroll:true});return;}
   if(dialog.dataset.view==="developer"){showMenu("home");return;}
@@ -600,12 +607,17 @@ function dismissDialog() {
   closeDialog();
 }
 function showNameEditor(seat) {
+  nameEditorReturn=dialog.open&&dialog.dataset.view==='battle';
   openDialog(`<form id="player-name-form" class="dialog-body" data-seat="${seat}"><button type="button" class="dialog-close" data-close aria-label="取消改名">×</button><h2>你的名字</h2><label for="player-name-input">最多 10 个字符</label><input id="player-name-input" name="name" maxlength="200" value="${name(seat)}" autocomplete="nickname"><p class="name-error" role="status"></p><button class="primary" type="submit">保存</button></form>`);
+  dialog.dataset.view='name-editor';
   document.querySelector('#player-name-input').focus();
 }
 function showBattleMenu() {
-  openDialog(`<div class="dialog-body battle-menu"><button class="dialog-close" data-close aria-label="继续游戏">×</button><h2>暂停一下。</h2><button data-close>继续游戏 </button>${mode==='tutorial'?'<button data-tutorial-help>本节提示</button><button data-tutorial-retry>重试本节</button><button data-tutorial-exit>退出教学</button>':''}${mode==='tutorial'?'':'<button data-battle-online>房间和玩家信息 </button>'}<button data-menu-settings>设置 </button>${mode==='online'?'':'<button data-menu="home">主菜单 </button>'}<small>${mode==='online'?'联机对局继续计时':''}</small></div>`);
+  const remote=mode==='online',tutorial=mode==='tutorial';
+  openDialog(`<div class="dialog-body battle-menu"><button class="dialog-close" data-close aria-label="继续游戏">×</button><small class="scene-kicker">${remote?'LIVE MATCH':tutorial?'TRAINING':'TIME OUT'}</small><h2>${remote?'战局菜单':tutorial?'教学已暂停':'对局已暂停'}</h2><p class="pause-context ${remote?'live-context':''}">${remote?'联机对局继续计时，及时返回战场。':tutorial?'当前步骤已保留，准备好再继续。':`第 ${Math.ceil(state.turn/2)} 回合 · ${name(state.active)} · 剩余 ${Math.ceil(remaining)} 秒`}</p><button class="resume-choice" data-close>${tutorial?'继续教学':'返回战场'}<span aria-hidden="true">↗</span></button>${tutorial?'<button data-tutorial-help>本节提示</button><button data-tutorial-retry>重试本节</button><button data-tutorial-exit>退出教学</button>':`<button data-battle-online>${remote?'房间和玩家':'修改昵称'}</button>`}<button data-menu-settings>声音设置</button>${remote||tutorial?'':'<button data-menu="home">返回主菜单</button>'}</div>`,"scene-dialog pause-dialog");
+  dialog.dataset.view='battle';
 }
+
 function showDeveloper(){
   openDialog(`<article class="developer-story"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><header><h2>开发者<span>说。</span></h2></header><div class="developer-copy"><p>考虑 finger fight 稍作改编就可以贴合本次“99”主题，但之前就做过了，还是不做回锅肉，就新做了个躲避球游戏。本游戏其实是 2023 年首次 minigame 设计推出的（尊重给到 [UI&amp;特效] <span class="developer-credit">潘朱炜</span>，[程序] <span class="developer-credit">王璨、王崴、佘壕镪</span>），可惜完成度不高，也没有拿到任何奖项。</p><p>今年响应“超级个体”的号召，solo 参赛做了。躲避球晋级后自觉内容量已足够，不太想进一步开发了。于是移植了 finger fight 到网页端，补全了玩法，实现了联网，重做了美术，打磨了交互体验。既然今年躲避球晋级决赛，就私心把这个游戏再塞进来给大家再玩玩了。</p><p>至于这个游戏的灵感来源，可以点击<button class="story-slide-link" data-developer-slide>当时的幻灯片页面</button>查看。大家可以按F11全屏游玩以获得更好体验。感谢体验！</p></div><footer>开发者：<span class="developer-signature">谭越天</span></footer></article>`,"developer-dialog");
   dialog.dataset.view="developer";
@@ -618,14 +630,16 @@ function showTutorialIntro(){
  openDialog(`<div class="dialog-body tutorial-intro"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><h2>指尖上的博弈</h2><p>改变双手数值，形成手势组合，解锁不同能力。</p><div class="tutorial-goals"><b>清空对手 HP</b><span>或</span><b>九九归一</b></div><p>正式开局双方都是 [1] / [1]、99 HP。接下来模拟一段连续攻防：计算、对手行动、获得道具，再合成技能。最后演示两次归一的特殊胜利。</p><button class="primary" data-tutorial-confirm>开始教学</button></div>`);
 }
 function showSettings() {
-  openDialog(`<div class="dialog-body settings-body"><button class="dialog-close" data-close aria-label="关闭设置">×</button><h2>声音设置</h2>${['music','effects'].map(k=>`<label class="volume-row">${k==='music'?'背景音乐':'游戏音效'}<output id="volume-${k}">${Math.round(audioSettings.values[k]*100)}%</output><input aria-label="${k==='music'?'背景音乐':'游戏音效'}" type="range" min="0" max="100" value="${Math.round(audioSettings.values[k]*100)}" data-volume="${k}"></label>`).join('')}<button class="primary" data-close>返回</button></div>`);
+  settingsReturn=dialog.open?{view:dialog.dataset.view,page:dialog.dataset.page}:null;
+  openDialog(`<div class="dialog-body settings-body"><button class="dialog-close" data-close aria-label="关闭设置">×</button><small class="scene-kicker">SOUND MIX</small><h2>声音设置</h2>${['music','effects'].map(k=>`<label class="volume-row">${k==='music'?'背景音乐':'游戏音效'}<output id="volume-${k}">${Math.round(audioSettings.values[k]*100)}%</output><input aria-label="${k==='music'?'背景音乐':'游戏音效'}" type="range" min="0" max="100" value="${Math.round(audioSettings.values[k]*100)}" data-volume="${k}"></label>`).join('')}<button class="primary" data-close>返回</button></div>`);
+  dialog.dataset.view='settings';
 }
 
 function showResult() {
   const winner = state.winner;
   const lost = mode === "online" ? winner !== online.packet.room.seat : mode === "ai" && winner !== 0;
   openDialog(
-    `<div class="result-art">${img(`manga/${winner ? "red" : "blue"}.webp`)}<span aria-hidden="true">${lost ? "DEFEAT" : "VICTORY"}</span></div><div class="result-content"><div class="result-stamp">${lost ? "败北" : "胜利"}<i>!</i></div><h2>${name(winner)}<span>获胜</span></h2><p>第 ${Math.ceil(state.turn/2)} 轮 · ${state.winReason ? escapeHtml(state.winReason) : mode === "online" && online.packet.room.finishReason ? escapeHtml(online.packet.room.finishReason) : lost ? "下一手，扳回来。" : "这一局，拿下。"}</p>${mode === "online" ? '<button class="primary" id="online">返回房间 / 再战 </button>' : `<button class="primary" data-mode="${mode}">再战一局 </button>`}<button class="text-button" data-close>查看战场</button></div>`,
+    `<div class="result-art">${img(`manga/${winner ? "red" : "blue"}.webp`)}<span aria-hidden="true">${lost ? "DEFEAT" : "VICTORY"}</span></div><div class="result-content"><div class="result-stamp">${lost ? "败北" : "胜利"}<i>!</i></div><h2>${name(winner)}<span>获胜</span></h2><p class="result-reason">第 ${Math.ceil(state.turn/2)} 回合 · ${state.winReason ? escapeHtml(state.winReason) : mode === "online" && online.packet.room.finishReason ? escapeHtml(online.packet.room.finishReason) : name(1-winner)+" HP 归零"}</p><div class="result-scores">${state.players.map((p,i)=>`<div class="${i===winner?'won':''}"><small>${name(i)}</small><strong>${p.hp}<span> HP</span></strong><b>${p.nine} / 2 归一</b></div>`).join('')}</div>${mode === "online" ? '<button class="primary" id="online">返回房间 / 再战 </button>' : `<button class="primary" data-mode="${mode}">再战一局 </button>`}<button class="text-button" data-close>查看战场</button></div>`,
     `result-dialog manga-result ${lost ? "defeat" : "victory"} winner-${winner}`,
   );
 }
@@ -653,7 +667,7 @@ async function onlineAction(id) {
   try {
     if(id==="copy-room") {const url=new URL(location.href);url.searchParams.set("room",online.packet.room.code);await navigator.clipboard.writeText(url.href);toast("邀请链接已复制");return;}
     if(id==="online-leave"&&online.packet?.room?.status==="playing") {
-      openDialog('<div class="dialog-body"><h2>离开当前对局？</h2><p>离开会判负，对手将获胜。</p><button class="primary" id="online-leave-confirm">离开并认输</button><button class="text-button" data-close>继续对局</button></div>');return;
+      openDialog('<div class="dialog-body"><h2>离开当前对局？</h2><p>离开会判负，对手将获胜。</p><button class="primary" id="online-leave-confirm">离开并认输</button><button class="text-button" data-close>继续对局</button></div>',"scene-dialog leave-dialog");return;
     }
     const ops={"online-create":"create","online-queue":"queue","online-cancel":"cancel","online-ready":"ready","online-rematch":"rematch","online-leave":"leave","online-leave-confirm":"leave"};
     const op=ops[id];if(!op)return;
@@ -668,7 +682,7 @@ listen(dialog,"input",e=>{if(e.target.dataset.volume){const k=e.target.dataset.v
 listen(dialog,"submit",async e=>{
   if(e.target.id==="player-name-form") {
     e.preventDefault();const form=e.target,button=form.querySelector('[type="submit"]');if(button.disabled)return;button.disabled=true;
-    try{const value=shortName(new FormData(form).get('name'));if(mode==='online')await online.rename(value);else {session.rename(Number(form.dataset.seat),value);savePve();}if(dialog.contains(form)){closeDialog();render();}}
+    try{const value=shortName(new FormData(form).get('name'));if(mode==='online')await online.rename(value);else {session.rename(Number(form.dataset.seat),value);savePve();}if(dialog.contains(form)){dismissDialog();render();}}
     catch(error){if(dialog.contains(form)){form.querySelector('.name-error').textContent=error.message;button.disabled=false;}}return;
   }
   if(!["name-form","join-form"].includes(e.target.id))return;
@@ -748,11 +762,11 @@ listen(app, "click", (e) => {
     return;
   }
   if(button.dataset.editName!==undefined){showNameEditor(Number(button.dataset.editName));return;}
-  if(button.id==='back-forge'){battleSound.play('back',.5);forgeUi.choice=null;render();return;}
-  if(button.id==='cancel-forge'){battleSound.play('back',.5);forgeUi.choice=null;forgeUi.hidden=true;render();return;}
-  if(button.id==='open-forge'){battleSound.play('inspect',.5);forgeUi.hidden=false;render();return;}
+  if(button.id==='back-forge'){battleSound.play('back',.5);const choice=forgeUi.choice;forgeUi.choice=null;render();document.querySelector(`[data-forge="${choice}"]`)?.focus({preventScroll:true});return;}
+  if(button.id==='cancel-forge'){battleSound.play('back',.5);forgeUi.choice=null;forgeUi.hidden=true;render();document.querySelector('#open-forge')?.focus({preventScroll:true});return;}
+  if(button.id==='open-forge'){battleSound.play('inspect',.5);forgeUi.hidden=false;render();document.querySelector('#forge-options [data-forge]:not(:disabled)')?.focus({preventScroll:true});return;}
   if(button.id==='confirm-forge'){if(forgeUi.choice)send({type:'forge',weapon:forgeUi.choice});return;}
-  if (button.dataset.forge) { battleSound.play('select',.6);forgeUi.choice=button.dataset.forge;render();return; }
+  if (button.dataset.forge) { battleSound.play('select',.6);forgeUi.choice=button.dataset.forge;render();document.querySelector('#confirm-forge')?.focus({preventScroll:true});return; }
   if (button.dataset.hand !== undefined) {
     if(mode==='tutorial' && !session.canProceed)return;
     const owner = Number(button.dataset.owner),
@@ -862,16 +876,12 @@ listen(dialog, "click", (e) => {
 });
 listen(dialog, "cancel", (e) => { e.preventDefault(); dismissDialog(); });
 listen(document, "keydown", (e) => {
+  if(e.defaultPrevented)return;
   if(e.key === "Escape" && dialog.open){
     e.preventDefault();
     e.stopPropagation();
     if(!e.repeat)dismissDialog();
     return;
-  }
-  if(e.key==='Escape' && !dialog.open && mode==='tutorial' && started){
-    e.preventDefault();if(e.repeat)return;
-    openDialog('<section class="dialog-body tutorial-pause"><h2>教学已暂停</h2><p>随时继续，当前步骤会保留。</p><button class="primary" data-close>继续教学</button><button data-tutorial-retry>重试本节</button><button data-tutorial-exit>退出教学</button></section>');
-    dialog.dataset.view='tutorial-pause';return;
   }
   if (e.key === "Escape" && !dialog.open && started && !e.repeat) {
     e.preventDefault();showBattleMenu();
