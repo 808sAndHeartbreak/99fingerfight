@@ -57,6 +57,8 @@ const participants = () => session?.getParticipants() || [];
 const name = (seat) => escapeHtml(playerName(participants(), seat));
 let renderedRemoteReady = false;
 let online, remoteMatch = null, remoteQueue = [], remoteApplying = false;
+let forgeUi={key:'',choice:null,hidden:false};
+function updateClockWarning(){const el=document.querySelector('#phase-time'),seconds=Math.ceil(remaining);el.classList.toggle('warning',mode!=='tutorial' && seconds>=6 && seconds<=10);el.classList.toggle('urgent',mode!=='tutorial' && seconds<=5);}
 const humanTurn = () => mode === "online" ? online?.packet?.room?.seat === state.active : mode === "local" || state.active === 0;
 const team = (id) => (id === 0 ? "蓝方" : "红方");
 const audioCache = new Map();
@@ -220,9 +222,7 @@ function render() {
   info?.hide();
   document.querySelector("#phase-time").hidden = state.winner !== null || state.phase === "start";
   document.querySelector("#clock").textContent = mode==="tutorial"?"∞":mode==="online"&&online.status!=="connected"?"—":Math.ceil(remaining);
-  document
-    .querySelector("#phase-time")
-    .classList.toggle("urgent", remaining <= 5);
+  updateClockWarning();
   document.querySelector("#phase-time small").textContent=mode==="tutorial"?"练习":"秒";
   renderPlayer(0);
   renderPlayer(1);
@@ -251,9 +251,13 @@ function render() {
   document.querySelector(".game-shell").dataset.step = guide.step;
   document.querySelector(".game-shell").dataset.actor = state.active;
   document.querySelector(".game-shell").dataset.phase = state.phase;
-  const forgePanel=document.querySelector("#forge-options");
-  forgePanel.hidden=(mode==="tutorial" && session.guide?.command.type!=="forge") || !enabled || busy || remotePending || !!selected || !humanTurn() || state.phase!=="action" || !!p.weapon || !synthesisOptions(state).length;
-  forgePanel.innerHTML=forgePanel.hidden ? "" : `<div class="forge-heading"><h2>合成技能</h2><p>${p.hands.map(n=>`[${n}]`).join(" + ")}</p></div><div class="forge-choices">${synthesisOptions(state).filter(w=>mode!=="tutorial" || session.guide?.command.weapon===w.id).map(w=>`<button data-forge="${w.id}" ${enabled && (mode!=="tutorial" || session.guide?.command.weapon===w.id) ? "" : "disabled"}>${img(w.image,"skill-icon")}<strong>${w.name}</strong><span>${w.detail}</span></button>`).join("")}</div>`;
+  const forgeKey=`${mode}:${actionSerial}:${state.revision}`;
+  if(forgeUi.key!==forgeKey)forgeUi={key:forgeKey,choice:null,hidden:false};
+  const forgeAvailable=enabled && !selected && humanTurn() && state.phase==='action' && !p.weapon && synthesisOptions(state).length>0 && (mode!=='tutorial'||session.guide?.command.type==='forge');
+  const forgePanel=document.querySelector('#forge-options'),chosen=forgeUi.choice&&weaponById(forgeUi.choice);
+  forgePanel.hidden=!forgeAvailable || forgeUi.hidden;
+  forgePanel.innerHTML=forgePanel.hidden?'':chosen?`<div class="forge-confirm-art">${img(chosen.image,'skill-icon')}</div><small class="forge-eyebrow">${p.hands.map(n=>`[${n}]`).join(' + ')} · 合成技能</small><h2>${chosen.name}</h2><p class="forge-detail">${chosen.detail}</p><p class="forge-note">确认后立即释放，结算后双手归 [1]</p><div class="forge-buttons"><button id="confirm-forge">确认释放</button><button id="cancel-forge">取消</button></div>`:`<div class="forge-heading"><h2>合成技能</h2><button id="cancel-forge">暂不合成</button></div><div class="forge-choices">${synthesisOptions(state).filter(w=>mode!=='tutorial'||session.guide?.command.weapon===w.id).map(w=>`<button data-forge="${w.id}">${img(w.image,'skill-icon')}<strong>${w.name}</strong><span>${w.detail}</span></button>`).join('')}</div>`;
+  forgePanel.classList.toggle('confirming',!!chosen);
   for(const owner of [0,1]) {
     const player=state.players[owner], usable=owner===state.active && enabled && state.phase==="action" && !p.weapon && !player.silenced;
     const supply=player.turns===0?1:supplyIn(player);
@@ -270,6 +274,7 @@ function render() {
   }).join('');
   for(const el of shelf.children){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',!p.hands.every(v=>v===n)&&p.hands.includes(n));}
   document.querySelector("#primary-actions").innerHTML = `${selected ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"}</button>` : ""}`;
+  if(forgeAvailable && forgeUi.hidden)document.querySelector('#primary-actions').insertAdjacentHTML('afterbegin','<button id="open-forge">合成技能</button>');
   const endButton=document.querySelector('#end-turn');
   endButton.hidden=state.winner!==null;
   endButton.disabled=!enabled || !canEndTurn(state) || (mode==='tutorial' && (session.guide?.command.type!=='end' || !session.canProceed));
@@ -288,7 +293,7 @@ function render() {
 function showTutorialNote(){
   const done=session.done,g=session.guide;
   session.notices.add(done?'done':session.step);
-  openDialog(`<section class="tutorial-sticker"><small>新手教学 ${session.chapter+1} / ${LESSONS.length}</small><h2>${done?session.chapter===3?'HP 归零，胜利！':session.chapter===4?'九九归一，胜利！':'学会了！':g.title}</h2><p>${done?session.lesson.result:g.detail}</p><button class="primary" ${done?'data-tutorial-next':'data-tutorial-understood'}>${done?session.chapter===LESSONS.length-1?'完成教学':'下一节':'明白了，试试看'}</button><footer><button data-tutorial-retry>重试本节</button><button data-tutorial-exit>退出教学</button></footer></section>`,"tutorial-sticker-dialog");
+  openDialog(`<section class="tutorial-sticker"><small>新手教学 ${session.chapter+1} / ${LESSONS.length}</small><h2>${done?session.chapter===LESSONS.length-1?'九九归一，胜利！':'攻防练习完成':g.title}</h2><p>${done?session.lesson.result:g.detail}</p><button class="primary" ${done?'data-tutorial-next':'data-tutorial-understood'}>${done?session.chapter===LESSONS.length-1?'完成教学':'下一节':'明白了，试试看'}</button><footer><button data-tutorial-retry>重试本节</button><button data-tutorial-exit>退出教学</button></footer></section>`,"tutorial-sticker-dialog");
   dialog.dataset.view='tutorial-note';
 }
 function renderTutorial() {
@@ -299,15 +304,16 @@ function renderTutorial() {
   const done=session.done,g=session.guide;
   document.querySelector('#end-turn').hidden=done || g.command.type!=='end';
   host.hidden=false;
-  host.innerHTML=`<small>练习 ${session.chapter+1} / ${LESSONS.length} · ${session.lesson.title}</small><p>${done?session.lesson.result:g.detail}</p>${!done&&session.step===0?`<details><summary>本次预设局面</summary><p>${session.lesson.setup}</p></details>`:''}`;
+  host.innerHTML=`<small>练习 ${session.chapter+1} / ${LESSONS.length} · ${session.lesson.title}</small><p>${done?session.lesson.result:g.detail}</p>`;
   if(done){
     document.querySelector('.game-shell').dataset.step='complete';
     feedback.reveal(document.querySelector('#instruction'),session.chapter===LESSONS.length-1?'两种胜利方式，都学会了':'练习完成');
     document.querySelector('#end-turn').hidden=true;
     document.querySelector('#primary-actions').innerHTML='<button class="primary" id="tutorial-next">'+(session.chapter===LESSONS.length-1?'完成教学':`继续 · ${LESSONS[session.chapter+1].title}`)+'</button>';
   }
+  if(!done&&g.command.type==='demo')document.querySelector('#primary-actions').innerHTML='<button id="tutorial-demo">演示再次凑齐双 [9]</button>';
   if(!done){
-    const target=!session.canProceed?`[data-info="${g.requiresInfo}"]`:selected&&g.selectedTarget?g.selectedTarget:g.target;
+    const target=g.command.type==='forge'&&forgeUi.hidden?'#open-forge':g.command.type==='forge'&&forgeUi.choice?'#confirm-forge':!session.canProceed?`[data-info="${g.requiresInfo}"]`:selected&&g.selectedTarget?g.selectedTarget:g.target;
     if(target)document.querySelectorAll(target).forEach(el=>{if(!el.disabled)el.classList.add('tutorial-target');});
   }
 }
@@ -325,6 +331,15 @@ async function animateCommand(command, old, next, contact) {
     const a=old.players[command.actor].hands[command.hand],b=old.players[1-command.actor].hands[command.targetHand];
     const resultOwner=old.players[command.actor].mirror?1-command.actor:command.actor;
     document.querySelector('#instruction').innerHTML=`出手！数字加和，<span class="equation-team-${command.actor}">[${a}]</span> + <span class="equation-team-${1-command.actor}">[${b}]</span> → <span class="equation-team-${resultOwner}">[${(a+b)%10}]</span>`;
+  }
+  if(command.type==='demo') {
+    const epoch=feedback.generation();
+    await feedback.animate(document.querySelector('#stage'),[{opacity:1},{opacity:0}],{duration:300,fill:'both'}).finished.catch(()=>{});
+    if(feedback.generation()!==epoch)return false;
+    stage?.sync(next,null,false,true);
+    next.players.forEach((p,o)=>p.hands.forEach((n,h)=>handElements[o][h].querySelector('.hand-value').textContent=n));
+    await feedback.animate(document.querySelector('#stage'),[{opacity:0},{opacity:1}],{duration:600,fill:'both'}).finished.catch(()=>{});
+    return feedback.generation()===epoch;
   }
   if(command.type==="attack"||command.type==="prop"||["end","advance","forge"].includes(command.type)) {
     cinema??=createCombatCinema({animate:feedback.animate,register:feedback.register,generation:feedback.generation,asset,sound:battleSound.play,participants,notice:feedback.notice,noticeRoot:feedback.noticeRoot});
@@ -453,7 +468,7 @@ function scheduleAI() {
   stopAI();
   if (mode === "online") return;
   if(state.phase==="action" && state.players[state.active].weapon && !paused && !busy && started && state.winner===null){aiTimer=setTimeout(()=>send({type:"attack"}),0);return;}
-  if(mode === "tutorial")return;
+  if(mode === "tutorial"){if(session.guide?.auto && !paused && !busy && started)aiTimer=setTimeout(()=>send(session.guide.command),session.guide.command.type==='add'?1800:950);return;}
   if (state?.phase === "start" && !paused && !busy && started) {
     aiTimer=setTimeout(()=>send({type:"advance"}),80);
     return;
@@ -592,7 +607,7 @@ function showDeveloperSlide(){
   dialog.dataset.view="developer-slide";
 }
 function showTutorialIntro(){
- openDialog(`<div class="dialog-body tutorial-intro"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><h2>指尖上的博弈</h2><p>改变双手数值，形成手势组合，解锁不同能力。</p><div class="tutorial-goals"><b>清空对手 HP</b><span>或</span><b>九九归一</b></div><p>在同一个练习场，依次体验计算、道具、护盾和两种胜利方式。每项会准备新的数字与道具，场内提示会带你完成操作。</p><button class="primary" data-tutorial-confirm>开始教学</button></div>`);
+ openDialog(`<div class="dialog-body tutorial-intro"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><h2>指尖上的博弈</h2><p>改变双手数值，形成手势组合，解锁不同能力。</p><div class="tutorial-goals"><b>清空对手 HP</b><span>或</span><b>九九归一</b></div><p>正式开局双方都是 [1] / [1]、99 HP。接下来模拟一段连续攻防：计算、对手行动、获得道具，再合成技能。最后演示两次归一的特殊胜利。</p><button class="primary" data-tutorial-confirm>开始教学</button></div>`);
 }
 function showSettings() {
   openDialog(`<div class="dialog-body settings-body"><button class="dialog-close" data-close aria-label="关闭设置">×</button><h2>声音设置</h2>${['music','effects'].map(k=>`<label class="volume-row">${k==='music'?'背景音乐':'游戏音效'}<output id="volume-${k}">${Math.round(audioSettings.values[k]*100)}%</output><input aria-label="${k==='music'?'背景音乐':'游戏音效'}" type="range" min="0" max="100" value="${Math.round(audioSettings.values[k]*100)}" data-volume="${k}"></label>`).join('')}<button class="primary" data-close>返回</button></div>`);
@@ -708,6 +723,7 @@ listen(app, "click", (e) => {
     if(tutorialAction==='tutorial-exit'){exitTutorial();return;}
     if(tutorialAction==='tutorial-retry'){nextTutorial(session.chapter);return;}
     if(tutorialAction==='tutorial-next'&&!busy){if(session.chapter===LESSONS.length-1)exitTutorial();else nextTutorial(session.chapter+1);return;}
+    if(tutorialAction==='tutorial-demo'&&!busy){send({type:'demo'});return;}
     if(tutorialAction==='online'){toast('先退出教学，再选择联机对战');return;}
   }
 
@@ -724,7 +740,10 @@ listen(app, "click", (e) => {
     return;
   }
   if(button.dataset.editName!==undefined){showNameEditor(Number(button.dataset.editName));return;}
-  if (button.dataset.forge) { send({type:"forge",weapon:button.dataset.forge}); return; }
+  if(button.id==='cancel-forge'){forgeUi.choice=null;forgeUi.hidden=true;render();return;}
+  if(button.id==='open-forge'){forgeUi.hidden=false;render();return;}
+  if(button.id==='confirm-forge'){if(forgeUi.choice)send({type:'forge',weapon:forgeUi.choice});return;}
+  if (button.dataset.forge) { forgeUi.choice=button.dataset.forge;render();return; }
   if (button.dataset.hand !== undefined) {
     const owner = Number(button.dataset.owner),
       hand = Number(button.dataset.hand);
@@ -866,7 +885,7 @@ const ticker = setInterval(() => {
   if(mode === "online") {
     const room=online.packet?.room;
     updateNetworkNotice();
-    if(room?.state){remaining=room.deadlineAt ? Math.max(0,Math.ceil((room.deadlineAt-Math.max(online.serverNow(),room.readyAt||0))/1000)):0;document.querySelector("#clock").textContent=online.status==="connected"?Math.ceil(remaining):"—";document.querySelector("#phase-time").classList.toggle("urgent",remaining<=5);
+    if(room?.state){remaining=room.deadlineAt ? Math.max(0,Math.ceil((room.deadlineAt-Math.max(online.serverNow(),room.readyAt||0))/1000)):0;document.querySelector("#clock").textContent=online.status==="connected"?Math.ceil(remaining):"—";updateClockWarning();
       const ready = online.status === 'connected' && online.serverNow() >= room.readyAt;
       if(!busy && !remotePending && ready !== renderedRemoteReady)render();}
     return;
@@ -874,9 +893,7 @@ const ticker = setInterval(() => {
   if (mode === "tutorial" || paused || busy || !started || !state || state.winner !== null) return;
   remaining = Math.max(0, (deadline - Date.now()) / 1000);
   document.querySelector("#clock").textContent = mode==="tutorial"?"∞":mode==="online"&&online.status!=="connected"?"—":Math.ceil(remaining);
-  document
-    .querySelector("#phase-time")
-    .classList.toggle("urgent", remaining <= 5);
+  updateClockWarning();
   if (remaining === 0)
     send(state.phase === "start" ? {type:"advance"} : {type:"end"});
 }, 200);

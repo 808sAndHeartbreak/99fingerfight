@@ -18,7 +18,7 @@ export const WEAPONS = Object.freeze([
   {"id": "dual", "recipe": [8, 8], "name": "双枪", "damage": 5, "detail": "连续 4 次各造成 5 点普通伤害，随后补满自己的道具"},
   {"id": "sniper", "recipe": [8, 8], "name": "狙击枪", "damage": 30, "detail": "造成 30 点真实伤害"},
   {"id": "taser", "recipe": [8, 8], "name": "泰瑟枪", "damage": 1, "detail": "造成 1 点普通伤害，跳过对手下 3 回合"},
-  {"id": "unify", "recipe": [9, 9], "name": "归一", "damage": 0, "detail": "双方双手归 [1]，清除自己的全部减益，获得一枚九；累计两枚立即获胜"},
+  {"id": "unify", "recipe": [9, 9], "name": "归一", "damage": 0, "detail": "双方双手归 [1]，清除自己的全部减益，记录使用次数；累计使用两次立即获胜"},
 ].map(w=>Object.freeze({...w,image:`ink-mono/${w.id}.webp`})));
 export const MAX_HP = 99;
 export const PROPS = Object.freeze({

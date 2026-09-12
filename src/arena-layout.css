@@ -107,3 +107,73 @@
  .game-shell .arena-center:has(.combat-cinema) .tutorial-guide { max-height:78px; }
  .game-shell .arena-center:has(.combat-cinema) .arena-actions { gap:6px; }
 }
+
+/* Match controls share the menu's ink, paper and vermilion visual language. */
+.game-shell .scoreboard { left:50%; right:auto; transform:translateX(-50%); width:94%; max-width:1100px; grid-template-columns:minmax(0,1fr) 140px minmax(0,1fr); gap:36px; }
+.game-shell .player { max-width:330px; border-radius:5px; padding:10px 14px 4px; }
+.game-shell .player.active { background:#e2e9f7; box-shadow:inset 4px 0 0 #315bd6; }
+.game-shell .player.red.active { background:#f8e4dd; box-shadow:inset -4px 0 0 #d94536; }
+.game-shell .player .status-strip:empty { min-height:12px; }
+.game-shell .round-block { padding:0; gap:4px; }
+.game-shell .round-block .phase-time { background:#172139; border:1px solid #fff4da; box-shadow:3px 4px 0 #13203825; color:#fff3d9; padding:6px 14px 3px; min-width:100px; border-radius:3px; }
+.game-shell .round-block .phase-time #clock { font-size:64px; }
+.game-shell .round-block .phase-time small { color:inherit; opacity:.65; }
+.game-shell .round-block .phase-time.warning { color:#ffd24e; border-color:#ffd24e; }
+.game-shell .round-block .phase-time.urgent { color:#ff6255; border-color:#ff6255; }
+.game-shell .field-items { top:calc(50% + 55px); bottom:auto; transform:translateY(-50%); height:270px; }
+.game-shell .notice-stack { top:180px; }
+.game-shell .turn-handoff { top:165px; }
+.game-shell .arena-actions #forge-options { background:#182238; border:1px solid #f3e7d2; border-radius:4px; padding:12px; box-shadow:5px 6px 0 #17213925; }
+.game-shell .arena-actions .forge-heading { display:flex!important; padding:0 0 8px; margin:0; border-bottom:1px solid #fff4d930; }
+.game-shell .forge-heading h2 { font-size:14px; }
+.game-shell #cancel-forge { color:#bfc8d9; font-size:11px; text-decoration:underline; padding:5px; background:transparent; box-shadow:none; border:0; }
+.game-shell .arena-actions .forge-choices button { background:#f4eedf; border:0; border-left:3px solid transparent; border-radius:2px; transition:background .15s,border-color .15s; }
+.game-shell .arena-actions .forge-choices button:hover { background:#fff8e6; border-left-color:#ed4839; }
+.game-shell .arena-actions #forge-options.confirming { display:flex; align-items:stretch; text-align:left; gap:8px; max-height:none; }
+.game-shell .forge-confirm-art { align-self:center; width:74px; height:74px; padding:7px; background:#fff3d9; transform:rotate(-5deg); box-shadow:4px 4px 0 #e94a39; margin:4px 0 8px; }
+.game-shell .forge-confirm-art .skill-icon { width:100%; height:100%; }
+.game-shell .forge-eyebrow { font-size:11px; color:#c3ccdc; }
+.game-shell #forge-options.confirming h2 { margin:0; color:#fff4d9; font-size:25px; font-weight:800; }
+.game-shell .forge-detail { margin:0; color:#fff4df; font-size:13px; line-height:1.6; }
+.game-shell .forge-note { margin:0; color:#b6c1d2; font-size:10px; line-height:1.5; }
+.game-shell .forge-buttons { display:flex; gap:10px; align-items:center; margin-top:4px; }
+.game-shell #confirm-forge { flex:1; padding:11px; font-size:15px; color:#fff6e3; background:#d94232; border:1px solid #f2a489; border-radius:2px; box-shadow:2px 3px 0 #080f20; }
+.game-shell #confirm-forge:hover { background:#f3533d; }
+.game-shell.is-tutorial .arena-actions { border-radius:4px; border-top:3px solid #1b2940; box-shadow:4px 5px 0 #17213916; }
+.nine-finale { background:radial-gradient(ellipse at center,#263750ed,#0c1426fa); backdrop-filter:blur(6px); }
+.nine-aura { border-radius:5px; border:1px solid #f3e6c845; rotate:45deg; background:linear-gradient(135deg,#fff1cc06,transparent); box-shadow:18px 18px 0 #e44a3320; }
+.nine-aura::before,.nine-aura::after { border-radius:2px; border-style:solid; }
+.nine-orbit>span,.nine-orbit>b { color:#fff1d3; font-family:MangaSans,'Noto Sans SC',sans-serif; font-weight:900; text-shadow:5px 6px 0 #d94c3a,10px 10px 0 #050c1d80; }
+.nine-content h2 { display:table; margin:4px auto 18px; padding:5px 25px 10px; color:#16223b; background:#fff0d0; font-family:MangaSans,sans-serif; font-style:italic; letter-spacing:.08em; box-shadow:8px 8px 0 #d64b38; }
+.nine-content p { font-size:20px; color:#fff1d3; font-weight:750; letter-spacing:.12em; }
+.nine-progress { gap:7px; margin-top:20px; }
+.nine-progress i { width:34px; height:5px; border-radius:0; background:#ffffff15; border:0; }
+.nine-progress i.lit { background:#f5dfab; }
+.nine-content footer { margin-top:20px; color:#d2d8e0; }
+@media(max-width:650px) {
+ .game-shell .scoreboard { width:calc(100% - 16px); max-width:none; gap:8px; grid-template-columns:minmax(0,1fr) 84px minmax(0,1fr); }
+ .game-shell .player { padding:8px 6px 3px; }
+ .game-shell .round-block .phase-time { min-width:72px; padding:7px 8px 2px; }
+ .game-shell .round-block .phase-time #clock { font-size:48px; }
+ .game-shell .round-block .round-caption { font-size:10px; }
+ .game-shell .field-items { height:230px; top:calc(50% + 45px); }
+ .game-shell .arena-center { top:calc(50% + 75px); }
+ .game-shell .arena-center .notice-stack { position:static; }
+ .game-shell .turn-handoff { top:155px; }
+ .game-shell .forge-confirm-art { width:50px; height:50px; margin:0 0 4px; }
+ .game-shell .arena-actions #forge-options.confirming { padding:10px; gap:6px; }
+ .game-shell #forge-options.confirming h2 { font-size:21px; }
+ .game-shell .forge-detail { font-size:11px; }
+ .game-shell.is-tutorial .arena-actions:has(.confirming) .tutorial-guide { display:none; }
+ .nine-content h2 { padding:7px 18px; font-size:36px; }
+ .nine-content p { font-size:18px; }
+}
+
+.game-shell .forge-choices button>span:not(.skill-icon) { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+@media(max-width:650px) {
+ .game-shell.is-tutorial .arena-actions #forge-options:not(.confirming) { max-height:170px; }
+ .game-shell .arena-actions #forge-options.confirming { display:grid; grid-template-columns:minmax(0,1fr) 46px; gap:7px 9px; }
+ .game-shell .confirming .forge-confirm-art { grid-column:2; grid-row:1/3; width:44px; height:44px; margin:0; }
+ .game-shell .confirming .forge-eyebrow,.game-shell .confirming h2 { grid-column:1; }
+ .game-shell .confirming .forge-detail,.game-shell .confirming .forge-note,.game-shell .confirming .forge-buttons { grid-column:1/-1; }
+}

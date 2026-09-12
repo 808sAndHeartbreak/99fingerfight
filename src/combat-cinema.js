@@ -51,7 +51,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
     const nine=id==='unify',won=nine&&next.winReason==='九九归一';
     if(nine) {
       const ritual=document.createElement('section');ritual.className=`nine-finale ${won?'complete':''}`;ritual.dataset.team=old.active;ritual.setAttribute('role','status');
-      ritual.innerHTML=`<div class="nine-aura"></div><div class="nine-content"><small>${escapeHtml(playerName(participants(),old.active))} · ${old.active?'红方':'蓝方'}</small><div class="nine-orbit"><span>九</span><span>九</span><b>一</b></div><h2>${won?'九九归一':'九印已凝成'}</h2><p>${won?'第二枚九印 · 直接获胜':'第一枚九印 · 再获得一枚即可获胜'}</p><div class="nine-progress"><i class="lit">九</i><i class="${won?'lit':''}">九</i></div><footer>${won?`${escapeHtml(playerName(participants(),old.active))} 获胜`:'双方双手归 [1]，施法者清除减益'}</footer></div>`;
+      ritual.innerHTML=`<div class="nine-aura"></div><div class="nine-content"><small>${escapeHtml(playerName(participants(),old.active))} · ${old.active?'红方':'蓝方'}</small><div class="nine-orbit"><span>九</span><span>九</span><b>一</b></div><h2>${won?'九九归一':'归一'}</h2><p>${won?'胜 利':'再次使用，即可获胜'}</p><div class="nine-progress"><i class="lit"></i><i class="${won?'lit':''}"></i></div><footer>${won?`${escapeHtml(playerName(participants(),old.active))} 获胜`:'双方双手归 [1]，施法者清除减益'}</footer></div>`;
       document.body.append(ritual);register(ritual);
       const duration=actionDuration(old,next,command),orb=ritual.querySelector('.nine-orbit');
       animate(ritual,[{opacity:0},{opacity:1}],{duration:300,fill:'both'});sound('charge',.7);

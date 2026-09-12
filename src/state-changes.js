@@ -1,5 +1,5 @@
 import {PROPS} from './catalog.js';
-export const STATUS_NAMES=Object.freeze({echo:'回响',mirror:'镜像',silenced:'沉默',skip:'跳过',seven:'七伤',dark:'玄冥',foam:'盾墙',knuckles:'指虎',peace:'和平',weak:'虚弱',poison:'中毒',wine:'酒',adrenaline:'肾上腺素',resilience:'坚韧',nine:'九印'});
+export const STATUS_NAMES=Object.freeze({echo:'回响',mirror:'镜像',silenced:'沉默',skip:'跳过',seven:'七伤',dark:'玄冥',foam:'盾墙',knuckles:'指虎',peace:'和平',weak:'虚弱',poison:'中毒',wine:'酒',adrenaline:'肾上腺素',resilience:'坚韧',nine:'归一次数'});
 export function stateChanges(old,next) {
  const changes=[];
  for(const owner of [0,1]) {
