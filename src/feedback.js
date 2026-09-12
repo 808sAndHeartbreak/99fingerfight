@@ -104,9 +104,12 @@ export function createFeedback() {
       for(const h of [0,1])if(old.players[owner].hands[h]===5 && p.hands[h]!==5){
         const hand=document.querySelector(`#hand-${owner}-${h}`),ghost=document.createElement('span');ghost.className='shield-break';ghost.setAttribute('aria-hidden','true');
         const pieces=['0,0 50,0 43,46 0,32','50,0 100,0 100,32 57,46','0,32 43,46 50,64 26,82 0,56','57,46 100,32 100,56 74,82 50,64','26,82 50,64 74,82 50,100'];
-        ghost.innerHTML=pieces.map(points=>`<svg viewBox="0 0 100 100"><polygon points="${points}"/></svg>`).join('');hand.append(ghost);nodes.add(ghost);
-        ghost.querySelectorAll('svg').forEach((piece,i)=>{const x=[-34,34,-45,45,0][i],y=[-24,-24,25,25,56][i];animate(piece,[{opacity:0,transform:'translate(0,0)'},{opacity:1,offset:.12},{opacity:1,transform:`translate(${x*.3}px,${y*.3}px) rotate(${(i-2)*4}deg)`,offset:.4},{opacity:0,transform:`translate(${x}px,${y}px) rotate(${(i-2)*15}deg)`}],{duration:1000,fill:'both'});});
-        animate(ghost,[{opacity:1},{opacity:1}],{duration:1050},true);
+        ghost.innerHTML=pieces.map(points=>`<svg viewBox="0 0 100 100"><polygon points="${points}"/></svg>`).join('');
+        ghost.dataset.owner=owner;ghost.dataset.hand=h;
+        if(hand.closest('.stage').dataset.renderer==='webgl'){ghost.style.left=hand.style.left;ghost.style.top=hand.style.top;hand.closest('.stage').append(ghost);}else hand.append(ghost);
+        nodes.add(ghost);
+        ghost.querySelectorAll('svg').forEach((piece,i)=>{const x=[-12,12,-18,18,0][i],y=[-10,-10,12,12,22][i];animate(piece,[{opacity:0,transform:'translate(0,0)'},{opacity:1,offset:.12},{opacity:1,transform:`translate(${x*.3}px,${y*.3}px) rotate(${(i-2)*4}deg)`,offset:.4},{opacity:0,transform:`translate(${x}px,${y}px) rotate(${(i-2)*15}deg)`}],{duration:650,fill:'both'});});
+        animate(ghost,[{opacity:1},{opacity:1}],{duration:700},true);
       }
       const delta = p.hp - old.players[owner].hp;
       if (!delta) return;

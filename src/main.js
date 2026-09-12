@@ -66,7 +66,7 @@ function updateClockWarning(){const el=document.querySelector('#phase-time'),sec
 const humanTurn = () => mode === "online" ? online?.packet?.room?.seat === state.active : mode === "local" || state.active === 0;
 const team = (id) => (id === 0 ? "蓝方" : "红方");
 const audioCache = new Map();
-const audioSettings=createAudioSettings(asset("music/pixel-afternoon-streets-8bit-loop.mp3"));
+const audioSettings=createAudioSettings(asset("music/pixel-afternoon-streets-seamless.mp3"));
 const battleSound=createBattleSound(()=>sound,audioSettings);
 let cinema, aiWorker, aiJob=0, aiDifficulty='advanced';
 function stopAI(){clearTimeout(aiTimer);aiJob++;aiWorker?.terminate();aiWorker=null;}
@@ -279,18 +279,7 @@ function render(preserveInfo=false) {
       return id ? `<div class="prop-slot ${mine&&selected?.kind==='prop'&&selected.slot===slot?'selected':''}"><button class="prop-use" ${mine?`data-prop="${slot}"`:'data-info-only'} data-info="prop:${id}:${owner}" aria-disabled="${!usable || !propCommands(state).some(c=>c.slot===slot)}" aria-label="${mine?'使用':'查看'}${PROPS[id].name}">${propArt(id)}<b>${PROPS[id].name}</b></button>${mine&&selected?.kind==='prop'&&selected.slot===slot&&PROPS[id].target!=='hand'?`<button class="prop-confirm" id="use-prop" ${usable?'':'disabled'}>确认使用</button>`:''}</div>` : '<div class="prop-slot empty" aria-label="空道具位"><span>＋</span></div>';
     }).join('');
   }
-  const shelf=document.querySelector('#recipe-shelf');
-  if(mode==='tutorial')referencePage='skills';
-  if(shelf.dataset.page!==referencePage){shelf.innerHTML='';shelf.dataset.page=referencePage;}
-  document.querySelector('#reference-toggle').hidden=mode==='tutorial';
-  document.querySelector('#reference-toggle').textContent=referencePage==='skills'?'道具 ⇄':'配方 ⇄';
-  document.querySelector('#reference-toggle').setAttribute('aria-label',referencePage==='skills'?'查看道具大全':'查看技能配方');
-  if(referencePage==='items'&&!shelf.children.length)shelf.innerHTML=Object.entries(PROPS).map(([id,item])=>`<button class="reference-item" data-info="prop:${id}:${state.active}" data-info-only aria-label="查看${item.name}">${img(item.image)}<span>${item.name}</span></button>`).join('');
-  if(referencePage==='items')for(const el of shelf.children)el.dataset.info=`prop:${el.dataset.info.split(':')[1]}:${state.active}`;
-  if(referencePage==='skills'&&!shelf.children.length)shelf.innerHTML=`<div class="reference-recipe shield-reference" role="button" tabindex="0" data-info="shield:0" aria-label="5 护盾"><b>[5]</b></div>`+[5,0,2,4,6,7,8,9].map(n=>{
-    return `<div class="reference-recipe" role="button" tabindex="0" data-number="${n}" data-info="recipe:${n}" aria-label="${n} 加 ${n} 配方"><b>[${n}] + [${n}]</b></div>`;
-  }).join('');
-  for(const el of shelf.querySelectorAll('.reference-recipe')){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',!p.hands.every(v=>v===n)&&p.hands.includes(n));}
+  renderReference();
   document.querySelector("#primary-actions").innerHTML = `${selected?.kind==='prop' ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"}</button>` : ""}`;
   if(forgeAvailable && forgeUi.hidden)document.querySelector('#primary-actions').insertAdjacentHTML('afterbegin','<button id="open-forge">合成技能</button>');
   const endButton=document.querySelector('#end-turn');
@@ -310,6 +299,41 @@ function render(preserveInfo=false) {
 
   renderTutorial();
   stage?.sync(state, selected, enabled, busy);
+}
+const referencePages=new WeakMap();
+let referenceTurning=false;
+function renderReference(){
+  const p=state.players[state.active];
+  const shelf=document.querySelector('#recipe-shelf');
+  if(mode==='tutorial')referencePage='skills';
+  let pages=referencePages.get(shelf);if(!pages){pages={};referencePages.set(shelf,pages);}
+  if(shelf.dataset.page!==referencePage){
+    if(shelf.dataset.page)pages[shelf.dataset.page]={nodes:[...shelf.children],scroll:shelf.scrollLeft};
+    shelf.replaceChildren(...(pages[referencePage]?.nodes||[]));shelf.dataset.page=referencePage;shelf.scrollLeft=pages[referencePage]?.scroll||0;
+  }
+  document.querySelector('#reference-toggle').hidden=mode==='tutorial';
+  document.querySelector('#reference-toggle').textContent=referencePage==='skills'?'道具 ⇄':'配方 ⇄';
+  document.querySelector('#reference-toggle').setAttribute('aria-label',referencePage==='skills'?'查看道具大全':'查看技能配方');
+  if(referencePage==='items'&&!shelf.children.length)shelf.innerHTML=Object.entries(PROPS).map(([id,item])=>`<button class="reference-item" data-info="prop:${id}:${state.active}" data-info-only aria-label="查看${item.name}">${img(item.image)}<span>${item.name}</span></button>`).join('');
+  if(referencePage==='items')for(const el of shelf.children)el.dataset.info=`prop:${el.dataset.info.split(':')[1]}:${state.active}`;
+  if(referencePage==='skills'&&!shelf.children.length)shelf.innerHTML=`<div class="reference-recipe shield-reference" role="button" tabindex="0" data-info="shield:0" aria-label="5 护盾"><b>[5]</b></div>`+[5,0,2,4,6,7,8,9].map(n=>{
+    return `<div class="reference-recipe" role="button" tabindex="0" data-number="${n}" data-info="recipe:${n}" aria-label="${n} 加 ${n} 配方"><b>[${n}] + [${n}]</b></div>`;
+  }).join('');
+  for(const el of shelf.querySelectorAll('.reference-recipe')){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',!p.hands.every(v=>v===n)&&p.hands.includes(n));}
+}
+async function turnReference(){
+  if(referenceTurning)return;referenceTurning=true;info.hide();
+  const shelf=document.querySelector('#recipe-shelf'),direction=referencePage==='skills'?1:-1;
+  shelf.setAttribute('aria-busy','true');
+  const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  battleSound.play('page',.45);
+  try{
+    if(!reduced)await shelf.animate([{opacity:1,transform:'translateX(0)'},{opacity:.4,transform:`translateX(${-direction*12}px)`}],{duration:100,easing:'ease-in',fill:'forwards'}).finished;
+    if(!shelf.isConnected)return;
+    referencePage=referencePage==='skills'?'items':'skills';renderReference();
+    shelf.getAnimations().forEach(a=>a.cancel());
+    if(!reduced)await shelf.animate([{opacity:.4,transform:`translateX(${direction*12}px)`},{opacity:1,transform:'translateX(0)'}],{duration:180,easing:'ease-out'}).finished;
+  }catch{}finally{shelf.getAnimations().forEach(a=>a.cancel());shelf.removeAttribute('aria-busy');referenceTurning=false;}
 }
 function showTutorialNote(){
   const done=session.done,g=session.guide;
@@ -756,7 +780,7 @@ info = setupInfo(app, () => state, asset, participants, () => mode === "online",
   render(true);scheduleAI();
 },()=>{if(mode==='tutorial')scheduleAI();});
 listen(app, "click", (e) => {
-  if(e.target.closest('#reference-toggle')){info.hide();referencePage=referencePage==='skills'?'items':'skills';battleSound.play('inspect',.5);render();return;}
+  if(e.target.closest('#reference-toggle')){turnReference();return;}
   const tutorialAction=e.target.closest('button')?.id;
   if(mode==='tutorial') {
     if(tutorialAction==='tutorial-exit'){exitTutorial();return;}
@@ -946,6 +970,7 @@ try {
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
       el.style.setProperty("--hand-scale", scale);
+      for(const shard of el.closest(".stage").querySelectorAll(`.shield-break[data-owner="${owner}"][data-hand="${hand}"]`)){shard.style.left=`${x}px`;shard.style.top=`${y}px`;}
     },
   );
   document.querySelector("#render-status").textContent = "3D 对战场";

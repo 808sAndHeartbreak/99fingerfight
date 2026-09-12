@@ -57,7 +57,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
       const duration=actionDuration(old,next,command),orb=ritual.querySelector('.taiji');
       animate(ritual,[{opacity:0},{opacity:1}],{duration:300,fill:'both'});sound('charge',.7);
       animate(orb,[{opacity:0,transform:'scale(.8) rotate(-30deg)'},{opacity:1,transform:'scale(1) rotate(0deg)'}],{duration:750,fill:'both',easing:'ease-out'});
-      animate(ritual.querySelector(won?'.taiji-half.second':'.taiji-half.first'),[{fill:'#1c2943'},{fill:won?'#e94936':'#fff0ce'}],{duration:1500,delay:100,fill:'both',easing:'ease-in-out'});
+      animate(ritual.querySelector(won?'.taiji-half.second':'.taiji-half.first'),[{fill:'#1c2943'},{fill:old.active===0?(won?'#9bbcff':'#578dff'):(won?'#ffb1a5':'#f36c5b')}],{duration:1500,delay:100,fill:'both',easing:'ease-in-out'});
       if(!await wait(ritual,1700))return false;
       onBeat({type:'settle',preserveActorHands:true});sound('nine',.8);
       ritual.classList.add('resolved');

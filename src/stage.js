@@ -158,7 +158,9 @@ export class DuelStage {
   sync(state, selected, enabled = true, presenting = false) {
     this.pointerLeave?.();
       this.state = state;this.presenting=presenting;
-      this.ink.uniforms.uActive.value=state.winner==null?state.active:-1;
+      if(this.activeTeam===undefined)this.ink.uniforms.uActive.value=state.active;
+      this.activeTeam=state.active;
+      this.activeGlow=state.winner===null?1:0;
     this.selection = selected;
     this.hands.forEach((h) => {
       const p = state.players[h.owner];
@@ -377,7 +379,10 @@ export class DuelStage {
   frame(now) {
     this.raf = requestAnimationFrame(this.frame);
     const elapsed = Math.max(0, (now - this.last) / 1000);
-    const dt = Math.min(0.05, elapsed);
+      const dt = Math.min(0.05, elapsed);
+      const blend=this.reduced.matches?1:1-Math.exp(-dt*5);
+      this.ink.uniforms.uActive.value+=((this.activeTeam??0)-this.ink.uniforms.uActive.value)*blend;
+      this.ink.uniforms.uActiveAlpha.value+=((this.activeGlow??0)-this.ink.uniforms.uActiveAlpha.value)*blend;
     this.last = now;
     if (this.failed || document.hidden) return;
     if (!this.paused) {
