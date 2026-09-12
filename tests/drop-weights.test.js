@@ -6,11 +6,11 @@ import {createGame, applyCommand} from '../src/engine.js';
 test('each A/B/C item has exact 4/2/1 ticket weight, with no missing items', () => {
   const counts=Object.fromEntries(PROP_IDS.map(id=>[id,0]));
   for(let ticket=0;ticket<PROP_WEIGHT_TOTAL;ticket++)counts[propForTicket(ticket)]++;
-  assert.equal(PROP_WEIGHT_TOTAL,33);
+  assert.equal(PROP_WEIGHT_TOTAL,31);
   assert.deepEqual(counts,PROP_WEIGHTS);
   for(const id of ['add','sub','double'])assert.equal(counts[id],4);
   for(const id of ['grace','greed','boon'])assert.equal(counts[id],1);
-  assert.throws(()=>propForTicket(-1));assert.throws(()=>propForTicket(33));
+  assert.throws(()=>propForTicket(-1));assert.throws(()=>propForTicket(31));
 });
 
 test('weighted repeated draws are deterministic, inventory capped, input immutable', () => {

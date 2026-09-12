@@ -9,6 +9,7 @@ export function createInkStage() {
     uAspect: { value: 1 },
     uCenter: { value: new THREE.Vector2(0.5, 0.5) },
     uTeam: { value: 0 },
+    uActive: { value: -1 },
     uSkill: { value: 0 }, uPulse: { value: 0 },
   };
   const material = new THREE.ShaderMaterial({
@@ -20,7 +21,7 @@ export function createInkStage() {
       "varying vec2 vUv; void main(){vUv=uv;gl_Position=vec4(position.xy, .999, 1.);}",
     fragmentShader: `
       varying vec2 vUv;
-      uniform float uTime, uFocus, uImpact, uAspect, uTeam, uSkill, uPulse;
+      uniform float uTime, uFocus, uImpact, uAspect, uTeam, uSkill, uPulse, uActive;
       uniform vec2 uCenter;
       float hash(float n){return fract(sin(n*127.1)*43758.5453);}
       void main(){
@@ -47,6 +48,9 @@ export function createInkStage() {
         vec3 surface=mix(vec3(.105,.125,.235),ink,vignette*.72)+grain*.006;
         surface=mix(surface,vec3(.16,.25,.55),blueGlow*.35);
         surface=mix(surface,vec3(.39,.12,.24),redGlow*.25);
+        float activeX=mix(.26,.74,clamp(uActive,0.,1.));
+        float backing=(1.-smoothstep(.15,.24,abs(vUv.x-activeX)))*(1.-smoothstep(.38,.49,abs(vUv.y-.5)))*step(-.5,uActive);
+        surface=mix(surface,mix(vec3(.36,.49,.72),vec3(.65,.35,.37),clamp(uActive,0.,1.)),backing*.25);
         float printDots=(1.-smoothstep(.08,.16,length(cell)))*smoothstep(.28,.7,r);
         surface+=printDots*.013;
         vec3 col=mix(surface,team,wash);

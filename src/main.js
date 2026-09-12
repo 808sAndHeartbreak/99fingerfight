@@ -6,7 +6,7 @@ import { createBattleSound } from "./battle-sound.js";
 import { TutorialSession, LESSONS } from "./tutorial.js";
 import { menuMarkup } from "./menu.js";
 import { OnlineClient, onlineMarkup } from "./online.js";
-import { synthesisOptions, supplyIn, hasTurnOptions, canEndTurn, propCommands } from "./engine.js";
+import { synthesisOptions, supplyIn, hasTurnOptions, canEndTurn, emptyTurnPenalty, propCommands } from "./engine.js";
 import { playerName, escapeHtml, shortName } from "./identity.js";
 import { phaseCue, turnSeconds, TURN_SECONDS } from "./phase-cue.js";
 import "./style.css";
@@ -19,6 +19,7 @@ import "./event-ui.css";
 import "./arena-layout.css";
 import "./arena-poster.css";
 import "./scene-ui.css";
+import "./interaction-ui.css";
 import { WEAPONS, PROPS, MAX_HP, weaponById } from "./catalog.js";
 import { LocalSession } from "./session.js";
 import { chooseCommand, AI_LEVELS } from "./ai.js";
@@ -59,6 +60,7 @@ const participants = () => session?.getParticipants() || [];
 const name = (seat) => escapeHtml(playerName(participants(), seat));
 let renderedRemoteReady = false;
 let online, remoteMatch = null, remoteQueue = [], remoteApplying = false;
+let referencePage='skills';
 let forgeUi={key:'',choice:null,hidden:false};
 function updateClockWarning(){const el=document.querySelector('#phase-time'),seconds=Math.ceil(remaining);el.classList.toggle('warning',mode!=='tutorial' && seconds>=6 && seconds<=10);el.classList.toggle('urgent',mode!=='tutorial' && seconds<=5);}
 const humanTurn = () => mode === "online" ? online?.packet?.room?.seat === state.active : mode === "local" || state.active === 0;
@@ -100,10 +102,10 @@ app.innerHTML = `<main class="game-shell">
     <div id="combat-callout" class="combat-callout" aria-live="polite"></div>
     <div class="field-note" aria-hidden="true"></div>
     <div id="items-0" class="field-items blue" aria-label="蓝方道具"></div><div id="items-1" class="field-items red" aria-label="红方道具"></div>
-    <div class="arena-center"><section class="arena-actions" aria-label="当前操作"><div class="turn-instruction"><h1 id="instruction" aria-live="polite"></h1></div><section id="tutorial-guide" class="tutorial-guide" hidden aria-label="新手教学"></section><div id="primary-actions" class="primary-actions"></div><button id="end-turn" class="end-turn">结束回合</button></section></div>
+    <div class="arena-center"><section class="arena-actions" aria-label="当前操作"><div class="turn-instruction"><h1 id="instruction" aria-live="polite"></h1></div><section id="tutorial-guide" class="tutorial-guide" hidden aria-label="新手教学"></section><div id="primary-actions" class="primary-actions"></div><button id="end-turn" class="end-turn">结束回合</button><small id="end-penalty" hidden></small></section></div>
     <section id="forge-options" class="forge-options" hidden aria-label="合成选项"></section>
   </section>
-  <section class="reference-deck" aria-label="常驻组合图鉴"><nav class="hud-tools" aria-label="游戏工具"><button id="history">对局记录</button><button id="menu">菜单 ☰</button></nav><span id="render-status" hidden></span><div id="recipe-shelf" class="recipe-shelf" tabindex="0" aria-label="横向滚动查看组合"></div></section>
+  <section class="reference-deck" aria-label="常驻组合图鉴"><nav class="hud-tools" aria-label="游戏工具"><button id="history">对局记录</button><button id="menu">菜单 ☰</button></nav><button id="reference-toggle" aria-label="查看道具大全" title="切换技能配方 / 道具大全">道具 ⇄</button><span id="render-status" hidden></span><div id="recipe-shelf" class="recipe-shelf" tabindex="0" aria-label="横向滚动查看组合"></div></section>
 </main><div id="menu-backdrop" class="game-menu menu-backdrop" aria-hidden="true" inert>${menuMarkup("home")}</div><dialog id="dialog"></dialog><aside id="info-popover" role="tooltip" hidden></aside><div id="toast" class="toast" role="status"></div>`;
 
 document.querySelector('#recipe-shelf').addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)&&event.target.matches('.reference-recipe')){event.preventDefault();event.target.click();}},{signal:listeners.signal});
@@ -150,10 +152,10 @@ function renderPlayer(owner) {
     active = state.active === owner && state.winner === null;
   const presence=mode==="online" ? participants().find(x=>x.seat===owner) : null;
   const presenceText=presence ? presence.departed?"已离开":online.status!=="connected"?(owner===online.packet.room.seat?"重连中":"待同步"):presence.connected?"在线":"已断线" : "";
-  const statusIcons={echo:'echo',mirror:'mirror',silenced:'silence',skip:'taser',seven:'seven',dark:'dark',foam:'foam',knuckles:'knuckles',peace:'peace',weak:'serpent',poison:'serpent',wine:'wine',adrenaline:'adrenaline',resilience:'resilience',nine:'nine-seal'};
+  const statusIcons={echo:'echo',mirror:'mirror',silenced:'silence',skip:'taser',seven:'seven',dark:'dark',foam:'foam',knuckles:'knuckles',peace:'peace',weak:'serpent',poison:'serpent',wine:'wine',resilience:'resilience',nine:'nine-seal'};
   const statuses=Object.keys(statusIcons).filter(key=>p[key]).map(key=>{
     const d=describe(`status:${key}:${owner}`,state);
-    const count=({skip:p.skip,seven:p.seven,dark:'∞',foam:p.foam,knuckles:`+${p.knuckles*10}`,peace:p.peace,weak:`弱${p.weak}`,poison:`毒${p.poison}`,wine:`+${p.wine*10}`,adrenaline:p.adrenaline,resilience:p.resilience,nine:`${p.nine}/2`})[key];
+    const count=({skip:p.skip,seven:p.seven,dark:'∞',foam:p.foam,knuckles:`+${p.knuckles*10}`,peace:p.peace,weak:`弱${p.weak}`,poison:`毒${p.poison}`,wine:`+${p.wine*10}`,resilience:p.resilience,nine:`${p.nine}/2`})[key];
     return `<button class="status-icon" data-info="status:${key}:${owner}" data-info-only aria-label="${d.title}，${d.stats[0][1]}">${img(`ink-mono/${statusIcons[key]}.webp`)}${count!==undefined?`<b class="status-count">${count}</b>`:''}</button>`;
   }).join('');
   const mine=mode==='online'?owner===online.packet.room.seat:mode==='local'?owner===state.active:owner===0;
@@ -245,6 +247,7 @@ function render(preserveInfo=false) {
   document.querySelector("#phase-label").textContent=state.winner!==null?'对局结束':`${team(state.active)}的回合`;
   document.querySelector('#turn-arrow').textContent=state.active?'→':'←';
   document.querySelector('.round-block').dataset.team=state.active;
+  document.querySelector('#stage').dataset.active=state.winner===null?state.active:'';
   document.querySelector('#turn-arrow').hidden=state.winner!==null;
   const guide = mode==="online"&&online.status!=="connected"&&state.winner===null ? {title:"正在恢复对局",detail:"连接恢复后继续操作",step:"waiting"} : guidance(state, selected, humanTurn(), busy);
   if(mode==="online" && online.status==="connected" && !busy && !renderedRemoteReady && state.winner===null) Object.assign(guide,{title:"",detail:"",step:"waiting"});
@@ -277,19 +280,29 @@ function render(preserveInfo=false) {
     }).join('');
   }
   const shelf=document.querySelector('#recipe-shelf');
-  if(!shelf.children.length)shelf.innerHTML=`<div class="reference-recipe shield-reference" role="button" tabindex="0" data-info="shield:0" aria-label="5 护盾"><b>[5]</b></div>`+[5,0,2,4,6,7,8,9].map(n=>{
+  if(mode==='tutorial')referencePage='skills';
+  if(shelf.dataset.page!==referencePage){shelf.innerHTML='';shelf.dataset.page=referencePage;}
+  document.querySelector('#reference-toggle').hidden=mode==='tutorial';
+  document.querySelector('#reference-toggle').textContent=referencePage==='skills'?'道具 ⇄':'配方 ⇄';
+  document.querySelector('#reference-toggle').setAttribute('aria-label',referencePage==='skills'?'查看道具大全':'查看技能配方');
+  if(referencePage==='items'&&!shelf.children.length)shelf.innerHTML=Object.entries(PROPS).map(([id,item])=>`<button class="reference-item" data-info="prop:${id}:${state.active}" data-info-only aria-label="查看${item.name}">${img(item.image)}<span>${item.name}</span></button>`).join('');
+  if(referencePage==='items')for(const el of shelf.children)el.dataset.info=`prop:${el.dataset.info.split(':')[1]}:${state.active}`;
+  if(referencePage==='skills'&&!shelf.children.length)shelf.innerHTML=`<div class="reference-recipe shield-reference" role="button" tabindex="0" data-info="shield:0" aria-label="5 护盾"><b>[5]</b></div>`+[5,0,2,4,6,7,8,9].map(n=>{
     return `<div class="reference-recipe" role="button" tabindex="0" data-number="${n}" data-info="recipe:${n}" aria-label="${n} 加 ${n} 配方"><b>[${n}] + [${n}]</b></div>`;
   }).join('');
-  for(const el of shelf.children){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',!p.hands.every(v=>v===n)&&p.hands.includes(n));}
+  for(const el of shelf.querySelectorAll('.reference-recipe')){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',!p.hands.every(v=>v===n)&&p.hands.includes(n));}
   document.querySelector("#primary-actions").innerHTML = `${selected?.kind==='prop' ? '<button class="cancel-action" id="cancel">取消选择</button>' : ""}${state.winner !== null ? `<button class="primary" id="${mode === "online" ? "online" : "again"}">${mode === "online" ? "返回房间" : "再战一局"}</button>` : ""}`;
   if(forgeAvailable && forgeUi.hidden)document.querySelector('#primary-actions').insertAdjacentHTML('afterbegin','<button id="open-forge">合成技能</button>');
   const endButton=document.querySelector('#end-turn');
   endButton.hidden=state.winner!==null;
   endButton.disabled=!enabled || !canEndTurn(state) || (mode==='tutorial' && (session.guide?.command.type!=='end' || !session.canProceed));
-  endButton.classList.toggle('recommended',!endButton.disabled && state.calculated);
+  endButton.classList.toggle('recommended',!endButton.disabled && (state.calculated||state.acted));
   endButton.classList.toggle('urgent',!endButton.disabled && !hasTurnOptions(state));
-  endButton.textContent='结束回合';
-  endButton.setAttribute('aria-label',!state.calculated?'结束回合，本回合尚未计算':!hasTurnOptions(state)?'结束回合，没有其他可用操作':'结束回合');
+  const penalty=emptyTurnPenalty(state);
+  endButton.textContent=penalty?'结束回合 · −10 HP':'结束回合';
+  document.querySelector('#end-penalty').hidden=!penalty||endButton.disabled||state.winner!==null;
+  document.querySelector('#end-penalty').textContent='惩罚：未进行任何的计算和合成操作';
+  endButton.setAttribute('aria-label',penalty?'结束回合，空过扣除 10 HP':!state.calculated?'结束回合，本回合尚未计算':!hasTurnOptions(state)?'结束回合，没有其他可用操作':'结束回合');
   document.querySelector('.game-shell').classList.toggle('needs-calculation',enabled && state.phase==='action' && !state.calculated && !p.weapon && !selected && (mode!=='tutorial' || session.guide?.command.type==='add'));
 
   document.querySelector(".game-shell").classList.toggle("is-busy", busy);
@@ -743,6 +756,7 @@ info = setupInfo(app, () => state, asset, participants, () => mode === "online",
   render(true);scheduleAI();
 },()=>{if(mode==='tutorial')scheduleAI();});
 listen(app, "click", (e) => {
+  if(e.target.closest('#reference-toggle')){info.hide();referencePage=referencePage==='skills'?'items':'skills';battleSound.play('inspect',.5);render();return;}
   const tutorialAction=e.target.closest('button')?.id;
   if(mode==='tutorial') {
     if(tutorialAction==='tutorial-exit'){exitTutorial();return;}

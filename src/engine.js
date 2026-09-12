@@ -1,7 +1,7 @@
 import {effectDetail,defenseDetail} from "./effect-copy.js";
 import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
-export const RULES_VERSION = 13;
+export const RULES_VERSION = 14;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -59,7 +59,7 @@ export function createGame(seed = 1) {
       echo:false,
       mirror:false,
       silenced:false,
-      skip:0, skippedTurns:0, resilience:0, resilienceSince:0, seven:0, dark:false, foam:0, knuckles:0, peace:0, peaceSince:0, wine:0, adrenaline:0, adrenalineSince:0, weak:0, poison:0, nine:0,
+      skip:0, skippedTurns:0, resilience:0, resilienceSince:0, seven:0, dark:false, foam:0, knuckles:0, peace:0, peaceSince:0, wine:0, weak:0, poison:0, nine:0,
       hands: [1, 1],
       locks: [false, false],
       props: [],
@@ -70,6 +70,7 @@ export function createGame(seed = 1) {
   begin(s);
   return s;
 }
+export const emptyTurnPenalty = s => !s.calculated && !s.acted ? Math.min(10,s.players[s.active].hp) : 0;
 export const synthesisOptions = s => matchingWeapons(s.players[s.active].hands);
 export function touchCommands(s) {
   return [0,1].flatMap(hand => [0,1].flatMap(targetHand => !s.players[s.active].locks[hand] && !s.players[1-s.active].locks[targetHand] ? [{type:"add",hand,targetHand}] : []));
@@ -95,8 +96,7 @@ function randomInt(s, count) {
 function damage(s, owner, amount, trueDamage, source) {
   if(s.winner !== null) return;
   const target=s.players[owner];
-  amount=Math.max(0,amount+(s.players[1-owner].adrenaline>0?5:0));
-  let value=Math.max(0,amount-(target.adrenaline>0?5:0)),blocked=amount>0&&value===0?"肾上腺素":null;
+  let value=Math.max(0,amount),blocked=null;
   if(value>0 && target.peace>0) {value=0;blocked="和平";}
   else if(value>0 && !trueDamage) {
     if(target.hands.every(n=>n===5)) {value=0;blocked="绝对防御";}
@@ -120,7 +120,6 @@ function endTurn(s, skipped=false) {
   }
   if(ending.peace>0 && ending.turns>ending.peaceSince) ending.peace--;
   if(ending.weak>0) ending.weak--;
-  if(ending.adrenaline>0 && ending.turns>ending.adrenalineSince) ending.adrenaline--;
   s.players[s.active].locks = [false, false];
   s.players[s.active].echo=false;s.players[s.active].mirror=false;s.players[s.active].silenced=false;
   checkWinner(s);
@@ -155,8 +154,10 @@ export function applyCommand(state, command) {
     // Trusted reducer also records clock expiry. Manual callers must use canEndTurn.
     case "end":
       assert(s.phase === "action" && !p.weapon, "当前不能结束回合");
+      const penalty=emptyTurnPenalty(s);
+      if(penalty){p.hp-=penalty;s.events.push({type:"damage",owner:s.active,amount:penalty,raw:10,trueDamage:true,source:"空过惩罚",blocked:null,hands:[...p.hands],foam:p.foam});log(s,`${name(s.active)}未计算或合成，空过惩罚扣除 ${penalty} HP。`);checkWinner(s);}
       log(s, `${name(s.active)}结束回合。`);
-      endTurn(s);
+      if(s.winner===null)endTurn(s);
       break;
     case "forge": {
       assert(s.phase === "action" && !p.weapon, "当前不能合成技能");
@@ -207,7 +208,6 @@ export function applyCommand(state, command) {
       else if(id==="mirror")p.mirror=true;
       else if(id==="silence")enemy.silenced=true;
       else if(id==="wine")p.wine++;
-      else if(id==="adrenaline"){if(!p.adrenaline)p.adrenalineSince=p.turns;p.adrenaline+=3;if(!p.resilience)endTurn(s,true);}
       else if(id==="balance") {
         const counts=s.players.map(player=>player.props.length);
         s.players.forEach(player=>player.props=[]);
@@ -251,7 +251,7 @@ export function applyCommand(state, command) {
           if(enemy.peace>0){if(!p.peace)p.peaceSince=p.turns;p.peace+=enemy.peace;enemy.peace=0;}
           p.wine+=enemy.wine;enemy.wine=0;
           if(enemy.resilience>0){if(!p.resilience)p.resilienceSince=p.turns;p.resilience+=enemy.resilience;enemy.resilience=0;p.skip=0;p.skippedTurns=0;}
-          if(enemy.adrenaline>0){if(!p.adrenaline)p.adrenalineSince=p.turns;p.adrenaline+=enemy.adrenaline;enemy.adrenaline=0;}}
+        }
         if(id==="unify") {
           p.hands=[1,1];enemy.hands=[1,1];p.nine++;
           p.locks=[false,false];p.silenced=false;p.skip=0;p.seven=0;p.dark=false;p.weak=0;p.poison=0;

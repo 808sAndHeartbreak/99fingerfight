@@ -197,3 +197,11 @@ test('manual early end is accepted without a timeout flag; server timeout still 
  assert.equal(r.state.active,1);
  r.readyAt=0;x.h.tick();r.readyAt=0;r.deadlineAt=0;x.h.tick();assert.equal(r.state.active,0);
 });
+
+test('timeout empty turn penalty resolves once and protects next turn presentation',()=>{
+ const x=harness();x.ready();const r=x.room(),before=r.state.players[0].hp;x.tick(31000);
+ assert.equal(r.state.players[0].hp,before-10);assert.equal(r.state.active,1);
+ const revision=r.state.revision;x.tick(1);assert.equal(r.state.revision,revision);
+ x.tick(5000);assert.equal(r.state.phase,'action');assert.equal(r.state.players[0].hp,before-10);
+ assert.equal(r.deadlineAt-r.readyAt,30000);
+});

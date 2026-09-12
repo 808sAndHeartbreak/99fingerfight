@@ -1,0 +1,60 @@
+/* Preview is quiet; confirmed selection keeps the stronger hand outline. */
+.game-shell .hand-hotspot.hand-hover:not(.selected) .hand-value { background:#ffdf98; box-shadow:0 0 0 2px #fff1c477; }
+.game-shell .hand-hotspot.hand-hover:not(.selected) .fallback-hand { filter:brightness(1.12); }
+.game-shell :is(button,[role=button]):not(:disabled):focus-visible { outline:3px solid #ffcd61; outline-offset:3px; }
+.game-shell .reference-item:hover,.game-shell #reference-toggle:hover { background:#344361; border-color:#fff2d8; }
+.game-shell .stage::before { content:''; position:absolute; top:4%; bottom:4%; left:3%; width:44%; background:linear-gradient(115deg,#91b4ff16,#b6d0ff09); border:1px solid #b5d1ff26; clip-path:polygon(2% 0,100% 3%,97% 100%,0 96%); transition:left .5s ease,background .5s; pointer-events:none; }
+.game-shell .stage[data-active='1']::before { left:53%; background:linear-gradient(245deg,#ffb2a71a,#ffcbb909); border-color:#ffd0c126; }
+.game-shell .stage[data-active='']::before { display:none; }
+.game-shell .supply-dots { display:flex; gap:8px; align-items:center; justify-content:center; min-height:22px; padding:4px; }
+.game-shell .supply-dots i { display:block; width:13px; height:13px; border-radius:50%; border:2px solid #aab5c9; background:#24334c; opacity:1; }
+.game-shell .field-items.blue .supply-dots i.filled { background:#6098ff; border-color:#b5d4ff; box-shadow:0 0 9px #4986ff90; }
+.game-shell .field-items.red .supply-dots i.filled { background:#ff705d; border-color:#ffc2aa; box-shadow:0 0 9px #f5604990; }
+.game-shell .reference-deck { gap:16px; }
+.game-shell #reference-toggle { flex:0 0 auto; width:64px; padding:10px 6px; background:#18233b; border:1px solid #a1aec6; color:#fff0ce; font-size:13px; border-radius:0; min-height:44px; }
+.game-shell .recipe-shelf[data-page='items'] { justify-content:flex-start; gap:12px; }
+.game-shell .reference-item { display:flex; flex:0 0 70px; flex-direction:column; align-items:center; gap:5px; padding:6px; min-width:0; border:1px solid #6e7b963d; border-radius:0; background:#151f34; color:#fff0ce; }
+.game-shell .reference-item img { width:35px; height:35px; object-fit:contain; background:#fff0d4; padding:2px; }
+.game-shell .reference-item span { font:11px/1.3 'Microsoft YaHei',sans-serif; white-space:nowrap; }
+.game-shell #end-penalty { display:block; max-width:290px; margin:9px auto 0; color:#f6bf9e; font:12px/1.6 'Microsoft YaHei',sans-serif; }
+.game-shell #end-penalty[hidden] { display:none; }
+.game-shell .tutorial-guide p { white-space:pre-line; }
+@media(max-height:540px) and (orientation:landscape) {
+ .game-shell { min-height:100svh; }
+ .game-shell .duel,.game-shell.is-tutorial .duel { min-height:0; }
+ .game-shell,.game-shell.is-tutorial { height:100svh; }
+ .game-shell .scoreboard { top:8px; padding:0 6%; }
+ .game-shell .scoreboard .player { height:65px; min-height:0; padding:5px 14px; }
+ .game-shell .player .player-head { height:39px; }
+ .game-shell .round-block .round-caption { font-size:9px; }
+ .game-shell .round-block .round-caption b { font-size:18px; }
+ .game-shell .turn-arrow { font-size:20px; }
+ .game-shell .player .health-number { font-size:27px; }
+ .game-shell .player .hp-bar { height:6px; margin-top:4px; }
+ .game-shell .round-block .phase-time #clock { font-size:36px; }
+ .game-shell .round-block .phase-time { min-width:52px; padding:1px 5px; }
+ .game-shell .stage { top:76px; bottom:5px; }
+ .game-shell .arena-center { top:90px; width:240px; }
+ .game-shell .arena-actions .end-turn { min-height:38px; padding:9px 14px; font-size:18px; }
+ .game-shell .arena-actions #instruction { font-size:15px; }
+ .game-shell .field-items { top:calc(50% + 26px); height:auto; width:66px; padding:5px; gap:4px; }
+ .game-shell .field-items .prop-slot { height:41px; min-height:0; }
+ .game-shell .field-items .prop-use { min-height:0; padding:3px; }
+ .game-shell .field-items .prop-use img { width:28px; height:28px; }
+ .game-shell .field-items .prop-use b { font-size:9px; }
+ .game-shell .supply-dots { min-height:16px; gap:6px; padding:2px; }
+ .game-shell .supply-dots i { width:10px; height:10px; }
+ .game-shell .reference-deck { min-height:64px; padding:5px 12px; gap:10px; }
+ .game-shell .reference-deck .hud-tools { padding-right:8px; }
+ .game-shell .reference-deck .hud-tools button { min-height:36px; padding:7px; font-size:12px; }
+ .game-shell .reference-item { flex-basis:60px; padding:3px; }
+ .game-shell .reference-item img { width:27px; height:27px; }
+ .game-shell #reference-toggle { width:54px; min-height:36px; font-size:11px; }
+ .game-shell #end-penalty { font-size:10px; margin-top:5px; }
+ .game-shell .arena-actions .tutorial-guide { padding:7px 10px; }
+ .game-shell .arena-actions .tutorial-guide p { font-size:11px; line-height:1.5; margin:0; }
+ .game-shell .arena-actions { gap:7px; }
+ .game-shell .reference-deck { height:64px; box-sizing:border-box; }
+ .game-shell .arena-center .notice-stack:has(.arena-skill) { max-height:calc(100svh - 190px); }
+}
+@media(prefers-reduced-motion:reduce) { .game-shell .stage::before { transition:none; } }

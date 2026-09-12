@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LocalSession} from '../src/session.js';
-import {createGame,applyCommand,canEndTurn,calculationOutcome} from '../src/engine.js';
+import {createGame,applyCommand,canEndTurn,emptyTurnPenalty} from '../src/engine.js';
 import {chooseCommand} from '../src/ai.js';
 import {TutorialSession} from '../src/tutorial.js';
 test('manual early end is allowed, replayable, and unavailable while a skill awaits release',async()=>{
@@ -12,11 +12,11 @@ test('manual early end is allowed, replayable, and unavailable while a skill awa
  assert.deepEqual(LocalSession.restore(session.exportSave()).getSnapshot(),session.getSnapshot());
  const s=createGame();s.phase='action';s.players[0].weapon='frag';assert.equal(canEndTurn(s),false);
 });
-test('all AI levels avoid calculations with no changed number',()=>{
+test('all AI levels calculate against zero when it avoids an empty-turn penalty',()=>{
  for(const level of ['easy','advanced','master'])for(const hands of [[0,0],[0,1],[1,0]]){
   const s=createGame();s.phase='action';s.players[0].props=[];s.players[0].hands=[3,6];s.players[1].hands=hands;
   const c=chooseCommand(s,level);assert.ok(c);
-  if(c.type==='add')assert.ok(calculationOutcome(s,c).writes.some(w=>s.players[w.owner].hands[w.hand]!==w.value));
+  assert.equal(c.type,'add');assert.equal(emptyTurnPenalty(applyCommand(s,c)),0);
  }
 });
 test('zero remains a useful echo target when it copies a winning combination',()=>{

@@ -3,7 +3,7 @@ import {createGame, applyCommand} from './engine.js';
 export const LESSONS = [
  {title:'走完一个攻防回合',result:'手雷原伤害 30，被 [5] 护盾减半，只扣 15 HP；格挡后 [5] 退为 [1]。真实伤害可以绕过数字护盾。把对手 HP 清空即可获胜。接着看看另一种胜利方式。',steps:[
   {title:'先用 [3] 碰对手的 [1]',detail:'选自己的 [3]，再碰对手任意一只 [1]，得到 [4]。',command:{type:'add',hand:0},target:'#hand-0-0',selectedTarget:'#hand-1-0, #hand-1-1'},
-  {title:'本回合已无可用操作',detail:'正式对局每回合有 30 秒。手动点击按钮以提前结束回合',command:{type:'end'}},
+  {title:'本回合已无可用操作',detail:'正式对局每回合有 30 秒。手动点击按钮以提前结束回合\n若既没有合成也没有计算就结束，则会扣除10HP作为空过惩罚',command:{type:'end'}},
   {title:'轮到对手',detail:'对手也会选择自己的手去碰你的手。',command:{type:'advance'},auto:true},
   {title:'对手用 [1] 碰你的 [4]',detail:'[1] + [4] = [5]，只有对手出手的数字改变，你的 [4] 不变。',command:{type:'add',hand:0,targetHand:0},auto:true},
   {title:'先认识对手的护盾',detail:'点击查看下方 [5] 对应的护盾效果',command:{type:'end'},requiresInfo:'shield:0',auto:true},
@@ -27,7 +27,7 @@ export const LESSONS = [
 export class TutorialSession {
  constructor(chapter=0) {
   this.chapter=chapter;this.step=0;this.notices=new Set();this.seenInfo=new Set();this.disposed=false;
-  this.state=createGame(7);this.state.phase='action';this.state.events=[];
+  this.state=createGame(6);this.state.phase='action';this.state.events=[];
   const [p,e]=this.state.players;p.props=[];
   if(chapter===0){this.state.turn=5;p.turns=3;e.turns=2;p.hands=[3,6];e.hands=[1,1];}
   else {p.hands=[8,9];e.hands=[1,1];}

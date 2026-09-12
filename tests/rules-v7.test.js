@@ -10,8 +10,8 @@ test('second consecutive skipped turn grants five future turns, clears queued sk
  for(let i=5;i>0;i--){s=act(s);assert.equal(s.skipping,false);assert.equal(s.players[1].resilience,i);s=act(s);assert.equal(s.players[1].resilience,i-1);}
  s=createGame();s.players[0].skippedTurns=1;s=act(s);assert.equal(s.players[0].skippedTurns,0);
 });
-test('greed and adrenaline count as skipped actions, but do not end the turn under resilience',()=>{
- for(const id of ['greed','adrenaline']) {
+test('greed count as skipped actions, but do not end the turn under resilience',()=>{
+ for(const id of ['greed']) {
   let s=createGame();s.phase='action';s.players[0].props=[id];s.players[0].skippedTurns=1;
   let n=run(s,{type:'prop',slot:0,target:0});assert.equal(n.active,1);assert.equal(n.players[0].resilience,5);assert.equal(n.players[0].skip,0);
   s.players[0].resilience=3;n=run(s,{type:'prop',slot:0,target:0});assert.equal(n.active,0);assert.equal(n.phase,'action');assert.equal(n.players[0].resilience,3);

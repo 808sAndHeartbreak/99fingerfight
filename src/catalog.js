@@ -13,7 +13,7 @@ export const WEAPONS = Object.freeze([
   {"id": "frag", "recipe": [6, 6], "name": "碎片手雷", "damage": 30, "detail": "造成 30 点普通伤害"},
   {"id": "foam", "recipe": [6, 6], "name": "泡沫手雷", "damage": 0, "detail": "获得盾墙，完全挡住两次普通伤害；重复获得次数 +2"},
   {"id": "knuckles", "recipe": [6, 6], "name": "指虎", "damage": 0, "detail": "永久获得每段直接技能伤害 +10，可重复叠加"},
-  {"id": "steal", "recipe": [7, 7], "name": "窃取", "damage": 0, "detail": "夺走对手全部道具及增益（和平、指虎、酒、肾上腺素、坚韧）；道具最多持有 3 个，溢出舍弃"},
+  {"id": "steal", "recipe": [7, 7], "name": "窃取", "damage": 0, "detail": "夺走对手全部道具及增益（和平、指虎、酒、坚韧）；道具最多持有 3 个，溢出舍弃"},
   {"id":"serpent", "recipe":[7,7], "name":"双头蛇", "damage":0, "detail":"对手虚弱、中毒 5 回合：每段直接技能伤害 −5（最低 0），每回合开始受到 2 点普通伤害；重复施加延长回合"},
   {"id": "dual", "recipe": [8, 8], "name": "双枪", "damage": 5, "detail": "连续 4 次各造成 5 点普通伤害，随后补满自己的道具"},
   {"id": "sniper", "recipe": [8, 8], "name": "狙击枪", "damage": 30, "detail": "造成 30 点真实伤害"},
@@ -23,7 +23,6 @@ export const WEAPONS = Object.freeze([
 export const MAX_HP = 99;
 export const PROPS = Object.freeze({
   wine: {name:"酒", detail:"下一次直接技能攻击的首段伤害 +10；可叠层，出手时一次消耗全部层数", target:"self", image:"ink-mono/wine.webp"},
-  adrenaline: {name:"肾上腺素", detail:"立即结束本回合；接下来 3 个己方回合，造成的所有伤害 +5、受到的所有伤害 −5，最低 0", target:"self", image:"ink-mono/adrenaline.webp"},
   add: { name:"增幅", detail:"任意一只手数字 +1", target:"hand", image:"ink-mono/add.webp" },
   sub: { name:"退化", detail:"任意一只手 −1，[0] 变为 [9]", target:"hand", image:"ink-mono/sub.webp" },
   lock: { name:"封印", detail:"封印一只手，不能参与触碰计算，至其回合结束；每人最多封印一只手", target:"hand", image:"ink-mono/lock.webp" },

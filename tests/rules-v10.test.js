@@ -18,7 +18,7 @@ test('combined mirror and echo updates both enemy hands from the original operan
  }
 });
 test('ending items cannot award missed-action resilience after calculation or skill use',()=>{
- for(const id of ['greed','adrenaline'])for(const actedBy of ['add','attack']){
+ for(const id of ['greed'])for(const actedBy of ['add','attack']){
   let s=ready();s.players[0].props=[id];s.players[0].skippedTurns=1;
   if(actedBy==='attack')s.players[0].weapon='scissors';
   s=run(s,actedBy==='add'?{type:'add',hand:0,targetHand:0}:{type:'attack'});s=run(s,{type:'prop',slot:0,target:0});
@@ -44,5 +44,5 @@ test('event deltas identify shield loss, copied digits and inventory without tre
  const changes=stateChanges(s,n);assert.equal(changes.filter(c=>c.kind==='inventory').length,1);assert.ok(changes.some(c=>c.owner===1&&c.hand===0&&c.label==='[5] → [1]'));assert.ok(changes.some(c=>c.key==='foam'));
 });
 test('turn-start periodic damage gets reading time and the server can reserve that same duration',()=>{
- const s=ready();s.players[1].seven=2;s.players[1].poison=2;const n=run(s,{type:'end'});assert.equal(n.events.filter(e=>e.type==='damage').length,2);assert.equal(presentationDuration(s,n,{type:'end'}),4200);
+ const s=ready();s.calculated=true;s.players[1].seven=2;s.players[1].poison=2;const n=run(s,{type:'end'});assert.equal(n.events.filter(e=>e.type==='damage').length,2);assert.equal(presentationDuration(s,n,{type:'end'}),4200);
 });

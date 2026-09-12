@@ -32,8 +32,8 @@ export function describe(key, state, participants) {
   if (kind === "prop") {
     const owner=hand===undefined?state.active:Number(hand),p=state.players[owner],e=state.players[1-owner];
     const sum=p.hands[0]+p.hands[1],enemySum=e.hands[0]+e.hands[1];
-    const ruinDamage=Math.max(0,enemySum+(p.adrenaline>0?5:0)-(e.adrenaline>0?5:0));
-    const preview={wine:`（当前叠加后首段 +${(p.wine+1)*10}）`,adrenaline:`（当前剩余 ${p.adrenaline} 个己方回合，使用延长 3 回合）`,grace:`（当前回复 ${Math.min(MAX_HP-p.hp,sum)}，数字总和 ${sum}）`,ruin:`（当前伤害 ${ruinDamage}，实际扣血 ${e.peace>0?0:Math.min(e.hp,ruinDamage)}）`,greed:`（当前获得 ${Math.min(2,4-p.props.length)} 个）`,boon:`（当前己方补 ${4-p.props.length} 个，对方补 ${3-e.props.length} 个）`,balance:`（当前己方重抽 ${Math.max(0,p.props.length-1)} 个，对方重抽 ${e.props.length} 个）`}[id]||'';
+    const ruinDamage=enemySum;
+    const preview={wine:`（当前叠加后首段 +${(p.wine+1)*10}）`,grace:`（当前回复 ${Math.min(MAX_HP-p.hp,sum)}，数字总和 ${sum}）`,ruin:`（当前伤害 ${ruinDamage}，实际扣血 ${e.peace>0?0:Math.min(e.hp,ruinDamage)}）`,greed:`（当前获得 ${Math.min(2,4-p.props.length)} 个）`,boon:`（当前己方补 ${4-p.props.length} 个，对方补 ${3-e.props.length} 个）`,balance:`（当前己方重抽 ${Math.max(0,p.props.length-1)} 个，对方重抽 ${e.props.length} 个）`}[id]||'';
     return {
       title: PROPS[id].name,
       image: PROPS[id].image,
@@ -42,8 +42,8 @@ export function describe(key, state, participants) {
         ["使用", "自己的回合"],
         ["目标", ({hand:"任意一方的手",self:"自己",enemy:"对手",all:"双方"})[PROPS[id].target]],
       ],
-      body: (p.resilience>0 && ["greed","adrenaline"].includes(id) ? PROPS[id].detail.replace("立即结束本回合；", "").replace("，立即结束回合", "")+"（坚韧：使用后继续本回合）" : PROP_INFO[id] || PROPS[id].detail)+preview,
-      note: ({wine:"只强化下一次有直接伤害的技能首段，出手时一次消耗全部酒；无伤害技能不消耗，被免疫或护盾挡住仍消耗。无回合期限，可被窃取。",adrenaline:"包括真实伤害、道具与持续伤害；先合并增减伤，再结算护盾，最低 0。重复使用延长三回合，不叠加强度；可被窃取。",echo:"本回合下一次计算复制同一个结果；另一只手被封印也会接收复制值。未计算则回合结束失效；重复使用不叠加。",mirror:"与回响同时存在时，以最初所选两手加和求值，再把同一个结果写入对手双手；己方不变。回合结束失效，重复使用不叠加。",silence:"持续到对手下一回合结束；禁止主动使用道具，不影响补给和武器补牌。",balance:"先消耗制衡，再按双方各自剩余道具数量重抽。允许抽到同名道具。",boon:"补到每人 3 个，已满的玩家不会再获得；不会移除已有状态。",greed:"先消耗强欲，最多补至 3 个；立即结束回合；已计算或出招则不计为未行动；坚韧期间仍可继续行动。",grace:"以使用时自己的双手数字之和计算，生命最多为 99；满血或数字总和为 0 仍会消耗。",ruin:"以使用时对手双手数字之和计算，忽略护盾且不消耗护盾；生命归零立即结算。"})[id] || "点击道具，再点高亮手势即生效；数字变化不会立即合成。",
+      body: (p.resilience>0 && id==="greed" ? PROPS[id].detail.replace("立即结束本回合；", "").replace("，立即结束回合", "")+"（坚韧：使用后继续本回合）" : PROP_INFO[id] || PROPS[id].detail)+preview,
+      note: ({wine:"只强化下一次有直接伤害的技能首段，出手时一次消耗全部酒；无伤害技能不消耗，被免疫或护盾挡住仍消耗。无回合期限，可被窃取。",echo:"本回合下一次计算复制同一个结果；另一只手被封印也会接收复制值。未计算则回合结束失效；重复使用不叠加。",mirror:"与回响同时存在时，以最初所选两手加和求值，再把同一个结果写入对手双手；己方不变。回合结束失效，重复使用不叠加。",silence:"持续到对手下一回合结束；禁止主动使用道具，不影响补给和武器补牌。",balance:"先消耗制衡，再按双方各自剩余道具数量重抽。允许抽到同名道具。",boon:"补到每人 3 个，已满的玩家不会再获得；不会移除已有状态。",greed:"先消耗强欲，最多补至 3 个；立即结束回合；已计算或出招则不计为未行动；坚韧期间仍可继续行动。",grace:"以使用时自己的双手数字之和计算，生命最多为 99；满血或数字总和为 0 仍会消耗。",ruin:"以使用时对手双手数字之和计算，忽略护盾且不消耗护盾；生命归零立即结算。"})[id] || "点击道具，再点高亮手势即生效；数字变化不会立即合成。",
     };
   }
   if(kind==="status") {
@@ -58,11 +58,10 @@ export function describe(key, state, participants) {
       foam:["泡沫盾墙",`剩余 ${p.foam} 次`,"完全挡住普通伤害，每段消耗一次。真实伤害穿透且不消耗。重复获得次数 +2。"],
       knuckles:["指虎",`永久 ${p.knuckles} 层 · +${p.knuckles*10}`,"每段直接技能伤害 +10，包括真实伤害和双枪每发；不增加道具或持续伤害。可重复叠加，无层数上限。"],
       wine:["酒",`${p.wine} 层 · 首段 +${p.wine*10}`,"下一次直接技能攻击只强化第一段；一次消耗全部层数，被挡住也消耗。无伤害技能不消耗，无回合期限，可被窃取。"],
-      adrenaline:["肾上腺素",`剩余 ${p.adrenaline} 个己方回合`,"造成的所有伤害 +5，受到的所有伤害 −5，包括真实伤害、道具和持续伤害。先增减伤，再结算护盾，最低 0；重复延长、可被窃取。"],
       peace:["和平",`剩余 ${p.peace} 个己方回合`,"免疫所有伤害，包括真实伤害、道具与持续伤害，不消耗护盾。各自后续回合结束计数，跳过的回合照常计数；不阻止九九归一胜利。"],
       weak:["虚弱",`剩余 ${p.weak} 个己方回合`,"每段直接技能伤害 −5，最低 0；不影响道具与持续伤害。重复施加延长回合。"],
       poison:["中毒",`剩余 ${p.poison} 次`,"每个己方回合开始受到 2 点普通伤害，可被防御阻挡。重复施加延长回合。"],
-      resilience:["坚韧",`剩余 ${p.resilience} 个己方回合`,"免疫跳过回合与行动。连续两个己方回合被跳过后获得；强欲、肾上腺素不再结束回合。可被窃取；不解除封印。"],
+      resilience:["坚韧",`剩余 ${p.resilience} 个己方回合`,"免疫跳过回合与行动。连续两个己方回合被跳过后获得；强欲不再结束回合。可被窃取；不解除封印。"],
       nine:["归一次数",`${p.nine} / 2`,"累计使用两次归一即可获胜。手的数字变化不会清除使用次数。"]
     }[id];
     return data?{title:data[0],tag:"持续状态",stats:[["时限 / 数量",data[1]]],body:data[2],note:""}:null;
@@ -103,7 +102,7 @@ export function describe(key, state, participants) {
         ["减伤", "50%"],
       ],
       body: "单个 [5] 使普通伤害减半（向上取整），然后变为 [1]；双手 [5] + [5] 完全免疫普通伤害，不消耗数字且不限次数，数字变化后立即失效。",
-      note: "防御顺序：和平 → [5] + [5] → 盾墙 → 单个 [5]。真实伤害跳过护盾，仍受和平与肾上腺素影响；认真一拳先将双手变为 [1] 并清除盾墙。零伤害不消耗防御。",
+      note: "防御顺序：和平 → [5] + [5] → 盾墙 → 单个 [5]。真实伤害跳过护盾，仍受和平影响；认真一拳先将双手变为 [1] 并清除盾墙。零伤害不消耗防御。",
     };
   if (kind === "player") {
     const p = state.players[Number(id)];

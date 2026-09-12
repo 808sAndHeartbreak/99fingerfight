@@ -35,7 +35,7 @@ test('all ordinary and true direct skills agree with defense priority for every 
 import {existsSync,statSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 test('all production illustrations exist with nonempty files and no placeholder aliases',()=>{
- const files=[...WEAPONS.map(w=>w.image),...Object.values(PROPS).map(p=>p.image),'ink-mono/nine-seal.webp','ink-mono/resilience.webp'];assert.equal(new Set(files).size,37);
+ const files=[...WEAPONS.map(w=>w.image),...Object.values(PROPS).map(p=>p.image),'ink-mono/nine-seal.webp','ink-mono/resilience.webp'];assert.equal(new Set(files).size,36);
  for(const file of files){const path=fileURLToPath(new URL('../public/assets/'+file,import.meta.url));assert.ok(existsSync(path),file);assert.ok(statSync(path).size>1000,file);}
 });
 test('terminal attacks preserve the final cinematic window while ending the match immediately',()=>{

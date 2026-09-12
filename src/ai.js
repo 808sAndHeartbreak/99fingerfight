@@ -1,4 +1,4 @@
-import { applyCommand, legalCommands, calculationOutcome } from "./engine.js";
+import { applyCommand, legalCommands, emptyTurnPenalty } from "./engine.js";
 import { WEAPONS, weaponById, matchingWeapons } from "./catalog.js";
 
 function skillValue(w,p) {
@@ -25,7 +25,7 @@ function score(s, actor) {
     potential(e) * 0.9 +
     (p.props.length - e.props.length) * 2 +
     (p.nine-e.nine)*100+(p.foam-e.foam)*7+(Number(p.knuckles)-Number(e.knuckles))*35+(e.skip-p.skip)*12+(e.seven-p.seven)*5+(Number(e.dark)-Number(p.dark))*40+
-    (p.resilience-e.resilience)*8+(p.wine-e.wine)*12+(p.adrenaline-e.adrenaline)*14+(p.peace-e.peace)*8+(e.weak-p.weak)*6+(e.poison-p.poison)*2+(p.echo?7:0)+(p.mirror?3:0)-(p.silenced?6:0)+(e.silenced?6:0)
+    (p.resilience-e.resilience)*8+(p.wine-e.wine)*12+(p.peace-e.peace)*8+(e.weak-p.weak)*6+(e.poison-p.poison)*2+(p.echo?7:0)+(p.mirror?3:0)-(p.silenced?6:0)+(e.silenced?6:0)
   );
 }
 
@@ -41,12 +41,12 @@ function simulate(s,c) {
 function moves(s) {
  const legal=legalCommands(s);
  return legal.filter(c=>{
-  if(c.type==='add')return calculationOutcome(s,c).writes.some(w=>s.players[w.owner].hands[w.hand]!==w.value);
+  if(c.type==='add')return true;
   return c.type!=='prop'||s.players[s.active].props[c.slot]!=='lock'||c.target!==s.active;
  });
 }
 function ranked(s,actor) {
- return moves(s).map(c=>{const next=simulate(s,c);return {c,next,value:score(next,actor)-(c.type==='end'&&!s.calculated?2:0)};}).sort((a,b)=>b.value-a.value);
+ return moves(s).map(c=>{const next=simulate(s,c);return {c,next,value:score(next,actor)};}).sort((a,b)=>b.value-a.value);
 }
 function responseValue(s,actor) {
  let next=s;
@@ -65,7 +65,7 @@ function searchTurn(first,actor) {
   }
   if(!expanded.length){frontier=[];break;}
   const seen=new Set();frontier=expanded.sort((a,b)=>b.value-a.value).filter(n=>{
-   const k=JSON.stringify([n.next.active,n.next.calculated,n.next.players]);if(seen.has(k))return false;seen.add(k);return true;
+   const k=JSON.stringify([n.next.active,n.next.calculated,n.next.acted,n.next.players]);if(seen.has(k))return false;seen.add(k);return true;
   }).slice(0,4);
  }
  for(const node of frontier) {
@@ -83,7 +83,7 @@ export function chooseCommand(state,difficulty='advanced') {
  if(difficulty==='easy') {
   // Beginner makes simple local choices and frequently misses combinations.
   const turn=(s.turn*13+s.revision*7)>>>0;
-  const pool=legal.filter(c=>c.type==='add'||c.type==='end'||(c.type==='forge'&&turn%4===0)||(c.type==='prop'&&turn%3===0));
+  const pool=legal.filter(c=>c.type==='add'||(c.type==='end'&&!emptyTurnPenalty(s))||(c.type==='forge'&&turn%4===0)||(c.type==='prop'&&turn%3===0));
   return (pool.length?pool:legal)[turn%(pool.length||legal.length)];
  }
  const options=ranked(s,actor);

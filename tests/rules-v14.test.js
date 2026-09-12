@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createGame,applyCommand,emptyTurnPenalty,RULES_VERSION} from '../src/engine.js';
+import {PROPS,PROP_IDS} from '../src/catalog.js';
+import {chooseCommand} from '../src/ai.js';
+const run=(s,c)=>applyCommand(s,{...c,actor:s.active,revision:s.revision});
+const fresh=()=>{const s=createGame(1);s.phase='action';s.players.forEach(p=>p.props=[]);return s;};
+test('empty turn directly loses ten HP even through peace, shields and foam',()=>{const s=fresh();Object.assign(s.players[0],{hands:[5,5],peace:3,foam:2});const n=run(s,{type:'end'});assert.equal(n.players[0].hp,89);assert.deepEqual(n.players[0].hands,[5,5]);assert.equal(n.players[0].foam,2);assert.equal(n.active,1);assert.equal(n.events.find(e=>e.source==='空过惩罚').amount,10);});
+test('empty turn can lose the match and must not begin another turn',()=>{const s=fresh();s.players[0].hp=7;const n=run(s,{type:'end'});assert.equal(n.players[0].hp,0);assert.equal(n.winner,1);assert.equal(n.turn,s.turn);assert.equal(n.phase,'over');});
+test('using only an item does not exempt an empty turn',()=>{const s=fresh();s.players[0].props=['wine'];const n=run(s,{type:'prop',slot:0,target:0});assert.equal(emptyTurnPenalty(n),10);assert.equal(run(n,{type:'end'}).players[0].hp,89);});
+test('zero-result-change calculation still fulfils the turn',()=>{const s=fresh();s.players[1].hands=[0,0];const n=run(s,{type:'add',hand:0,targetHand:0});assert.deepEqual(n.players[0].hands,[1,1]);assert.equal(emptyTurnPenalty(n),0);assert.equal(run(n,{type:'end'}).players[0].hp,99);});
+test('forge and automatic release fulfil the turn without a calculation',()=>{let s=fresh();s.players[0].hands=[6,6];s=run(s,{type:'forge',weapon:'foam'});assert.equal(emptyTurnPenalty(s),0);s=run(s,{type:'attack'});assert.equal(s.calculated,false);assert.equal(run(s,{type:'end'}).players[0].hp,99);});
+test('forced skip and greed never trigger empty-turn penalty',()=>{const s=fresh();s.phase='start';s.skipping=true;assert.equal(run(s,{type:'advance'}).players[0].hp,99);const t=fresh();t.players[0].props=['greed'];assert.equal(run(t,{type:'prop',slot:0,target:0}).players[0].hp,99);});
+test('retired item is absent and old rules reject before applying commands',()=>{assert.equal(PROPS.adrenaline,undefined);assert.equal(PROP_IDS.length,14);const s=fresh();assert.equal('adrenaline' in s.players[0],false);assert.throws(()=>run({...s,rulesVersion:RULES_VERSION-1},{type:'end'}),/版本/);});
+for(const difficulty of ['easy','advanced','master'])test(`${difficulty} avoids fatal empty turn when a zero target calculation is available`,()=>{const s=fresh();s.players[0].hp=5;s.players[1].hands=[0,0];const c=chooseCommand(s,difficulty);assert.equal(c.type,'add');});

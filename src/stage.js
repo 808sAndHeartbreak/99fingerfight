@@ -94,6 +94,30 @@ export class DuelStage {
         this.scene.add(model.root);
         this.hands.push({ ...model, owner, hand, base, shield });
       }
+    this.raycaster=new THREE.Raycaster();
+    const pick=event=>{
+      if(this.presenting||this.animation||this.paused||this.host.inert)return null;
+      const bounds=this.canvas.getBoundingClientRect();
+      this.raycaster.setFromCamera(new THREE.Vector2((event.clientX-bounds.left)/bounds.width*2-1,1-(event.clientY-bounds.top)/bounds.height*2),this.camera);
+      const hit=this.raycaster.intersectObjects(this.hands.map(h=>h.root),true)[0];
+      if(!hit)return null;
+      let object=hit.object;while(object&&!this.hands.some(h=>h.root===object))object=object.parent;
+      const hand=this.hands.find(h=>h.root===object);if(!hand)return null;
+      const button=this.host.querySelector(`#hand-${hand.owner}-${hand.hand}`);
+      return button?.matches('.available,.target')&&!button.closest('[inert]')?button:null;
+    };
+    this.pointerMove=event=>{
+      const direct=event.target.closest('.hand-hotspot.available,.hand-hotspot.target');
+      const button=direct||pick(event);
+      this.host.querySelectorAll('.hand-hover').forEach(el=>el.classList.toggle('hand-hover',el===button));
+      button?.classList.add('hand-hover');this.host.style.cursor=button?'pointer':'';
+      this.hovered=button?`${button.dataset.owner}:${button.dataset.hand}`:null;
+    };
+    this.pointerLeave=()=>{this.hovered=null;this.host.style.cursor='';this.host.querySelectorAll('.hand-hover').forEach(el=>el.classList.remove('hand-hover'));};
+    this.pointerClick=event=>{if(event.target.closest('.hand-hotspot'))return;const button=pick(event);if(button){event.stopPropagation();button.click();}};
+    this.host.addEventListener('pointermove',this.pointerMove);
+    this.host.addEventListener('pointerleave',this.pointerLeave);
+    this.host.addEventListener('click',this.pointerClick);
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(host);
     this.resize();
@@ -132,7 +156,9 @@ export class DuelStage {
     });
   }
   sync(state, selected, enabled = true, presenting = false) {
-    this.state = state;this.presenting=presenting;
+    this.pointerLeave?.();
+      this.state = state;this.presenting=presenting;
+      this.ink.uniforms.uActive.value=state.winner==null?state.active:-1;
     this.selection = selected;
     this.hands.forEach((h) => {
       const p = state.players[h.owner];
@@ -365,6 +391,8 @@ export class DuelStage {
       if(this.hits)this.hits=this.hits.map(t=>Math.max(0,t-dt));
       this.hands.forEach((h, i) => {
         h.update(dt);
+        const chosen=this.selection?.kind==='hand'&&this.selection.hand===h.hand&&this.state?.active===h.owner;
+        h.trim.emissiveIntensity=chosen?.2:this.hovered===`${h.owner}:${h.hand}`?.09:0;
         if (!this.animation) {
           h.root.position.copy(h.base);
           if (!this.reduced.matches) {
@@ -403,6 +431,7 @@ export class DuelStage {
     this.cancel();
     cancelAnimationFrame(this.raf);
     this.resizeObserver.disconnect();
+    this.host.removeEventListener('pointermove',this.pointerMove);this.host.removeEventListener('pointerleave',this.pointerLeave);this.host.removeEventListener('click',this.pointerClick);
     this.canvas.removeEventListener("webglcontextlost", this.contextLost);
     const geometries = new Set(),
       materials = new Set();
