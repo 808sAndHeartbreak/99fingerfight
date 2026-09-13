@@ -3,7 +3,7 @@ import { actionBeats, actionDuration, commandArt, SKILL_MOTION, skillSummary, IT
 import { playerName, escapeHtml } from './identity.js';
 
 // Presentation consumes authoritative events; it never rolls randomness or changes game state.
-export function createCombatCinema({animate,register,generation,asset,sound,participants,notice,noticeRoot}) {
+export function createCombatCinema({animate,register,generation,asset,sound,participants,notice,appendNotice,retainNotice}) {
   return async function perform(old,next,command,onBeat) {
     const epoch=generation(), art=commandArt(old,command), skill=command.type==='attack';
     const wait=async(el,ms)=>{await animate(el,[{opacity:1},{opacity:1}],{duration:ms}).finished.catch(()=>{});return generation()===epoch;};
@@ -25,7 +25,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
         : beats.filter(b=>b.type==='effect').map(b=>b.label).join(' · ');
       const duel=document.querySelector('.duel'),card=document.createElement('aside');card.className='item-receipt';card.dataset.owner=owner;card.setAttribute('role','status');
       card.innerHTML=`<img src="${asset(art.image)}" alt=""><div><small>${escapeHtml(playerName(participants(),owner))} 使用 · ${escapeHtml(names)}</small><strong>${art.name}</strong><span class="item-purpose">${escapeHtml(art.detail)}</span><b>${escapeHtml(result)}</b></div>`;
-      noticeRoot().append(card);register(card);
+      appendNotice(card);
       const source=document.querySelector(`#items-${owner} [data-slot="${command.slot}"]`),icon=card.querySelector('img');
       const center=()=>{const r=icon.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};};
       const to=center(),from=source?.getBoundingClientRect();
@@ -57,7 +57,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
       sound(id==='grace'?'heal':['lock','silence','ruin'].includes(id)?'curse':'item',.65);
       icon.style.visibility='visible';
       // Reading time is independent of action locks and the shared turn clock.
-      animate(card,[{opacity:1},{opacity:1,offset:.94},{opacity:0}],{duration:ITEM_READ_MS,fill:'both'},true);
+      retainNotice(card,ITEM_READ_MS);
       if(!await wait(card,ITEM_SETTLE_MS))return false;
       return generation()===epoch;
     }
@@ -84,14 +84,15 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
       if(!await wait(ritual,duration-2350))return false;
       onBeat({type:'reset-hands'});
       if(!await wait(ritual,400))return false;
-      await animate(ritual,[{opacity:1},{opacity:0}],{duration:250,fill:'both'},true).finished.catch(()=>{});
+      if(won){if(!await wait(ritual,250))return false;}
+      else await animate(ritual,[{opacity:1},{opacity:0}],{duration:250,fill:'both'},true).finished.catch(()=>{});
       return generation()===epoch;
     }
     const el=document.createElement('section');
     el.className=`combat-cinema ${skill?'skill':'item'} arena-skill`;
     el.dataset.family=family;el.dataset.team=old.active;el.setAttribute('role','status');
     el.innerHTML=`<div class="cinema-ink"></div><div class="cinema-heading"><small>${old.active?'红方':'蓝方'} · ${escapeHtml(playerName(participants(),old.active))} 使用</small><h2>${art.name}</h2><span class="skill-explanation">${escapeHtml(art.detail)}</span></div><img class="cinema-icon" src="${asset(art.image)}" alt=""><div class="cinema-impact" aria-hidden="true"><i></i><i></i><i></i><i></i></div><small class="cinema-hit" aria-hidden="true"></small><div class="cinema-result" aria-live="polite"></div>`;
-    noticeRoot().append(el);register(el);
+    appendNotice(el);
     animate(document.querySelector(`#player-${old.active}`),[{filter:'brightness(1)'},{filter:'brightness(1.35)',offset:.3},{filter:'brightness(1)'}],{duration:650});
     const duration=actionDuration(old,next,command),beats=actionBeats(old,next,command);
     const intro=skill?250:120,tail=2000;
@@ -141,7 +142,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
     if(!await skillWait(650))return false;
     el.classList.add('resolved-summary');
     if(!await skillWait(200))return false;
-    animate(el,[{opacity:1},{opacity:1,offset:.85},{opacity:0}],{duration:5000,fill:'both'},true);
+    retainNotice(el,5000);
     return live();
   };
 }

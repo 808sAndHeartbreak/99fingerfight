@@ -8,6 +8,39 @@ export function createFeedback() {
     nodes = new Set();
   let paused = false;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  const receipts = new Map();
+  let layoutFrame=0;
+  const scheduleLayout=()=>{if(!layoutFrame)layoutFrame=requestAnimationFrame(()=>{layoutFrame=0;layoutNotices();});};
+  const noticeObserver=new ResizeObserver(scheduleLayout);
+  function layoutNotices() {
+    const stack=document.querySelector('.notice-stack');if(!stack?.getClientRects().length)return;
+    const actions=document.querySelector('.arena-actions');
+    const gap=parseFloat(getComputedStyle(stack.parentElement).rowGap)||0;
+    let room=Math.max(0,document.querySelector('.reference-deck').getBoundingClientRect().top-stack.getBoundingClientRect().top-(actions?.getBoundingClientRect().height||0)-gap-4);
+    // The effect being resolved stays visible. Reading-only cards wait without losing reading time.
+    const ordered=[...receipts.values()].filter(r=>r.el.isConnected).sort((a,b)=>Number(b.live)-Number(a.live));
+    for(const r of ordered){
+      const height=r.el.getBoundingClientRect().height;
+      const visible=r.live||height+12<=room;
+      if(visible)room-=height+12;
+      r.visible=visible;r.slot.classList.toggle('queued',!visible);
+      r.slot.style.height=`${visible?height:0}px`;r.slot.style.marginBottom=visible?'12px':'0';
+      r.slot.inert=!visible;
+      if(r.reading && r.reading.playState!=='finished')paused||!visible?r.reading.pause():r.reading.play();
+    }
+  }
+  function appendNotice(el) {
+    const stack=noticeRoot(),slot=document.createElement('div');slot.className='notice-slot';
+    slot.append(el);stack.append(slot);nodes.add(el);nodes.add(slot);
+    receipts.set(el,{el,slot,live:true,visible:true,reading:null});
+    noticeObserver.observe(el);layoutNotices();
+  }
+  function retainNotice(el,duration) {
+    const r=receipts.get(el);if(!r)return;
+    r.live=false;el.classList.add('reading-receipt');
+    r.reading=animate(el,[{opacity:1},{opacity:1,offset:.94},{opacity:0}],{duration,fill:'both'},true);
+    layoutNotices();
+  }
   function animate(el, frames, options, remove = false) {
     const quietFrames = reduced.matches ? frames.map(frame => {
       const {transform, translate, scale, rotate, ...rest} = frame;
@@ -22,6 +55,12 @@ export function createFeedback() {
       .finally(() => {
         running.delete(animation);
         if (remove) {
+          const receipt=receipts.get(el);
+          if(receipt){
+            noticeObserver.unobserve(el);receipts.delete(el);
+            animate(receipt.slot,[{height:receipt.slot.style.height,marginBottom:receipt.slot.style.marginBottom,opacity:0},{height:'0px',marginBottom:'0px',opacity:0}],{duration:260,fill:'both'},true);
+            scheduleLayout();
+          }
           el.remove();
           nodes.delete(el);
         }
@@ -30,33 +69,30 @@ export function createFeedback() {
   }
   function noticeRoot() {
     let stack=document.querySelector('.notice-stack');
-    if(!stack){stack=document.createElement('div');stack.className='notice-stack';document.querySelector('.arena-center').prepend(stack);nodes.add(stack);}
+    if(!stack){stack=document.createElement('div');stack.className='notice-stack';document.querySelector('.arena-center').prepend(stack);nodes.add(stack);noticeObserver.observe(document.querySelector('.arena-actions'));noticeObserver.observe(document.querySelector('.duel'));}
     return stack;
   }
   function notice(text, team, kind = "turn", art = null) {
-    const stack=noticeRoot();
     const el = document.createElement("div");
     el.className = `moment-notice ${kind}`;
     el.dataset.team = team;
     if(art)el.innerHTML=`<img class="notice-art" src="${new URL('assets/'+art.image,document.baseURI).href}" alt=""><div><strong>${escapeHtml(art.title)}</strong><span>${escapeHtml(text)}</span></div>`;
     else el.textContent = text;
-    stack.append(el);
-    nodes.add(el);
+    appendNotice(el);
     animate(
       el,
       [
-        { opacity: 0, transform: "translateY(8px)" },
-        { opacity: 1, transform: "translateY(0)", offset: 0.05 },
-        { opacity: 1, offset: 0.92 },
-        { opacity: 0, transform: "translateY(-5px)" },
+        { transform: "translateY(8px)" },
+        { transform: "translateY(0)" },
       ],
       {
-        duration: 7000,
+        duration: 250,
         fill: "both",
         easing: "ease-out",
       },
-      true,
+      false,
     );
+    retainNotice(el,7000);
   }
   const counters=new WeakMap();
   function countTo(el,value) {
@@ -153,7 +189,7 @@ export function createFeedback() {
 
   }
   return {
-    animate, register:el=>nodes.add(el), generation:()=>epoch,
+    animate, register:el=>nodes.add(el), generation:()=>epoch, appendNotice, retainNotice,
     async intro(participants, mine) {
       const root=document.createElement('section');root.className='match-intro';root.setAttribute('role','status');
       root.innerHTML=`<b class="intro-vs">VS</b>${[0,1].map(i=>`<div class="intro-name team-${i}">${escapeHtml(participants[i]?.displayName||`玩家${i?'二':'一'}`)}${mine===i?'<small>（我）</small>':''}</div>`).join('')}`;
@@ -202,16 +238,20 @@ export function createFeedback() {
       for (const n of nodes)
         if (n.classList.contains("moment-notice")) {
           n.getAnimations().forEach((a) => a.cancel());
+          const r=receipts.get(n);if(r){noticeObserver.unobserve(n);r.slot.remove();nodes.delete(r.slot);receipts.delete(n);}
           n.remove();
           nodes.delete(n);
         }
+      scheduleLayout();
     },
     pause(value) {
       paused = value;
       for (const a of running) value ? a.pause() : a.play();
+      layoutNotices();
     },
     reset() {
       epoch++;
+      cancelAnimationFrame(layoutFrame);layoutFrame=0;noticeObserver.disconnect();receipts.clear();
       paused = false;
       for (const a of running) a.cancel();
       running.clear();

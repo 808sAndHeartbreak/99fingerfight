@@ -366,7 +366,7 @@ export class DuelStage {
     }
   }
   hit(owner,amount) {
-    this.hits??=[0,0];this.hits[owner]=amount>0?.85:.4;
+    this.hits??=[0,0];this.hits[owner]=amount>0?.45:.25;
   }
   skillImpact(kind,owner) {
     if(this.failed||this.reduced.matches)return;
@@ -404,7 +404,7 @@ export class DuelStage {
             const active=!this.presenting && this.state?.active===h.owner && this.state?.phase==='action' && !this.state?.players[h.owner].weapon;
             h.root.position.y += active?Math.sin(this.time * .95 + i*.3)*.035:0;
             const hit=this.hits?.[h.owner]||0;
-            h.root.position.x+=(h.owner?1:-1)*Math.sin(Math.min(1,hit/.85)*Math.PI)*.65;
+            h.root.position.x+=(h.owner?1:-1)*Math.sin(Math.min(1,hit/.45)*Math.PI)*.65;
             h.root.position.y+=Math.sin(hit*55)*hit*.1;
             h.root.rotation.y =
               (h.owner ? -0.28 : 0.28) + Math.sin(this.time * .35 + i) * .025;

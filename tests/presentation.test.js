@@ -146,7 +146,8 @@ test("every weapon, item and game status has complete inspectable details", () =
     "player:1",
   ]) {
     const d = describe(key, s);
-    assert.ok(d.title && d.body && d.note, key);
+    assert.ok(d.title && d.body, key);
+    if(key.startsWith("weapon:"))assert.equal(d.note, "");else assert.ok(d.note,key);
     assert.equal(d.stats.length, 2);
   }
   s.players[0].locks[0] = true;
@@ -154,4 +155,7 @@ test("every weapon, item and game status has complete inspectable details", () =
   s.players[0].hands[0] = 5;
   s.players[0].locks[0] = false;
   assert.equal(describe("hand:0:0", s).stats[1][1], "护盾生效");
+  for(const digit of [0,2,4,5,6,7,8,9])assert.equal(describe(`recipe:${digit}`,s).note,'');
+  assert.ok(describe('shield',s).note);
+  assert.match(describe('status:nine:0',s).body,/无法被清除或转移/);
 });

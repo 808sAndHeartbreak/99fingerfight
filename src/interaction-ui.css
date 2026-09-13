@@ -271,3 +271,63 @@
  .game-shell.is-tutorial #tutorial-demo { min-height:42px; padding:9px 14px; font-size:18px; }
  .game-shell.is-tutorial #primary-actions #tutorial-next { min-height:40px; padding:8px 18px; font-size:18px; }
 }
+
+/* Readable receipts reserve their own rows; overflow waits without a scrollbar. */
+.game-shell .arena-center .notice-stack,.game-shell .arena-center .notice-stack:has(.arena-skill) { width:min(550px,calc(100vw - 180px)); max-height:none; overflow:visible; padding:0; gap:0; }
+.notice-slot { position:relative; width:100%; flex:none; transition:height .26s ease,margin-bottom .26s ease,opacity .18s ease; }
+.notice-slot.queued { opacity:0; overflow:hidden; pointer-events:none; }
+.notice-slot > :is(.moment-notice,.item-receipt,.arena-skill) { box-sizing:border-box; width:100%; margin:0; }
+.game-shell .notice-stack .item-receipt { padding:14px 20px; }
+#info-popover { width:min(520px,calc(100vw - 24px)); max-height:calc(100svh - 32px); }
+#info-popover.recipe-detail { width:min(1080px,calc(100vw - 32px)); }
+@media(max-height:540px) and (orientation:landscape) {
+ .game-shell .arena-center .notice-stack,.game-shell .arena-center .notice-stack:has(.arena-skill) { width:min(560px,calc(100vw - 160px)); }
+ .game-shell .notice-stack .combat-cinema.skill.arena-skill { padding:10px 14px; gap:5px 12px; grid-template-columns:44px minmax(0,1fr); }
+ .game-shell .notice-stack .arena-skill .cinema-icon { width:44px; height:48px; }
+ .game-shell .notice-stack .arena-skill .cinema-heading h2 { font-size:23px; margin:3px 0; }
+ .game-shell .notice-stack .arena-skill .cinema-result { padding-top:5px; gap:2px; }
+ .game-shell .notice-stack .arena-skill .cinema-result .damage-value { font-size:24px; }
+ .game-shell .notice-stack .arena-skill .skill-explanation,.game-shell .notice-stack .arena-skill .cinema-result .effect-text { font-size:12px; line-height:1.5; }
+ .game-shell .notice-stack .moment-notice,.game-shell .notice-stack .item-receipt { padding:9px 12px; font-size:12px; }
+ .game-shell .notice-stack .item-receipt.reading-receipt { grid-template-columns:38px minmax(0,1fr); gap:10px; }
+ .game-shell .notice-stack .item-receipt.reading-receipt > img { width:38px; height:38px; }
+ .game-shell .notice-stack .item-receipt.reading-receipt > div { display:grid; grid-template-columns:72px minmax(0,1fr); gap:1px 12px; }
+ .game-shell .notice-stack .item-receipt.reading-receipt small { grid-column:1/-1; font-size:10px; line-height:14px; }
+ .game-shell .notice-stack .item-receipt.reading-receipt strong { font-size:20px; line-height:24px; }
+ .game-shell .notice-stack .item-receipt.reading-receipt b { grid-column:2; grid-row:2; min-width:0; font-size:13px; line-height:20px; }
+ .game-shell .notice-stack .item-receipt.reading-receipt .item-purpose { display:none; }
+ .game-shell .notice-stack .arena-skill.resolved-summary { grid-template-columns:32px 100px minmax(0,1fr); gap:6px 10px; }
+ .game-shell .notice-stack .arena-skill.resolved-summary .cinema-icon { width:32px; height:38px; }
+ .game-shell .notice-stack .arena-skill.resolved-summary .cinema-heading h2 { font-size:18px; }
+ .game-shell .notice-stack .arena-skill.resolved-summary .cinema-heading small { font-size:10px; }
+ .game-shell .notice-stack .arena-skill.resolved-summary .cinema-result { grid-column:3; grid-row:1; border:0; padding:0; }
+ #info-popover.recipe-detail { padding:14px 18px; }
+ #info-popover.recipe-detail h3 { font-size:28px; }
+ #info-popover .recipe-gallery { grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; }
+ #info-popover .recipe-gallery article { padding:10px; }
+ #info-popover .recipe-gallery img { width:42px; height:42px; margin-bottom:6px; }
+ #info-popover .recipe-gallery h4 { font-size:17px; margin-bottom:5px; }
+ #info-popover .recipe-gallery p { font-size:11px; line-height:1.55; }
+ #info-popover .recipe-intro,#info-popover .recipe-footnote { margin:7px 0; font-size:11px; }
+ .game-shell:not(.is-tutorial) .arena-center:has(.notice-stack) .arena-actions { display:grid; grid-template-columns:1fr 1fr; width:min(560px,calc(100vw - 160px)); gap:4px 12px; }
+ .game-shell:not(.is-tutorial).is-busy .arena-center .arena-actions { display:none; }
+ .game-shell:not(.is-tutorial) .arena-center:has(.notice-stack) .turn-instruction { grid-column:1/-1; justify-self:center; margin:0; padding:3px 8px; }
+ .game-shell:not(.is-tutorial) .arena-center:has(.notice-stack) #instruction { font-size:16px; line-height:1.3; padding:2px 10px; }
+ .game-shell:not(.is-tutorial) .arena-center:has(.notice-stack) #end-penalty { grid-column:1/-1; text-align:center; margin:0; }
+ .game-shell:not(.is-tutorial) .arena-center:has(.notice-stack) :is(#end-turn,#open-forge,#cancel) { min-height:36px; padding:6px 12px; font-size:16px; width:100%; }
+ .game-shell:not(.is-tutorial) .arena-center:has(.notice-stack) #primary-actions:empty { display:none; }
+ .game-shell:not(.is-tutorial) .arena-center:has(.notice-stack) #primary-actions:empty + #end-turn { grid-column:1/-1; justify-self:center; width:auto; }
+}
+@media(prefers-reduced-motion:reduce) { .notice-slot { transition:opacity .18s ease; } }
+.game-shell .scoreboard .player-statuses { max-height:none; overflow:visible; }
+@media(max-height:540px) and (orientation:landscape) {
+ .game-shell .scoreboard { padding-left:72px; padding-right:72px; }
+ .game-shell .scoreboard .player-statuses { width:64px; padding:0; gap:4px; }
+ .game-shell .field-items .prop-slot .prop-confirm { left:0; right:0; top:auto; bottom:0; width:100%; min-height:24px; padding:4px 2px; font-size:11px; transform:none; box-sizing:border-box; }
+ .game-shell .field-items .prop-slot.selected .prop-use b { visibility:hidden; }
+}
+@media(max-height:380px) and (orientation:landscape) {
+ .game-shell:not(.is-tutorial) .arena-center:has(.notice-stack) { top:86px; gap:6px; }
+ .game-shell:not(.is-tutorial) .arena-center:has(.notice-stack) #instruction { font-size:14px; line-height:1.2; padding:1px 8px; }
+ .game-shell:not(.is-tutorial) .arena-center:has(.notice-stack) :is(#end-turn,#open-forge,#cancel) { min-height:32px; font-size:14px; padding:4px 10px; }
+}

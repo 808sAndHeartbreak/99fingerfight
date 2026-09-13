@@ -12,7 +12,7 @@ export function describe(key, state, participants) {
   if(kind === "recipe" || kind === "combo") {
     const options=WEAPONS.filter(w=>w.recipe.every(n=>n===Number(id)));
     if(!options.length)return null;
-    return {title:`[${id}] + [${id}]`,tag:"配方选项",options,stats:[],body:(kind==="combo"?`组合已满足，行动时可合成。${id==="5"?"[5] + [5]：免疫普通伤害，不消耗数字；真实伤害仍可生效。":""}<br><br>`:"")+options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:"行动时选择其中一种，自动释放，结算后双手归 [1]；每回合可计算一次，计算前后均可合成。"};
+    return {title:`[${id}] + [${id}]`,tag:"配方选项",options,stats:[],body:(kind==="combo"?`组合已满足，行动时可合成。${id==="5"?"[5] + [5]：免疫普通伤害，不消耗数字；真实伤害仍可生效。":""}<br><br>`:"")+options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:""};
   }
   if (kind === "weapon") {
     const w = weaponById(id);
@@ -26,7 +26,7 @@ export function describe(key, state, participants) {
         ["使用", "自己的回合"],
       ],
       body: w.detail,
-      note: "合成后自动释放，结算后双手归 [1]；每回合计算一次，计算前后均可合成。",
+      note: "",
     };
   }
   if (kind === "prop") {
@@ -70,7 +70,7 @@ export function describe(key, state, participants) {
       weak:["虚弱",`剩余 ${p.weak} 个己方回合`,"每段直接技能伤害 −5，最低 0；不影响道具与持续伤害。重复施加延长回合。"],
       poison:["中毒",`剩余 ${p.poison} 次`,"每个己方回合开始受到 2 点普通伤害，可被防御阻挡。重复施加延长回合。"],
       resilience:["坚韧",`剩余 ${p.resilience} 个己方回合`,"免疫跳过回合与行动。连续两个己方回合被跳过后获得；强欲不再结束回合。可被窃取；不解除封印。"],
-      nine:["归一次数",`${p.nine} / 2`,"累计使用两次归一即可获胜。手的数字变化不会清除使用次数。"]
+      nine:["归一次数",`${p.nine} / 2`,"再使用一次归一即可获胜！计数永久保留，无法被清除或转移。"]
     }[id];
     return data?{title:data[0],tag:"持续状态",stats:[["时限 / 数量",data[1]]],body:data[2],note:""}:null;
   }

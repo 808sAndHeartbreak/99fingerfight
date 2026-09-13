@@ -20,7 +20,7 @@ export function createHand(color, mirrored = false) {
     gradientMap: gradient,
   });
   const shade = new THREE.MeshToonMaterial({
-    color: 0xe7b284,
+    color: 0xa8a8a8,
     gradientMap: gradient,
   });
   const cloth = new THREE.MeshToonMaterial({

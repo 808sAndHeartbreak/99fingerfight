@@ -417,7 +417,7 @@ async function animateCommand(command, old, next, contact) {
     return feedback.generation()===epoch;
   }
   if(command.type==="attack"||command.type==="prop"||["end","advance","forge"].includes(command.type)) {
-    cinema??=createCombatCinema({animate:feedback.animate,register:feedback.register,generation:feedback.generation,asset,sound:battleSound.play,participants,notice:feedback.notice,noticeRoot:feedback.noticeRoot});
+    cinema??=createCombatCinema({animate:feedback.animate,register:feedback.register,generation:feedback.generation,asset,sound:battleSound.play,participants,notice:feedback.notice,appendNotice:feedback.appendNotice,retainNotice:feedback.retainNotice});
     let visual=structuredClone(old);
     const completed=await cinema(old,next,command,beat=>{
       const before=structuredClone(visual);
@@ -735,6 +735,7 @@ function showResult() {
     `result-dialog manga-result ${tutorial?'tutorial-result ':''}${lost ? "defeat" : "victory"} winner-${winner}`,
   );
   dialog.dataset.view='result';
+  document.querySelectorAll('.nine-finale.complete').forEach(el=>el.remove());
 }
 
 function showOnline(reveal = true) {
