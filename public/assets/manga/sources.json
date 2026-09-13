@@ -8,10 +8,6 @@
     "output": "assets/manga/contact.webp"
   },
   {
-    "source": "User-provided dodgeball art: ui\\victory_manga_burst_v2.png",
-    "output": "assets/manga/victory.webp"
-  },
-  {
     "source": "User-provided dodgeball art: fonts\\Teko-Variable.ttf",
     "output": "assets/manga/Teko-Variable.ttf"
   },

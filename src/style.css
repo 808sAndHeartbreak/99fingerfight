@@ -1260,36 +1260,6 @@ dialog[open] {
   font-size: 10px;
   color: var(--muted);
 }
-.result {
-  text-align: center;
-  background:
-    linear-gradient(#f2eddfcf, #f2eddfeb),
-    url("/assets/manga/victory.webp") center/cover;
-}
-.result-word {
-  font-size: 90px;
-  font-weight: 900;
-  font-style: italic;
-  color: var(--red);
-  line-height: 1.5;
-  text-shadow: 4px 4px 0 var(--ink);
-  -webkit-text-stroke: 1px var(--ink);
-}
-.result-word span {
-  color: var(--ink);
-}
-.result h2 {
-  font-size: 24px;
-}
-.result > p {
-  font-size: 12px;
-}
-.result .primary {
-  width: 220px;
-}
-.result .text-button {
-  margin-top: 14px;
-}
 @keyframes contact {
   0% {
     opacity: 0;
@@ -2060,12 +2030,6 @@ dialog[open] {
   .rules p,
   .help-notes p {
     font-size: 11px;
-  }
-  .result-word {
-    font-size: 75px;
-  }
-  .result h2 {
-    font-size: 21px;
   }
   #info-popover {
     width: calc(100vw - 24px);

@@ -217,10 +217,7 @@ export function createFeedback() {
       await animate(clock,[{boxShadow:'6px 6px 0 #050916'},{boxShadow:`6px 6px 0 #050916,0 0 0 5px ${cue.owner?'#ff9c7955':'#8bb6ff55'}`,offset:.3},{boxShadow:'6px 6px 0 #050916'}],{duration:cue.duration}).finished.catch(()=>{});
 
     },
-    async forge({owner, weapon}, asset, next, participants) {
-      notice(`${playerName(participants,owner)} 合成 ${weapon.name}，立即释放`, owner, "forge");
-    },
-    notice, noticeRoot,
+    notice,
     contact, changes,
     reveal(el, text) {
       if (el.textContent === text) return;
@@ -233,16 +230,6 @@ export function createFeedback() {
         ],
         { duration: 150 },
       );
-    },
-    clearNotices() {
-      for (const n of nodes)
-        if (n.classList.contains("moment-notice")) {
-          n.getAnimations().forEach((a) => a.cancel());
-          const r=receipts.get(n);if(r){noticeObserver.unobserve(n);r.slot.remove();nodes.delete(r.slot);receipts.delete(n);}
-          n.remove();
-          nodes.delete(n);
-        }
-      scheduleLayout();
     },
     pause(value) {
       paused = value;

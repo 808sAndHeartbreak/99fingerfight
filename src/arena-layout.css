@@ -14,8 +14,6 @@
 .game-shell .round-block .phase-time small { color:#747780; font-size:10px; }
 .game-shell .round-block .phase-time.urgent { color:#c54a28; }
 .game-shell .round-block .phase-time[hidden] { display:none; }
-.game-shell .turn-arrow { font:500 28px/1 sans-serif; letter-spacing:0; }
-.game-shell .turn-arrow[hidden] { display:none; }
 .sr-only { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
 .game-shell .stage { top:140px; bottom:25px; }
 .game-shell .arena-actions { position:absolute; left:50%; top:calc(50% + 50px); transform:translate(-50%,-50%); width:260px; z-index:30; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; pointer-events:none; }
@@ -43,9 +41,6 @@
 .game-shell .hand-hotspot.selected .hand-value { background:#fff2bd; box-shadow:0 0 0 3px currentColor,0 0 22px #edc65a65; }
 .game-shell .hand-hotspot.selected .fallback-hand { filter:drop-shadow(2px 0 0 currentColor) drop-shadow(-2px 0 0 currentColor) drop-shadow(0 2px 0 currentColor) brightness(1.1); }
 .game-shell .needs-calculation .hand-hotspot { animation:none; }
-.game-shell .turn-handoff { inset:auto; left:50%; top:125px; width:max-content; max-width:280px; padding:12px 22px; transform:none; border-radius:30px; }
-.game-shell .turn-handoff strong { font-size:17px; margin:0; }
-.game-shell .turn-handoff span { font-size:12px; margin-top:5px; }
 .game-shell .notice-stack { top:140px; }
 .game-shell.is-busy .arena-actions { visibility:hidden; }
 .game-shell .arena-actions .tutorial-guide { display:block; width:100%; padding:0; border:0; background:none; color:#3d4859; text-align:left; z-index:auto; }
@@ -80,16 +75,12 @@
  .game-shell .reference-deck .hud-tools button,.game-shell .reference-deck #history { padding:6px 8px; font-size:10px; min-height:30px; }
  .game-shell .reference-recipe { flex-basis:66px; }
  .game-shell .field-items { top:165px; }
- .game-shell .turn-handoff { top:145px; max-width:240px; padding:10px 16px; }
- .game-shell .turn-handoff strong { font-size:14px; }
  .game-shell .notice-stack { top:150px; }
  .game-shell.is-tutorial .arena-actions { width:220px; padding:12px; }
  .game-shell.is-tutorial .arena-actions #instruction { font-size:14px; }
  .game-shell .tutorial-guide p { font-size:11px; line-height:1.6; }
 }
 @media(prefers-reduced-motion:reduce) { .game-shell .player { transition:none; } }
-
-.game-shell .turn-handoff { translate:-50% 0; }
 
 .game-shell:not(.is-busy) .arena-actions .primary-actions { visibility:visible; }
 @media(max-width:650px) {
@@ -122,7 +113,6 @@
 .game-shell .round-block .phase-time.urgent { color:#ff6255; border-color:#ff6255; }
 .game-shell .field-items { top:calc(50% + 55px); bottom:auto; transform:translateY(-50%); height:270px; }
 .game-shell .notice-stack { top:180px; }
-.game-shell .turn-handoff { top:165px; }
 .game-shell .arena-actions #forge-options { background:#182238; border:1px solid #f3e7d2; border-radius:4px; padding:12px; box-shadow:5px 6px 0 #17213925; }
 .game-shell .arena-actions .forge-heading { display:flex!important; padding:0 0 8px; margin:0; border-bottom:1px solid #fff4d930; }
 .game-shell .forge-heading h2 { font-size:14px; }
@@ -141,14 +131,9 @@
 .game-shell #confirm-forge:hover { background:#f3533d; }
 .game-shell.is-tutorial .arena-actions { border-radius:4px; border-top:3px solid #1b2940; box-shadow:4px 5px 0 #17213916; }
 .nine-finale { background:radial-gradient(ellipse at center,#263750ed,#0c1426fa); backdrop-filter:blur(6px); }
-.nine-aura { border-radius:5px; border:1px solid #f3e6c845; rotate:45deg; background:linear-gradient(135deg,#fff1cc06,transparent); box-shadow:18px 18px 0 #e44a3320; }
-.nine-aura::before,.nine-aura::after { border-radius:2px; border-style:solid; }
 .nine-orbit>span,.nine-orbit>b { color:#fff1d3; font-family:MangaSans,'Noto Sans SC',sans-serif; font-weight:900; text-shadow:5px 6px 0 #d94c3a,10px 10px 0 #050c1d80; }
 .nine-content h2 { display:table; margin:4px auto 18px; padding:5px 25px 10px; color:#16223b; background:#fff0d0; font-family:MangaSans,sans-serif; font-style:italic; letter-spacing:.08em; box-shadow:8px 8px 0 #d64b38; }
 .nine-content p { font-size:20px; color:#fff1d3; font-weight:750; letter-spacing:.12em; }
-.nine-progress { gap:7px; margin-top:20px; }
-.nine-progress i { width:34px; height:5px; border-radius:0; background:#ffffff15; border:0; }
-.nine-progress i.lit { background:#f5dfab; }
 .nine-content footer { margin-top:20px; color:#d2d8e0; }
 @media(max-width:650px) {
  .game-shell .scoreboard { width:calc(100% - 16px); max-width:none; gap:8px; grid-template-columns:minmax(0,1fr) 84px minmax(0,1fr); }
@@ -159,7 +144,6 @@
  .game-shell .field-items { height:230px; top:calc(50% + 45px); }
  .game-shell .arena-center { top:calc(50% + 75px); }
  .game-shell .arena-center .notice-stack { position:static; }
- .game-shell .turn-handoff { top:155px; }
  .game-shell .forge-confirm-art { width:50px; height:50px; margin:0 0 4px; }
  .game-shell .arena-actions #forge-options.confirming { padding:10px; gap:6px; }
  .game-shell #forge-options.confirming h2 { font-size:21px; }

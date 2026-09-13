@@ -80,7 +80,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
         animate(orb,[{transform:'rotate(0deg)'},{transform:'rotate(360deg)'}],{duration:Math.max(650,duration-1950),fill:'both',easing:'cubic-bezier(.25,.05,.3,1)'});
         ritual.querySelectorAll('.taiji-wave').forEach((wave,i)=>animate(wave,[{opacity:0,transform:'scale(.75)'},{opacity:.8,offset:.2},{opacity:0,transform:'scale(1.65)'}],{duration:1200,delay:i*200,fill:'both'}));
       }
-      for(const node of ritual.querySelectorAll('h2,p,.nine-progress,footer'))animate(node,[{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:450,fill:'both'});
+      for(const node of ritual.querySelectorAll('h2,p,footer'))animate(node,[{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:450,fill:'both'});
       if(!await wait(ritual,duration-2350))return false;
       onBeat({type:'reset-hands'});
       if(!await wait(ritual,400))return false;

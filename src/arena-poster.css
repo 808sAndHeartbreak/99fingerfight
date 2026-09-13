@@ -25,7 +25,6 @@
 .game-shell .round-block .phase-time #clock { font:700 italic 76px/.95 Teko,sans-serif; text-shadow:none; }
 .game-shell .round-block .phase-time.warning { background:#ffd15e; color:#171426; border-color:#ffd15e; }
 .game-shell .round-block .phase-time.urgent { background:#e84432; color:#fff4dd; border-color:#fff4dd; }
-.game-shell .turn-arrow { color:#fff2d8; font-size:35px; font-weight:900; text-shadow:3px 3px 0 #0009; }
 .game-shell .arena-center { top:max(215px,calc(50% - 125px)); width:clamp(280px,23vw,360px); transform:translateX(-50%); gap:20px; }
 .game-shell .arena-center .arena-actions { gap:18px; }
 .game-shell:not(.is-tutorial) .arena-center:not(:has(.notice-stack:not(:empty))) .arena-actions { margin-top:55px; }
@@ -115,15 +114,10 @@
 .game-shell .notice-stack .arena-skill .cinema-result .damage-value { font:700 italic 48px/1 Teko,sans-serif; color:#fff2d8; text-shadow:3px 3px 0 #cc3d32; }
 .game-shell .notice-stack .arena-skill .cinema-result .effect-text { font:13px/1.75 'Microsoft YaHei',sans-serif; }
 .game-shell .notice-stack .arena-skill .cinema-icon { background:#fff2d8; border-radius:0; rotate:-5deg; box-shadow:4px 4px 0 #b93b32; }
-.game-shell .turn-handoff { top:175px; border:2px solid #fff2d8; border-radius:0; background:#162444; box-shadow:6px 6px 0 #050916; padding:9px 26px; max-width:340px; }
-.game-shell .turn-handoff[data-team='1'] { background:#a72c2a; }
-.game-shell .turn-handoff strong { font-size:23px; color:#fff2d8; font-weight:900; }
 .game-shell .hp-delta { color:#fff2d8; background:#c9362d; padding:4px 10px; text-shadow:2px 2px 0 #070d20; border:1px solid #fff2d8; }
 .game-shell .hp-delta.heal { background:#236c65; }
 .game-shell .change-marker>span { background:#101a30; color:#fff2d8; border-color:#fff2d866; }
 .nine-finale { background:radial-gradient(ellipse at 50% 48%,#29335a,#080f20 75%); }
-.nine-aura { rotate:-8deg; border:0; background:#d83d2c; clip-path:polygon(0 20%,100% 0,88% 87%,12% 100%); opacity:.3; box-shadow:none; }
-.nine-aura::before,.nine-aura::after { display:none; }
 .nine-content h2 { font-size:clamp(46px,7vw,110px); border:3px solid #fff2d8; box-shadow:12px 13px 0 #d7392f; transform:rotate(-5deg); }
 .nine-content p { font-size:clamp(20px,2.5vw,38px); font-weight:900; }
 @keyframes poster-end-beat { 0%,100% { translate:0 0; box-shadow:6px 7px 0 #060b19; } 50% { translate:0 -3px; box-shadow:8px 11px 0 #060b19,0 0 0 3px #f6e7c62a; } }
@@ -140,7 +134,6 @@
  .game-shell .round-block .phase-time #clock { font-size:48px; }
  .game-shell .round-block .round-caption { font-size:9px; letter-spacing:0; }
  .game-shell .round-block .round-caption b { font-size:18px; }
- .game-shell .turn-arrow { font-size:27px; }
  .game-shell .arena-center { width:230px; top:clamp(325px,calc(50% - 20px),400px); gap:12px; }
  .game-shell .arena-center .notice-stack { max-height:310px; }
  .game-shell .arena-actions #instruction { font-size:15px; padding:7px 10px; }
@@ -167,8 +160,6 @@
  .game-shell .notice-stack .arena-skill .cinema-heading h2 { font-size:26px; }
  .game-shell .notice-stack .arena-skill .cinema-result .damage-value { font-size:38px; }
  .game-shell .notice-stack .arena-skill .cinema-result .effect-text { font-size:12px; }
- .game-shell .turn-handoff { top:167px; padding:8px 17px; }
- .game-shell .turn-handoff strong { font-size:18px; }
 }
 @media(prefers-reduced-motion:reduce) { .game-shell .arena-actions .end-turn.urgent,.game-shell .hand-hotspot.tutorial-target .hand-value { animation:none; } .game-shell .reference-recipe { transition:none; } }
 /* Full-screen manga composition: portraits frame the play, never the hand targets. */
