@@ -62,8 +62,23 @@ const name = (seat) => escapeHtml(playerName(participants(), seat));
 let renderedRemoteReady = false;
 let online, remoteMatch = null, remoteQueue = [], remoteApplying = false;
 let referencePage='skills';
+let handoffOwner=null, clockReadyTurn=null;
 let forgeUi={key:'',choice:null,hidden:false};
-function updateClockWarning(){const el=document.querySelector('#phase-time'),seconds=Math.ceil(remaining);el.classList.toggle('warning',mode!=='tutorial' && seconds>=6 && seconds<=10);el.classList.toggle('urgent',mode!=='tutorial' && seconds<=5);}
+function updateClockWarning(){
+  if(!state)return;
+  const el=document.querySelector('#phase-time'),clock=document.querySelector('#clock'),arrow=document.querySelector('#turn-arrow');
+  const handoff=state.winner===null && (handoffOwner!==null || state.phase==='start'&&clockReadyTurn!==state.turn);
+  const owner=handoffOwner??state.active,seconds=Math.ceil(remaining);
+  el.classList.toggle('handoff',handoff);el.dataset.team=owner;
+  clock.hidden=handoff;arrow.hidden=!handoff;
+  arrow.dataset.direction=owner?'right':'left';
+  clock.textContent=state.winner!==null?'—':mode==='tutorial'?'∞':mode==='online'&&online.status!=='connected'?'—':state.phase==='start'?TURN_SECONDS:seconds;
+  el.setAttribute('aria-label',handoff?`回合交接，轮到${playerName(participants(),owner)}`:mode==='tutorial'?'教学，无倒计时':`剩余 ${state.phase==='start'?TURN_SECONDS:seconds} 秒`);
+  const counting=!handoff&&state.winner===null&&state.phase==='action'&&mode!=='tutorial'&&(mode!=='online'||online.status==='connected');
+  el.classList.toggle('warning',counting&&seconds<=10);
+  el.classList.toggle('urgent',counting&&seconds<=5);
+}
+
 const humanTurn = () => mode === "online" ? online?.packet?.room?.seat === state.active : mode === "local" || state.active === 0;
 const team = (id) => (id === 0 ? "蓝方" : "红方");
 const audioCache = new Map();
@@ -98,7 +113,7 @@ app.innerHTML = `<main class="game-shell">
 
   <div id="network-notice" class="network-notice" role="status" hidden></div><span id="mode-label" hidden></span>
   <section class="duel" aria-label="指尖对战场">
-    <div class="scoreboard"><div id="player-0" class="player blue"></div><div class="round-block" aria-label="回合与倒计时"><span class="round-caption">回合 <b id="round-number">01</b></span><div class="phase-time" id="phase-time" role="timer" aria-live="off" aria-label="剩余时间"><span id="clock">30</span><small>秒</small></div><span id="turn-arrow" class="turn-arrow" aria-hidden="true">←</span><span id="phase-label" class="sr-only"></span></div><div id="player-1" class="player red"></div></div>
+    <div class="scoreboard"><div id="statuses-0" class="status-strip player-statuses blue" aria-label="蓝方状态"></div><div id="statuses-1" class="status-strip player-statuses red" aria-label="红方状态"></div><div id="player-0" class="player blue"></div><div class="round-block" aria-label="回合与倒计时"><span class="round-caption">回合 <b id="round-number">01</b></span><div class="phase-time" id="phase-time" role="timer" aria-live="off" aria-label="剩余时间"><span id="clock">30</span><span id="turn-arrow" class="clock-arrow" aria-hidden="true" hidden><svg viewBox="0 0 100 72"><path d="M7 24 H54 L46 6 L96 36 L46 66 L54 48 H7 Z"/></svg></span></div><span id="phase-label" class="sr-only"></span></div><div id="player-1" class="player red"></div></div>
     <div id="stage" class="stage" data-motion="idle"><div class="hand-layer" id="hand-layer">${[0, 1].map((owner) => [0, 1].map((hand) => `<button id="hand-${owner}-${hand}" class="hand-hotspot ${owner ? "red" : "blue"}" data-owner="${owner}" data-hand="${hand}" aria-pressed="false"><span class="hand-corner"></span>${img("hand-1.webp", "fallback-hand")}<b class="hand-value">1</b><span class="hand-status"></span><span class="hand-shield" data-info="shield" data-info-only hidden></span><span class="sum-preview"></span></button>`).join("")).join("")}</div><div class="contact-fx" id="contact-fx" aria-hidden="true">${img("manga/contact.webp")}<b>碰!</b></div></div>
     <div id="combat-callout" class="combat-callout" aria-live="polite"></div>
     <div class="field-note" aria-hidden="true"></div>
@@ -137,6 +152,7 @@ function announceSupply(next) {
  if(notes.length)toast(notes.join('；'),3600);
 }
 async function revealSupply(next) {
+  clockReadyTurn=next.turn;handoffOwner=null;
   state=next;render();announceSupply(next);
   if(!hasSupply(next))return;
   feedback.changes(beforeSupply(next),next,3000);
@@ -155,21 +171,26 @@ function canTarget(owner, hand) {
   const id=state.players[state.active].props[selected.slot];
   return !state.players[state.active].silenced && hand !== undefined && PROPS[id]?.target === "hand" && (id!=="lock" || !state.players[owner].locks.some(Boolean));
 }
+function renderStatuses(owner,snapshot=state) {
+  const p=snapshot.players[owner];
+  const statusIcons={echo:'echo',mirror:'mirror',silenced:'silence',skip:'taser',seven:'seven',dark:'dark',foam:'foam',knuckles:'knuckles',peace:'peace',weak:'serpent',poison:'serpent',wine:'wine',resilience:'resilience',nine:'nine-seal'};
+  const statuses=Object.keys(statusIcons).filter(key=>p[key]).map(key=>{
+    const d=describe(`status:${key}:${owner}`,snapshot);
+    const count=({skip:p.skip,seven:p.seven,dark:'∞',foam:p.foam,knuckles:`+${p.knuckles*10}`,peace:p.peace,weak:`弱${p.weak}`,poison:`毒${p.poison}`,wine:`+${p.wine*10}`,resilience:p.resilience,nine:`${p.nine}/2`})[key];
+    return `<button class="status-icon" data-info="status:${key}:${owner}" data-info-only aria-label="${d.title}，${d.stats[0][1]}">${img(`ink-mono/${statusIcons[key]}.webp`)}${count!==undefined?`<b class="status-count">${count}</b>`:''}</button>`;
+  }).join('');
+  document.querySelector(`#statuses-${owner}`).innerHTML=statuses;
+}
 function renderPlayer(owner) {
   const p = state.players[owner],
     active = state.active === owner && state.winner === null;
   const presence=mode==="online" ? participants().find(x=>x.seat===owner) : null;
   const presenceText=presence ? presence.departed?"已离开":online.status!=="connected"?(owner===online.packet.room.seat?"重连中":"待同步"):presence.connected?"在线":"已断线" : "";
-  const statusIcons={echo:'echo',mirror:'mirror',silenced:'silence',skip:'taser',seven:'seven',dark:'dark',foam:'foam',knuckles:'knuckles',peace:'peace',weak:'serpent',poison:'serpent',wine:'wine',resilience:'resilience',nine:'nine-seal'};
-  const statuses=Object.keys(statusIcons).filter(key=>p[key]).map(key=>{
-    const d=describe(`status:${key}:${owner}`,state);
-    const count=({skip:p.skip,seven:p.seven,dark:'∞',foam:p.foam,knuckles:`+${p.knuckles*10}`,peace:p.peace,weak:`弱${p.weak}`,poison:`毒${p.poison}`,wine:`+${p.wine*10}`,resilience:p.resilience,nine:`${p.nine}/2`})[key];
-    return `<button class="status-icon" data-info="status:${key}:${owner}" data-info-only aria-label="${d.title}，${d.stats[0][1]}">${img(`ink-mono/${statusIcons[key]}.webp`)}${count!==undefined?`<b class="status-count">${count}</b>`:''}</button>`;
-  }).join('');
   const mine=mode==='online'?owner===online.packet.room.seat:mode==='local'?owner===state.active:owner===0;
   const identity=mine?'（我）':mode==='ai'&&owner===1?AI_LEVELS[aiDifficulty]:'';
   document.querySelector(`#player-${owner}`).innerHTML =
-    `<div class="player-head"><div class="player-identity">${mine&&mode!=="tutorial"?`<button class="player-name" data-edit-name="${owner}" aria-label="修改昵称：${name(owner)}">${name(owner)}</button>`:`<strong title="${name(owner)}">${name(owner)}</strong>`}${identity?`<small class="seat-label">${identity}</small>`:''}${presence?`<small class="player-presence ${presenceText==='在线'?'connected':''}" aria-label="${presenceText}"><i class="status-dot"></i>${presenceText==='在线'?'':presenceText}</small>`:''}</div><div class="health-number"><b>${p.hp}</b><small>/ ${MAX_HP}</small></div></div><div class="hp-bar" role="meter" aria-label="${team(owner)}生命" aria-valuenow="${p.hp}" aria-valuemin="0" aria-valuemax="${MAX_HP}"><span class="hp-trail" style="width:${(p.hp/MAX_HP)*100}%"></span><i style="width:${(p.hp/MAX_HP)*100}%"></i></div><div class="status-strip">${statuses}</div><div class="player-loadout"></div>`;
+    `<div class="player-head"><div class="player-identity">${mine&&mode!=="tutorial"?`<button class="player-name" data-edit-name="${owner}" aria-label="修改昵称：${name(owner)}">${name(owner)}</button>`:`<strong title="${name(owner)}">${name(owner)}</strong>`}${identity?`<small class="seat-label">${identity}</small>`:''}${presence?`<small class="player-presence ${presenceText==='在线'?'connected':''}" aria-label="${presenceText}"><i class="status-dot"></i>${presenceText==='在线'?'':presenceText}</small>`:''}</div><div class="health-number"><b>${p.hp}</b><small>/ ${MAX_HP}</small></div></div><div class="hp-bar" role="meter" aria-label="${team(owner)}生命" aria-valuenow="${p.hp}" aria-valuemin="0" aria-valuemax="${MAX_HP}"><span class="hp-trail" style="width:${(p.hp/MAX_HP)*100}%"></span><i style="width:${(p.hp/MAX_HP)*100}%"></i></div>`;
+  renderStatuses(owner);
   document.querySelector(`#player-${owner}`).classList.toggle("active", active);
 }
 function renderHandShield(el,p,h) {
@@ -235,10 +256,7 @@ function render(preserveInfo=false) {
   }
   renderedRemoteReady = mode === "online" && online.status === "connected" && online.serverNow() >= (online.packet?.room?.readyAt || 0);
   if(!preserveInfo)info?.hideTransient();
-  document.querySelector("#phase-time").hidden = state.winner !== null || state.phase === "start";
-  document.querySelector("#clock").textContent = mode==="tutorial"?"∞":mode==="online"&&online.status!=="connected"?"—":Math.ceil(remaining);
   updateClockWarning();
-  document.querySelector("#phase-time small").textContent=mode==="tutorial"?"练习":"秒";
   renderPlayer(0);
   renderPlayer(1);
   renderHands();
@@ -253,10 +271,8 @@ function render(preserveInfo=false) {
   const p = state.players[state.active],
     enabled = !busy && !remotePending && (mode!=='tutorial' || session.canProceed) && humanTurn() && state.winner === null && (mode !== "online" || online.status === "connected" && online.serverNow() >= (online.packet?.room?.readyAt || 0));
   document.querySelector("#phase-label").textContent=state.winner!==null?'对局结束':`${team(state.active)}的回合`;
-  document.querySelector('#turn-arrow').textContent=state.active?'→':'←';
   document.querySelector('.round-block').dataset.team=state.active;
   document.querySelector('#stage').dataset.active=state.winner===null?state.active:'';
-  document.querySelector('#turn-arrow').hidden=state.winner!==null;
   const guide = mode==="online"&&online.status!=="connected"&&state.winner===null ? {title:"正在恢复对局",detail:"连接恢复后继续操作",step:"waiting"} : guidance(state, selected, humanTurn(), busy);
   if(mode==="online" && online.status==="connected" && !busy && !renderedRemoteReady && state.winner===null) Object.assign(guide,{title:"",detail:"",step:"waiting"});
   if(remotePending && !busy && mode==="online" && online.status==="connected") Object.assign(guide,{title:"",detail:"",step:"waiting"});
@@ -284,7 +300,7 @@ function render(preserveInfo=false) {
     document.querySelector(`#items-${owner}`).classList.toggle("items-remaining",usable && state.calculated && propCommands(state).length>0 && !synthesisOptions(state).length);
     document.querySelector(`#items-${owner}`).innerHTML=`<div class="supply-dots" data-info="supply:${owner}" tabindex="0" aria-label="道具补给：${supply} 回合后">${[1,2,3].map(n=>`<i class="${n<=3-supply?'filled':''}"></i>`).join('')}</div>`+[0,1,2].map(slot=>{
       const id=player.props[slot], mine=owner===state.active && humanTurn();
-      return id ? `<div class="prop-slot ${mine&&selected?.kind==='prop'&&selected.slot===slot?'selected':''}"><button class="prop-use" data-slot="${slot}" ${mine?`data-prop="${slot}"`:'data-info-only'} data-info="prop:${id}:${owner}" aria-disabled="${!usable || !propCommands(state).some(c=>c.slot===slot)}" aria-label="${mine?'使用':'查看'}${PROPS[id].name}">${propArt(id)}<b>${PROPS[id].name}</b></button>${mine&&selected?.kind==='prop'&&selected.slot===slot&&PROPS[id].target!=='hand'?`<button class="prop-confirm" id="use-prop" ${usable?'':'disabled'}>确认使用</button>`:''}</div>` : '<div class="prop-slot empty" aria-label="空道具位"><span>＋</span></div>';
+      return id ? `<div class="prop-slot ${mine&&selected?.kind==='prop'&&selected.slot===slot?'selected':''}"><button class="prop-use" data-slot="${slot}" ${mine?`data-prop="${slot}"`:'data-info-only'} data-info="prop:${id}:${owner}" aria-disabled="${!usable || !propCommands(state).some(c=>c.slot===slot)}" aria-label="${mine?'使用':'查看'}${PROPS[id].name}">${propArt(id)}<b>${PROPS[id].name}</b></button>${mine&&selected?.kind==='prop'&&selected.slot===slot&&PROPS[id].target!=='hand'?`<button class="prop-confirm" id="use-prop" ${usable?'':'disabled'}>确认使用</button>`:''}</div>` : '<div class="prop-slot empty" aria-label="空道具位"></div>';
     }).join('');
   }
   renderReference();
@@ -426,6 +442,7 @@ async function animateCommand(command, old, next, contact) {
         stage?.sync(visual,null,false,true);
         visual.players.forEach((p,owner)=>p.hands.forEach((n,h)=>{handElements[owner][h].querySelector('.hand-value').textContent=n;}));
       }
+      visual.players.forEach((_,o)=>renderStatuses(o,visual));
       feedback.changes(before,visual,1800,beat.type==='damage'&&beat.blocked==='护盾'?beat.owner:null);
       visual.players.forEach((p,o)=>p.hands.forEach((n,h)=>renderHandShield(handElements[o][h],p,h)));
       feedback.contact({type:'beat'},before,visual);
@@ -476,6 +493,7 @@ async function send(command) {
   try {
     const full = { ...command, actor: old.active, revision: old.revision };
     const next = await current.send(full,{timeout:mode!=="tutorial" && remaining===0});
+    if(next.turn!==old.turn){handoffOwner=next.active;updateClockWarning();}
     const completed = await animateCommand(full, old, beforeSupply(next), (visual) => {
       if (current === session && serial === actionSerial)
         showContact(visual, old, next);
@@ -503,7 +521,7 @@ async function send(command) {
     }
   } finally {
     if (current === session && serial === actionSerial) {
-      busy = false;
+      busy = false;handoffOwner=null;
       deadline = Date.now() + remaining * 1000;
       document.querySelector("#combat-callout").classList.remove("visible");
       document.querySelector("#combat-callout").textContent = "";
@@ -564,7 +582,7 @@ function startGame(newMode = mode, chapter = 0, saved = null, matchParticipants 
   selected = null;
   busy = false;
   paused = false;
-  remaining = TURN_SECONDS;
+  remaining = TURN_SECONDS;handoffOwner=null;clockReadyTurn=null;
   deadline = Date.now() + TURN_SECONDS * 1000;
   session = mode === "tutorial" ? new TutorialSession(chapter) : saved ? LocalSession.restore(saved) : new LocalSession(crypto.getRandomValues(new Uint32Array(1))[0],{difficulty:aiDifficulty,participants:matchParticipants});
   if(mode==="ai")aiDifficulty=session.difficulty;
@@ -776,6 +794,7 @@ function receiveRemote(packet) {
   if(!room?.state){if(room?.status==="waiting"&&dialog.dataset.view==="menu")showOnline();if(mode==="online"){remoteMatch=null;remoteQueue=[];started=false;startGame("ai");showOnline();}return;}
   if(remoteMatch!==room.matchId||mode!=="online") {
     actionSerial++;stage?.cancel();feedback.reset();unsubscribe?.();session?.dispose();stopAI();
+    handoffOwner=null;clockReadyTurn=null;
     remoteQueue=[];remoteApplying=false;remoteMatch=room.matchId;session=online;mode="online";started=true;selected=null;busy=false;remotePending=false;paused=false;state=room.state;
     stage?.setPaused(false);if(dialog.open)closeDialog();render();if(state.winner!==null)showResult();else if(state.phase==="start")introRemote();return;
   }
@@ -796,6 +815,7 @@ async function drainRemote() {
     while(remoteQueue.length&&serial===actionSerial) {
       const packet=remoteQueue.shift(),room=packet.room,old=state,next=room.state;
       if(next.revision<=old.revision)continue;
+      if(next.turn!==old.turn)handoffOwner=next.active;
       busy=true;selected=null;info?.hideTransient();render();
       const event=room.event;
       if(!document.hidden&&!dialog.open&&remoteQueue.length<2&&event&&next.revision===old.revision+1&&online.serverNow()<=(room.readyAt||0)+500) {
@@ -811,7 +831,7 @@ async function drainRemote() {
       if(serial!==actionSerial)return;
       busy=false;render();if(state.winner!==null)showResult();
     }
-  } finally {if(serial===actionSerial){remoteApplying=false;busy=false;render();}}
+  } finally {if(serial===actionSerial){remoteApplying=false;busy=false;handoffOwner=null;render();}}
 }
 
 info = setupInfo(app, () => state, asset, participants, () => mode === "online", (key, clicked) => {
@@ -976,7 +996,7 @@ listen(document, "visibilitychange", () => {
     const room=online.packet?.room;
     if(room?.state && room.matchId===remoteMatch) {
       actionSerial++;stage?.cancel();feedback.reset();info?.hide();
-      remoteQueue=[];remoteApplying=false;busy=false;selected=null;state=room.state;render();
+      remoteQueue=[];remoteApplying=false;busy=false;selected=null;handoffOwner=null;clockReadyTurn=room.state.turn;state=room.state;render();
       if(!document.hidden&&state.winner!==null&&dialog.dataset.view!=='history')showResult();
     }
     return;
@@ -989,14 +1009,13 @@ const ticker = setInterval(() => {
     const room=online.packet?.room;
     updateNetworkNotice();
     if(busy)return;
-    if(room?.state){remaining=room.deadlineAt ? Math.max(0,Math.ceil((room.deadlineAt-Math.max(online.serverNow(),room.readyAt||0))/1000)):0;document.querySelector("#clock").textContent=online.status==="connected"?Math.ceil(remaining):"—";updateClockWarning();
+    if(room?.state){remaining=room.deadlineAt ? Math.max(0,Math.ceil((room.deadlineAt-Math.max(online.serverNow(),room.readyAt||0))/1000)):0;updateClockWarning();
       const ready = online.status === 'connected' && online.serverNow() >= room.readyAt;
       if(!busy && !remotePending && ready !== renderedRemoteReady)render();}
     return;
   }
   if (mode === "tutorial" || paused || busy || !started || !state || state.winner !== null) return;
   remaining = Math.max(0, (deadline - Date.now()) / 1000);
-  document.querySelector("#clock").textContent = mode==="tutorial"?"∞":mode==="online"&&online.status!=="connected"?"—":Math.ceil(remaining);
   updateClockWarning();
   if (remaining === 0)
     send(state.phase === "start" ? {type:"advance"} : {type:"end"});
@@ -1073,7 +1092,7 @@ function updateSpotlight(){
     const handBoxes=new Map([...document.querySelectorAll('.hand-hotspot')].map(el=>[el,guideBounds(el)]));
     const width=Math.max(...[...handBoxes.values()].map(r=>r.width)),height=Math.max(...[...handBoxes.values()].map(r=>r.height));
     const bounds=el=>{const r=handBoxes.get(el);return r?{left:r.left+(r.width-width)/2,top:r.top+(r.height-height)/2,width,height}:guideBounds(el);};
-    const holes=[...document.querySelectorAll('.tutorial-target, .arena-actions, #forge-options, .scoreboard, .hud-tools')].filter(el=>el.getClientRects().length).map(el=>{
+    const holes=[...document.querySelectorAll('.tutorial-target, .arena-actions, #forge-options, .scoreboard, .player-statuses, .hud-tools')].filter(el=>el.getClientRects().length).map(el=>{
       const r=bounds(el);return `<rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" rx="8" fill="black"/>`;
     }).join('');
     const markers=[...document.querySelectorAll('.tutorial-target')].filter(el=>el.matches('.reference-recipe,.prop-use,.hand-hotspot')).map(el=>{const r=bounds(el),x=Math.max(58,Math.min(innerWidth-58,r.left+r.width/2)),y=Math.max(38,el.matches('.hand-hotspot')?r.top+33:r.top-20);return `<g class="tutorial-click-cue"><rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" rx="10" fill="none" stroke="#ffcf60" stroke-opacity="${.7+.3*Math.sin(performance.now()/380)}" stroke-width="${el.matches('.hand-hotspot')?3:4}"/><path d="M${x-9} ${y} L${x} ${y+12} L${x+9} ${y}" fill="#ffcf60"/><rect x="${x-52}" y="${y-30}" width="104" height="28" fill="#ffcf60"/><text x="${x}" y="${y-10}" text-anchor="middle" fill="#111a2e" font-size="16" font-weight="900">点击这里</text></g>`;}).join('');

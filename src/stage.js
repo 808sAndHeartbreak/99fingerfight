@@ -402,7 +402,7 @@ export class DuelStage {
           h.root.position.copy(h.base);
           if (!this.reduced.matches) {
             const active=!this.presenting && this.state?.active===h.owner && this.state?.phase==='action' && !this.state?.players[h.owner].weapon;
-            h.root.position.y += active?Math.sin(this.time * .95 + i*.3)*.075:0;
+            h.root.position.y += active?Math.sin(this.time * .95 + i*.3)*.035:0;
             const hit=this.hits?.[h.owner]||0;
             h.root.position.x+=(h.owner?1:-1)*Math.sin(Math.min(1,hit/.85)*Math.PI)*.65;
             h.root.position.y+=Math.sin(hit*55)*hit*.1;

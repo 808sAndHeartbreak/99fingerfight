@@ -74,8 +74,8 @@ export function createFeedback() {
     const groups=new Map();
     for(const change of all){const id=`${change.owner}:${change.hand??change.kind}`;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(change);}
     for(const group of groups.values()){
-      const c=group[0],target=document.querySelector(c.hand!==undefined?`#hand-${c.owner}-${c.hand} .hand-value`:c.kind==='inventory'?`#items-${c.owner}`:`#player-${c.owner} .status-strip`);
-      if(!target)continue;const r=target.getBoundingClientRect();
+      const c=group[0],target=document.querySelector(c.hand!==undefined?`#hand-${c.owner}-${c.hand} .hand-value`:c.kind==='inventory'?`#items-${c.owner}`:`#statuses-${c.owner}`);
+      if(!target)continue;const r=(target.getClientRects().length?target:document.querySelector(`#player-${c.owner}`)).getBoundingClientRect();
       const el=document.createElement('div');el.className=`change-marker ${c.hand!==undefined?'hand-change':c.kind+'-change'}`;el.dataset.team=c.owner;el.dataset.anchor=`${c.owner}:${c.hand??c.kind}`;
       el.innerHTML=group.map(c=>`<span>${c.id?`<img src="${new URL('assets/'+PROPS[c.id].image,document.baseURI).href}" alt="">`:''}${escapeHtml(c.label)}</span>`).join('');el.setAttribute('role','status');
       el.style.left=`${Math.max(65,Math.min(bounds.width-65,r.x+r.width/2-bounds.x))}px`;el.style.top=`${c.kind==='inventory'?r.y-bounds.y+12:r.bottom-bounds.y+6}px`;
@@ -175,10 +175,11 @@ export function createFeedback() {
       if(cue.kind==='finish'){
         await animate(document.querySelector('.round-block'),[{opacity:1},{opacity:1}],{duration:cue.duration}).finished.catch(()=>{});return;
       }
-      const el=document.createElement('div');el.className='turn-handoff';el.dataset.team=cue.owner;el.setAttribute('role','status');
-      el.innerHTML=`<strong>${escapeHtml(cue.detail)}</strong>${cue.title==='本回合无法行动'?'<span>本回合无法行动</span>':''}`;
-      document.querySelector('.duel').append(el);nodes.add(el);
-      await animate(el,[{opacity:0,transform:`translateX(${cue.owner?30:-30}px)`},{opacity:1,transform:'translateX(0)',offset:.18},{opacity:1,offset:.82},{opacity:0}],{duration:cue.duration,fill:'both'},true).finished.catch(()=>{});
+      const clock=document.querySelector('#phase-time'),arrow=document.querySelector('#turn-arrow');
+      animate(arrow,[{opacity:0,translate:`${cue.owner?-12:12}px 0`},{opacity:1,translate:'0 0',offset:.22},{opacity:1,translate:'0 0',offset:.78},{opacity:0,translate:`${cue.owner?12:-12}px 0`}],{duration:cue.duration});
+      animate(document.querySelector(`#player-${cue.owner}`),[{filter:'brightness(1)'},{filter:'brightness(1.25)',offset:.3},{filter:'brightness(1)'}],{duration:cue.duration});
+      await animate(clock,[{boxShadow:'6px 6px 0 #050916'},{boxShadow:`6px 6px 0 #050916,0 0 0 5px ${cue.owner?'#ff9c7955':'#8bb6ff55'}`,offset:.3},{boxShadow:'6px 6px 0 #050916'}],{duration:cue.duration}).finished.catch(()=>{});
+
     },
     async forge({owner, weapon}, asset, next, participants) {
       notice(`${playerName(participants,owner)} 合成 ${weapon.name}，立即释放`, owner, "forge");

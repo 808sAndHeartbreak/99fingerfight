@@ -1,7 +1,7 @@
 import {createGame, applyCommand} from './engine.js';
 
 export const LESSONS = [
- {title:'走完一个攻防回合',result:'手雷原伤害 30，被 [5] 护盾减半，只扣 15 HP；格挡后 [5] 退为 [1]。真实伤害可以绕过数字护盾。把对手 HP 清空即可获胜。接着看看另一种胜利方式。',steps:[
+ {title:'走完一个攻防回合',result:'护盾 [5] 格挡后消散变为 [1]。手雷原伤害 30，被 [5] 护盾减半只扣 15 HP（真实伤害可以绕过护盾）。\n继续进攻，把对手 HP 清空即可获胜！\n或者… 让我们看看另一种特殊胜利方式。',steps:[
   {title:'先用 [3] 碰对手的 [1]',detail:'选自己的 [3]，再碰对手任意一只 [1]，得到 [4]。',command:{type:'add',hand:0},target:'#hand-0-0',selectedTarget:'#hand-1-0, #hand-1-1'},
   {title:'本回合已无可用操作',detail:'正式对局每回合有 30 秒。手动点击按钮以提前结束回合\n若既没有合成也没有计算就结束，则会扣除10HP作为空过惩罚',command:{type:'end'}},
   {title:'轮到对手',detail:'对手也会选择自己的手去碰你的手。',command:{type:'advance'},auto:true},
