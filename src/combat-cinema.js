@@ -1,5 +1,5 @@
 import {defenseDetail} from "./effect-copy.js";
-import { actionBeats, actionDuration, commandArt, SKILL_MOTION, skillSummary } from './presentation.js';
+import { actionBeats, actionDuration, commandArt, SKILL_MOTION, skillSummary, ITEM_FLIGHT_IN_MS, ITEM_FOCUS_MS, ITEM_FLIGHT_OUT_MS, ITEM_SETTLE_MS, ITEM_READ_MS } from './presentation.js';
 import { playerName, escapeHtml } from './identity.js';
 
 // Presentation consumes authoritative events; it never rolls randomness or changes game state.
@@ -33,14 +33,14 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
       icon.style.visibility='hidden';card.style.opacity='0';
       if(source)source.style.opacity='0';
       sound('release',.65);
-      await animate(flight,[{opacity:1,transform:`translate(calc(-50% + ${(from?from.x+from.width/2:to.x)-to.x}px),calc(-50% + ${(from?from.y+from.height/2:to.y)-to.y}px)) scale(.55)`},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}],{duration:350,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'}).finished.catch(()=>{});
+      await animate(flight,[{opacity:1,transform:`translate(calc(-50% + ${(from?from.x+from.width/2:to.x)-to.x}px),calc(-50% + ${(from?from.y+from.height/2:to.y)-to.y}px)) scale(.55)`},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}],{duration:ITEM_FLIGHT_IN_MS,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'}).finished.catch(()=>{});
       if(generation()!==epoch)return false;
       flight.style.visibility='hidden';icon.style.visibility='visible';
       animate(card,[{opacity:0},{opacity:1}],{duration:150,fill:'forwards'});
-      if(!await wait(card,3000))return false;
+      if(!await wait(card,ITEM_FOCUS_MS))return false;
       const origin=center();flight.style.left=`${origin.x}px`;flight.style.top=`${origin.y}px`;flight.style.visibility='visible';icon.style.visibility='hidden';
       const destination=o=>{
-        const el=document.querySelector(command.targetHand===undefined?(['balance','boon','greed'].includes(id)?`#items-${o}`:`#player-${o}`):`#hand-${o}-${command.targetHand}`),r=el.getBoundingClientRect();
+        const el=document.querySelector(command.targetHand===undefined?(['balance','greed'].includes(id)?`#items-${o}`:`#player-${o}`):`#hand-${o}-${command.targetHand}`),r=el.getBoundingClientRect();
         if(command.targetHand!==undefined&&el.closest('.stage').dataset.renderer==='webgl'){
           const host=el.closest('.stage').getBoundingClientRect();return {el,x:host.x+parseFloat(el.style.left),y:host.y+parseFloat(el.style.top)};
         }
@@ -49,18 +49,20 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
       await Promise.all(targets.map((o,i)=>{
         const target=destination(o),moving=i?flight.cloneNode(true):flight;
         if(i){document.body.append(moving);register(moving);}
-        return animate(moving,[{opacity:1,transform:'translate(-50%,-50%) scale(1)'},{opacity:1,offset:.8},{opacity:0,transform:`translate(calc(-50% + ${target.x-origin.x}px),calc(-50% + ${target.y-origin.y}px)) scale(.3)`}],{duration:350,fill:'forwards',easing:'ease-in'},true).finished.catch(()=>{});
+        return animate(moving,[{opacity:1,transform:'translate(-50%,-50%) scale(1)'},{opacity:1,offset:.8},{opacity:0,transform:`translate(calc(-50% + ${target.x-origin.x}px),calc(-50% + ${target.y-origin.y}px)) scale(.3)`}],{duration:ITEM_FLIGHT_OUT_MS,fill:'forwards',easing:'ease-in'},true).finished.catch(()=>{});
       }));
       if(generation()!==epoch)return false;
       for(const o of targets)animate(destination(o).el,[{filter:'brightness(1)'},{filter:'brightness(1.4)',offset:.2},{filter:'brightness(1)'}],{duration:600});
       for(const beat of beats)onBeat(beat);onBeat({type:'settle'});
       sound(id==='grace'?'heal':['lock','silence','ruin'].includes(id)?'curse':'item',.65);
-      if(!await wait(card,1120))return false;
-      await animate(card,[{opacity:1},{opacity:0}],{duration:180},true).finished.catch(()=>{});
+      icon.style.visibility='visible';
+      // Reading time is independent of action locks and the shared turn clock.
+      animate(card,[{opacity:1},{opacity:1,offset:.94},{opacity:0}],{duration:ITEM_READ_MS,fill:'both'},true);
+      if(!await wait(card,ITEM_SETTLE_MS))return false;
       return generation()===epoch;
     }
     const id=skill?old.players[old.active].weapon:old.players[old.active].props[command.slot];
-    const family=skill?SKILL_MOTION[id][0]:['grace','boon','echo','mirror'].includes(id)?'guard':['ruin','lock','silence'].includes(id)?'curse':'steal';
+    const family=skill?SKILL_MOTION[id][0]:['grace','echo','mirror'].includes(id)?'guard':['ruin','lock','silence'].includes(id)?'curse':'steal';
     const nine=id==='unify',won=nine&&next.winReason==='九九归一';
     if(nine) {
       const ritual=document.createElement('section');ritual.className=`nine-finale ${won?'complete':''}`;ritual.dataset.team=old.active;ritual.setAttribute('role','status');

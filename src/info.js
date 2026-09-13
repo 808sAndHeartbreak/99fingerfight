@@ -4,7 +4,7 @@ import { PROPS, MAX_HP, WEAPONS, weaponById } from "./catalog.js";
 
 const PROP_INFO = {
   add: "一只手数字 +1。",
-  sub: "一只手数字 −1，[0] 变成 [9]。",
+  sub: "一只手数字 −1。",
   lock: "一只手不能参与触碰计算；所属玩家回合结束解除。道具仍能改变它的数字。每人最多封印一只手；已有封印时不能再对该玩家使用。",
 };
 export function describe(key, state, participants) {
@@ -30,22 +30,30 @@ export function describe(key, state, participants) {
     };
   }
   if (kind === "prop") {
+    const prop=PROPS[id];if(!prop)return null;
     const owner=hand===undefined?state.active:Number(hand),p=state.players[owner],e=state.players[1-owner];
-    const sum=p.hands[0]+p.hands[1],enemySum=e.hands[0]+e.hands[1];
-    const ruinDamage=enemySum;
-    const preview={wine:`（当前叠加后首段 +${(p.wine+1)*10}）`,grace:`（当前回复 ${Math.min(MAX_HP-p.hp,sum)}，数字总和 ${sum}）`,ruin:`（当前伤害 ${ruinDamage}，实际扣血 ${e.peace>0?0:Math.min(e.hp,ruinDamage)}）`,greed:`（当前获得 ${Math.min(2,4-p.props.length)} 个）`,boon:`（当前己方补 ${4-p.props.length} 个，对方补 ${3-e.props.length} 个）`,balance:`（当前己方重抽 ${Math.max(0,p.props.length-1)} 个，对方重抽 ${e.props.length} 个）`}[id]||'';
+    const sum=p.hands[0]+p.hands[1],enemySum=e.hands[0]+e.hands[1],ruinDamage=Math.abs(sum-enemySum);
+    const preview={wine:`当前叠加后，首段伤害 +${(p.wine+1)*10}。`,grace:`当前自己回复 ${Math.min(MAX_HP-p.hp,sum)} HP，对手回复 ${Math.min(MAX_HP-e.hp,enemySum)} HP。`,ruin:`当前差值 |${sum} − ${enemySum}| = ${ruinDamage}，实际扣血 ${e.peace>0?0:Math.min(e.hp,ruinDamage)} HP。`,greed:`当前获得 ${Math.min(2,3-p.props.length+(p.props.includes(id)?1:0))} 个道具。${p.resilience?'坚韧生效：双手仍归 [1]，本回合继续。':''}`,balance:`当前自己重抽 ${Math.max(0,p.props.length-(p.props.includes(id)?1:0))} 个，对手重抽 ${e.props.length} 个。`}[id]||'';
+    const rules=prop.rules||({
+      add:"可以对任意玩家使用。只保留个位，[9] 变成 [0]。",
+      sub:"可以对任意玩家使用。[0] 变成 [9]。",
+      double:"可以对任意玩家使用。数字乘以 2 后只保留个位。",
+      echo:"本回合下一次计算复制同一个结果；另一只手被封印也会接收复制值。与镜像同时存在时，结果写入对手双手，己方不变。未计算则回合结束失效；重复使用不叠加。",
+      mirror:"与回响同时存在时，以最初所选两手加和求值，再把同一个结果写入对手双手；己方不变。回合结束失效，重复使用不叠加。",
+      silence:"持续到对手下一回合结束；禁止主动使用道具，不影响补给和技能补牌。",
+      balance:"先消耗制衡，再按双方各自剩余道具数量重抽。允许抽到同名道具。",
+      greed:"先消耗强欲，将自己双手均设为 [1]，再获得 2 个道具，最多持有 3 个。强制结束不触发空过惩罚；坚韧期间不结束回合，但只用道具仍不算计算或合成。",
+      grace:"使用时分别计算双方各自双手的数字之和，各自回复对应生命值，最多为 99。满血或数字总和为 0 仍会消耗道具。",
+      ruin:"先分别求双方双手数字之和，再取两个总和之差的绝对值，对对手造成对应真实伤害。差值为 0 不造成伤害；无视且不消耗护盾，仍受和平影响。"
+    })[id]||'';
     return {
-      title: PROPS[id].name,
-      image: PROPS[id].image,
-      tag: "一次性道具",
-      stats: [
-        ["使用", "自己的回合"],
-        ["目标", ({hand:"任意一方的手",self:"自己",enemy:"对手",all:"双方"})[PROPS[id].target]],
-      ],
-      body: (p.resilience>0 && id==="greed" ? PROPS[id].detail.replace("立即结束本回合；", "").replace("，立即结束回合", "")+"（坚韧：使用后继续本回合）" : PROP_INFO[id] || PROPS[id].detail)+preview,
-      note: ({wine:"只强化下一次有直接伤害的技能首段，出手时一次消耗全部酒；无伤害技能不消耗，被免疫或护盾挡住仍消耗。无回合期限，可被窃取。",echo:"本回合下一次计算复制同一个结果；另一只手被封印也会接收复制值。未计算则回合结束失效；重复使用不叠加。",mirror:"与回响同时存在时，以最初所选两手加和求值，再把同一个结果写入对手双手；己方不变。回合结束失效，重复使用不叠加。",silence:"持续到对手下一回合结束；禁止主动使用道具，不影响补给和武器补牌。",balance:"先消耗制衡，再按双方各自剩余道具数量重抽。允许抽到同名道具。",boon:"补到每人 3 个，已满的玩家不会再获得；不会移除已有状态。",greed:"先消耗强欲，最多补至 3 个；立即结束回合；已计算或出招则不计为未行动；坚韧期间仍可继续行动。",grace:"以使用时自己的双手数字之和计算，生命最多为 99；满血或数字总和为 0 仍会消耗。",ruin:"以使用时对手双手数字之和计算，忽略护盾且不消耗护盾；生命归零立即结算。"})[id] || "点击道具，再点高亮手势即生效；数字变化不会立即合成。",
+      title:prop.name,image:prop.image,tag:"一次性道具",
+      stats:[["使用","自己的回合"],["目标",({hand:"任意一方的手",self:"自己",enemy:"对手",all:"双方"})[prop.target]]],
+      body:p.resilience>0&&id==='greed'?"获得 2 个道具，自己双手归 [1]；坚韧使本回合继续":PROP_INFO[id]&&id!=='lock'?PROP_INFO[id]:prop.detail,
+      note:rules+(preview?'<br><br>'+preview:'')
     };
   }
+
   if(kind==="status") {
     const p=state.players[Number(hand)];
     const data={
@@ -138,19 +146,19 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
   const listen = (element, event, callback) =>
     element.addEventListener(event, callback, { signal: listeners.signal });
   const pop = document.querySelector("#info-popover");
-  let anchor,
+  let anchor, anchorKey, anchorRect,
     timer,
     pinned = false;
   function hide() {
     const wasVisible=!pop.hidden;
     clearTimeout(timer);
     anchor?.removeAttribute("aria-describedby");
-    anchor = null;
+    anchor = null;anchorKey=null;anchorRect=null;
     pinned = false;
     pop.hidden = true;
     if(wasVisible)onHide();
   }
-  function show(button, pin = false) {
+  function show(button, pin = false, refreshing = false) {
     if(pinned && !pin)return;
     if (
       !root.querySelector(".is-tutorial") && !pin &&
@@ -161,8 +169,7 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
       return;
     if (
       !button ||
-      document.querySelector("#dialog").open ||
-      root.querySelector(".is-busy")
+      document.querySelector("#dialog").open
     )
       return;
     const data = describe(button.dataset.info, getState(), getParticipants());
@@ -170,7 +177,8 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
     if(isRemote() && button.dataset.info === "phase") data.note="服务器统一计时，菜单、图鉴、后台和断线都不会暂停对局。动画期间暂停计时，超时结束回合。";
     clearTimeout(timer);
     anchor?.removeAttribute("aria-describedby");
-    anchor = button;
+    anchor = button;anchorKey=button.dataset.info;
+    if(button.isConnected)anchorRect=button.getBoundingClientRect();
     pinned = pin;
     button.setAttribute("aria-describedby", "info-popover");
     const kind=button.dataset.info.split(':')[0];
@@ -178,9 +186,17 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
     pop.classList.toggle('recipe-detail',!!data.options);
     pop.setAttribute('role',pin?'dialog':'tooltip');
     pop.setAttribute('aria-label',data.title);
-    pop.innerHTML = `${pin?'<button class="info-close" aria-label="关闭详情">×</button>':''}<div class="info-heading">${data.image?`<img src="${asset(data.image)}" alt="">`:''}<div><h3>${escapeHtml(data.title)}</h3><div class="info-tags">${stats.map(([label,value])=>`<span>${kind==='prop'||kind==='weapon'||kind==='status'?'':label+' '}${escapeHtml(value)}</span>`).join('')}</div></div></div><div class="info-content">${data.options?`<p class="recipe-intro">${idRecipeCopy(button.dataset.info)}</p><div class="recipe-gallery">${data.options.map(w=>`<article><img src="${asset(w.image)}" alt=""><h4>${escapeHtml(w.name)}</h4><p>${escapeHtml(w.detail)}</p></article>`).join('')}</div><p class="recipe-footnote">确认合成后自动释放，结算后双手归 [1]。</p>`:`<p>${data.body}</p>`}</div>${pin&&data.note?`<details class="info-rules"><summary>规则细节</summary><p class="info-note">${data.note}</p></details>`:''}`;
+    const expanded=refreshing&&pop.querySelector("details")?.open;
+    const markup = `${pin?'<button class="info-close" aria-label="关闭详情">×</button>':''}<div class="info-heading">${data.image?`<img src="${asset(data.image)}" alt="">`:''}<div><h3>${escapeHtml(data.title)}</h3><div class="info-tags">${stats.map(([label,value])=>`<span>${kind==='prop'||kind==='weapon'||kind==='status'?'':label+' '}${escapeHtml(value)}</span>`).join('')}</div></div></div><div class="info-content">${data.options?`<p class="recipe-intro">${idRecipeCopy(button.dataset.info)}</p><div class="recipe-gallery">${data.options.map(w=>`<article><img src="${asset(w.image)}" alt=""><h4>${escapeHtml(w.name)}</h4><p>${escapeHtml(w.detail)}</p></article>`).join('')}</div><p class="recipe-footnote">确认合成后自动释放，结算后双手归 [1]。</p>`:`<p>${data.body}</p>`}</div>${pin&&data.note?`<details class="info-rules"><summary>规则细节</summary><p class="info-note">${data.note}</p></details>`:''}`;
+    if(pop.dataset.content!==markup){pop.innerHTML=markup;pop.dataset.content=markup;}
+    if(expanded&&pop.querySelector("details"))pop.querySelector("details").open=true;
     pop.hidden = false;
-    const r = button.getBoundingClientRect(),
+    position();
+    if(!refreshing)onShow(button.dataset.info, pin);
+  }
+  function position() {
+    if(pop.hidden||!anchorRect)return;
+    const r = anchor?.isConnected?anchor.getBoundingClientRect():anchorRect,
       box = pop.getBoundingClientRect();
     const mobile = innerWidth < 650;
     const x = mobile
@@ -194,7 +210,6 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
         : Math.min(innerHeight - box.height - 12, r.bottom + 12);
     pop.style.left = `${x}px`;
     pop.style.top = `${Math.max(12, y)}px`;
-    onShow(button.dataset.info, pin);
   }
   listen(root, "pointerover", (e) => {
     if (e.pointerType === "touch" || pinned) return;
@@ -241,12 +256,21 @@ export function setupInfo(root, getState, asset, getParticipants = () => [], isR
     if (pinned && !pop.contains(e.target) && !anchor?.contains(e.target))
       hide();
   });
-  listen(window, "resize", hide);
+  listen(pop,"toggle",position);
+  const observer=new ResizeObserver(position);observer.observe(pop);
+  listen(window, "resize", position);
   return {
     show,
     hide,
+    hideTransient(){if(!pinned)hide();},
+    refresh(){
+      if(!pinned){hide();return;}
+      const replacement=anchor?.isConnected?anchor:[...root.querySelectorAll('[data-info]')].find(el=>el.dataset.info===anchorKey);
+      show(replacement||anchor,true,true);
+    },
     dispose() {
       hide();
+      observer.disconnect();
       listeners.abort();
     },
   };

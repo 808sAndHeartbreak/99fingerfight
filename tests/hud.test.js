@@ -5,17 +5,16 @@ import {createGame,applyCommand} from '../src/engine.js';
 import {phaseCue} from '../src/phase-cue.js';
 import {presentationDuration} from '../src/presentation.js';
 test('hover arithmetic belongs to the item owner and respects HP and inventory caps',()=>{
- const s=createGame();s.active=0;s.players[0].hands=[1,2];s.players[1].hands=[8,9];s.players[1].hp=97;s.players[1].props=['grace','boon','greed'];
- assert.match(describe('prop:grace:1',s).body,/当前回复 2，数字总和 17/);
- assert.match(describe('prop:ruin:1',s).body,/当前伤害 3/);
- assert.match(describe('prop:greed:1',s).body,/当前获得 1 个/);
- assert.match(describe('prop:boon:1',s).body,/己方补 1 个/);
- s.players[1].hp=80;assert.match(describe('prop:grace:1',s).body,/当前回复 17/);
+ const s=createGame();s.active=0;s.players[0].hands=[1,2];s.players[1].hands=[8,9];s.players[1].hp=97;s.players[1].props=['grace','balance','greed'];
+ assert.match(describe('prop:grace:1',s).note,/自己回复 2 HP，对手回复 0 HP/);
+ assert.match(describe('prop:ruin:1',s).note,/当前差值 \|17 − 3\| = 14/);
+ assert.match(describe('prop:greed:1',s).note,/当前获得 1 个/);
+ s.players[1].hp=80;assert.match(describe('prop:grace:1',s).note,/自己回复 17 HP/);
 });
 test('turn introduction and item receipts retain their presentation durations',()=>{
  const s=createGame();assert.equal(phaseCue(null,s).duration,1400);
  s.phase='action';s.players[0].props=['grace'];const c={type:'prop',slot:0,target:0,actor:0,revision:s.revision};const next=applyCommand(s,c);
- assert.equal(presentationDuration(s,next,c),5000);
+ assert.equal(presentationDuration(s,next,c),1700);
  assert.match(describe('supply:1',s).body,/将在 1 个己方回合开始时获得一个随机道具/);
 });
 

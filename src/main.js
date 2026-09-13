@@ -234,7 +234,7 @@ function render(preserveInfo=false) {
     remaining=until ? Math.max(0,Math.ceil((until-Math.max(online.serverNow(),online.packet.room.readyAt||0))/1000)) : 0;
   }
   renderedRemoteReady = mode === "online" && online.status === "connected" && online.serverNow() >= (online.packet?.room?.readyAt || 0);
-  if(!preserveInfo)info?.hide();
+  if(!preserveInfo)info?.hideTransient();
   document.querySelector("#phase-time").hidden = state.winner !== null || state.phase === "start";
   document.querySelector("#clock").textContent = mode==="tutorial"?"∞":mode==="online"&&online.status!=="connected"?"—":Math.ceil(remaining);
   updateClockWarning();
@@ -307,6 +307,7 @@ function render(preserveInfo=false) {
 
   renderTutorial();
   stage?.sync(state, selected, enabled, busy);
+  if(!preserveInfo)info?.refresh();
 }
 const referencePages=new WeakMap();
 let referenceTurning=false;
@@ -425,7 +426,7 @@ async function animateCommand(command, old, next, contact) {
         stage?.sync(visual,null,false,true);
         visual.players.forEach((p,owner)=>p.hands.forEach((n,h)=>{handElements[owner][h].querySelector('.hand-value').textContent=n;}));
       }
-      feedback.changes(before,visual);
+      feedback.changes(before,visual,1800,beat.type==='damage'&&beat.blocked==='护盾'?beat.owner:null);
       visual.players.forEach((p,o)=>p.hands.forEach((n,h)=>renderHandShield(handElements[o][h],p,h)));
       feedback.contact({type:'beat'},before,visual);
     });
@@ -467,7 +468,7 @@ async function send(command) {
   busy = true;
   selected = null;
   stopAI();
-  info.hide();
+  info.hideTransient();
   const old = state,
     current = session,
     serial = ++actionSerial;
@@ -795,7 +796,7 @@ async function drainRemote() {
     while(remoteQueue.length&&serial===actionSerial) {
       const packet=remoteQueue.shift(),room=packet.room,old=state,next=room.state;
       if(next.revision<=old.revision)continue;
-      busy=true;selected=null;info?.hide();render();
+      busy=true;selected=null;info?.hideTransient();render();
       const event=room.event;
       if(!document.hidden&&!dialog.open&&remoteQueue.length<2&&event&&next.revision===old.revision+1&&online.serverNow()<=(room.readyAt||0)+500) {
         await animateCommand(event.command,old,beforeSupply(next),visual=>{if(serial===actionSerial)showContact(visual,old,next);});
@@ -1069,10 +1070,13 @@ function guideBounds(el) {
 function updateSpotlight(){
   spotlight.style.display=mode==='tutorial'&&!busy&&!dialog.open&&!session.done&&(!session.guide.auto||!session.canProceed||!document.querySelector('#info-popover').hidden)?'block':'none';
   if(spotlight.style.display==='block'){
+    const handBoxes=new Map([...document.querySelectorAll('.hand-hotspot')].map(el=>[el,guideBounds(el)]));
+    const width=Math.max(...[...handBoxes.values()].map(r=>r.width)),height=Math.max(...[...handBoxes.values()].map(r=>r.height));
+    const bounds=el=>{const r=handBoxes.get(el);return r?{left:r.left+(r.width-width)/2,top:r.top+(r.height-height)/2,width,height}:guideBounds(el);};
     const holes=[...document.querySelectorAll('.tutorial-target, .arena-actions, #forge-options, .scoreboard, .hud-tools')].filter(el=>el.getClientRects().length).map(el=>{
-      const r=guideBounds(el);return `<rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" rx="8" fill="black"/>`;
+      const r=bounds(el);return `<rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" rx="8" fill="black"/>`;
     }).join('');
-    const markers=[...document.querySelectorAll('.tutorial-target')].filter(el=>el.matches('.reference-recipe,.prop-use,.hand-hotspot')).map(el=>{const r=guideBounds(el),x=Math.max(58,Math.min(innerWidth-58,r.left+r.width/2)),y=Math.max(38,el.matches('.hand-hotspot')?r.top+33:r.top-20);return `<g class="tutorial-click-cue"><rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" rx="10" fill="none" stroke="#ffcf60" stroke-opacity="${.7+.3*Math.sin(performance.now()/380)}" stroke-width="${el.matches('.hand-hotspot')?3:4}"/><path d="M${x-9} ${y} L${x} ${y+12} L${x+9} ${y}" fill="#ffcf60"/><rect x="${x-52}" y="${y-30}" width="104" height="28" fill="#ffcf60"/><text x="${x}" y="${y-10}" text-anchor="middle" fill="#111a2e" font-size="16" font-weight="900">点击这里</text></g>`;}).join('');
+    const markers=[...document.querySelectorAll('.tutorial-target')].filter(el=>el.matches('.reference-recipe,.prop-use,.hand-hotspot')).map(el=>{const r=bounds(el),x=Math.max(58,Math.min(innerWidth-58,r.left+r.width/2)),y=Math.max(38,el.matches('.hand-hotspot')?r.top+33:r.top-20);return `<g class="tutorial-click-cue"><rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" rx="10" fill="none" stroke="#ffcf60" stroke-opacity="${.7+.3*Math.sin(performance.now()/380)}" stroke-width="${el.matches('.hand-hotspot')?3:4}"/><path d="M${x-9} ${y} L${x} ${y+12} L${x+9} ${y}" fill="#ffcf60"/><rect x="${x-52}" y="${y-30}" width="104" height="28" fill="#ffcf60"/><text x="${x}" y="${y-10}" text-anchor="middle" fill="#111a2e" font-size="16" font-weight="900">点击这里</text></g>`;}).join('');
     const markup=`<defs><mask id="tutorial-holes"><rect width="100%" height="100%" fill="white"/>${holes}</mask></defs><rect width="100%" height="100%" fill="#060b19" opacity=".68" mask="url(#tutorial-holes)"/>${markers}`;
     if(markup!==spotlightMarkup){spotlight.innerHTML=markup;spotlightMarkup=markup;}
   }

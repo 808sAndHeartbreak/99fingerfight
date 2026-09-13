@@ -17,6 +17,6 @@ with ZipFile(temporary, 'w', ZIP_DEFLATED, compresslevel=6) as archive:
 with ZipFile(temporary) as archive:
     assert archive.testzip() is None
     assert 'src/tutorial.js' in archive.namelist()
-    assert len([n for n in archive.namelist() if n.startswith('dist/assets/ink-mono/')]) == 36
+    assert len([n for n in archive.namelist() if n.startswith('dist/assets/ink-mono/')]) == 35
 temporary.replace(destination)
 print(f'{destination}: {destination.stat().st_size:,} bytes')

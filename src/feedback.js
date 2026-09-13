@@ -67,8 +67,8 @@ export function createFeedback() {
       if(t<1&&a.playState!=='finished')requestAnimationFrame(frame);else el.textContent=value;
     };requestAnimationFrame(frame);
   }
-  function changes(old,next,duration=1800) {
-    const all=stateChanges(old,next);
+  function changes(old,next,duration=1800,consumedShieldOwner=null) {
+    const all=stateChanges(old,next).filter(c=>!(c.kind==='number'&&c.owner===consumedShieldOwner&&old.players[c.owner].hands[c.hand]===5&&next.players[c.owner].hands[c.hand]===1));
     for(const c of all.filter(c=>c.kind==='inventory'&&c.label.startsWith('＋'))){const prop=PROPS[c.id];notice(prop.detail,c.owner,'supply',{image:prop.image,title:`${c.owner?'红方':'蓝方'} 获得 · ${prop.name}`});}
     const duel=document.querySelector('.duel'),bounds=duel.getBoundingClientRect();
     const groups=new Map();

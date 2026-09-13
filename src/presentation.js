@@ -3,7 +3,9 @@ import {stateChanges} from "./state-changes.js";
 import {TOUCH_DURATION_MS} from "./motion.js";
 import {PROPS,weaponById} from './catalog.js';
 import {phaseCue} from './phase-cue.js';
-export const ITEM_NOTICE_MS=4000, ITEM_SETTLE_MS=1000;
+export const ITEM_FLIGHT_IN_MS=250, ITEM_FOCUS_MS=350, ITEM_FLIGHT_OUT_MS=300;
+export const ITEM_NOTICE_MS=ITEM_FLIGHT_IN_MS+ITEM_FOCUS_MS+ITEM_FLIGHT_OUT_MS, ITEM_SETTLE_MS=800;
+export const ITEM_READ_MS=6000;
 export const SUPPLY_REVEAL_MS=1400;
 export const hasSupply = state => (state.events||[]).some(e=>e.type==='draw'&&e.source==='回合补给');
 // Only the visual snapshot withholds supply. Authoritative state remains atomic.

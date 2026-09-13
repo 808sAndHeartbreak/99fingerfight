@@ -13,7 +13,7 @@ test('enemy effects name their recipient and explain how the next turns are affe
 });
 test('blocked damage stays explained in the final summary and history',()=>{
  const s=fixture('frag');s.players[1].hands=[5,1];const n=run(s,{type:'attack'}),summary=skillSummary(s,n,{type:'attack'});
- assert.equal(summary.damage,15);assert.ok(summary.effects.some(x=>x.includes('减半')));assert.ok(n.log.some(x=>x.includes('格挡后变为 [1]')));assert.equal(actionDuration(s,n,{type:'attack'}),3650);
+ assert.equal(summary.damage,15);assert.ok(summary.effects.some(x=>x.includes('格挡一半')));assert.ok(n.log.some(x=>x.includes('护盾被消耗，格挡一半伤害')));assert.equal(actionDuration(s,n,{type:'attack'}),3650);
  assert.match(defenseDetail({blocked:'绝对防御'}),/数字不变/);
 });
 test('lethal scissors never claims an unapplied secondary effect',()=>{

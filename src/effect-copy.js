@@ -2,7 +2,7 @@ import {PROPS} from './catalog.js';
 const team=o=>o?'红方':'蓝方';
 const hands=p=>p.hands.map(n=>`[${n}]`).join(' / ');
 export function defenseDetail(beat) {
- return ({护盾:'[5] 护盾减半伤害，格挡后变为 [1]',盾墙:'盾墙挡住本次伤害，消耗 1 次',绝对防御:'[5] + [5] 完全挡住普通伤害，数字不变',和平:'和平期间免疫伤害'})[beat.blocked]||'';
+ return ({护盾:'护盾被消耗，格挡一半伤害',盾墙:'盾墙挡住本次伤害，消耗 1 次',绝对防御:'[5] + [5] 完全挡住普通伤害，数字不变',和平:'和平期间免疫伤害'})[beat.blocked]||'';
 }
 /** Actual outcomes, shared by the live presentation and authoritative history. */
 export function effectDetail(old,next,command) {
@@ -10,7 +10,7 @@ export function effectDetail(old,next,command) {
  if(command.type==='prop') {
   const t=command.target,target=next.players[t];
   if(command.targetHand!==undefined)return id==='lock'?`${team(t)}${command.targetHand?'右':'左'}手被封印，不能参与计算，至其回合结束`:`${team(t)}${command.targetHand?'右':'左'}手 [${old.players[t].hands[command.targetHand]}] → [${target.hands[command.targetHand]}]`;
-  const details={echo:`${team(a)}下一次计算复制到己方双手`,mirror:`${team(a)}下一次计算写入${team(b)}目标手，己方不变`,silence:`${team(b)}下个回合不能使用道具，仍可计算和合成`,wine:`${team(a)}下次直接攻击首段 +${p.wine*10} 伤害，出手后消耗`,grace:`${team(t)} HP ${old.players[t].hp} → ${target.hp}，回复 ${target.hp-old.players[t].hp}`,ruin:`${team(b)} HP ${old.players[b].hp} → ${e.hp}；无视护盾`,balance:`双方按原数量重抽道具：${team(a)} ${p.props.length} 个，${team(b)} ${e.props.length} 个`,boon:`双方道具补充完毕：${team(a)} ${p.props.length}/3，${team(b)} ${e.props.length}/3`,greed:`${team(a)}获得 ${Math.max(0,p.props.length-old.players[a].props.length+1)} 个道具${next.active!==a?'，本回合结束':''}`};
+  const details={echo:`${team(a)}下一次计算复制到己方双手`,mirror:`${team(a)}下一次计算写入${team(b)}目标手，己方不变`,silence:`${team(b)}下个回合不能使用道具，仍可计算和合成`,wine:`${team(a)}下次直接攻击首段 +${p.wine*10} 伤害，出手后消耗`,grace:next.players.map((player,o)=>`${team(o)}回复 ${player.hp-old.players[o].hp} HP（${old.players[o].hp} → ${player.hp}）`).join("；"),ruin:`双方数字总和之差 |${old.players[a].hands.reduce((x,y)=>x+y,0)} − ${old.players[b].hands.reduce((x,y)=>x+y,0)}|；${team(b)}实际受到 ${old.players[b].hp-e.hp} 点真实伤害（HP ${old.players[b].hp} → ${e.hp}）`,balance:`双方按原数量重抽道具：${team(a)} ${p.props.length} 个，${team(b)} ${e.props.length} 个`,greed:`${team(a)}获得 ${Math.max(0,p.props.length-old.players[a].props.length+1)} 个道具，双手归 [1]${next.active!==a?'，本回合结束':''}`};
   if(['echo','mirror'].includes(id)&&p.echo&&p.mirror)return `${team(a)}镜像＋回响：下次加和结果写入${team(b)}双手，己方不变`;
   return details[id]||`${team(t)}获得${PROPS[id].name}`;
  }

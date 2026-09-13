@@ -29,7 +29,7 @@ test('peace blocks every direct segment and item damage without consuming any de
  }
  const s=fixture('fan');s.players[1].peace=3;s.players[1].props=['add'];assert.equal(attack(s).players[1].props.length,0);
  s.phase='action';s.players[0].weapon=null;s.players[0].props=['ruin'];s.players[1].hands=[9,9];
- assert.match(describe('prop:ruin:0',s).body,/实际扣血 0/);
+ assert.match(describe('prop:ruin:0',s).note,/实际扣血 0/);
  assert.equal(run(s,{type:'prop',slot:0,target:1}).players[1].hp,99);
 });
 
@@ -41,11 +41,11 @@ test('peace repeats extend by three without protecting an extra current turn',()
 test('weakness floors each direct segment at zero, preserves shields and combines stacked knuckles',()=>{
  for(const id of ['claw','dual','drunken','taser']){
   const s=fixture(id);s.players[0].weak=5;s.players[1].foam=4;s.players[1].hands=[5,5];
-  const n=attack(s);assert.ok(n.events.filter(e=>e.type==='damage').every(e=>e.raw===0));assert.equal(n.players[1].foam,4);assert.equal(n.players[0].weak,4);
+  const n=attack(s);assert.ok(n.events.filter(e=>e.type==='damage').every(e=>e.amount===0));assert.equal(n.players[1].foam,4);assert.equal(n.players[0].weak,4);
  }
  const s=fixture('claw');s.players[0].weak=2;s.players[0].knuckles=3;
  assert.deepEqual(attack(s).events.filter(e=>e.type==='damage').map(e=>e.raw),[30,30]);
- s.phase='action';s.players[0].weapon=null;s.players[0].props=['ruin'];s.players[1].hands=[9,9];assert.equal(run(s,{type:'prop',slot:0,target:1}).players[1].hp,81);
+ s.phase='action';s.players[0].weapon=null;s.players[0].props=['ruin'];s.players[1].hands=[9,9];assert.equal(run(s,{type:'prop',slot:0,target:1}).players[1].hp,83);
 });
 
 test('serpent applies five weakened turns and five shieldable poison starts; repeats extend',()=>{
@@ -58,7 +58,7 @@ test('serpent applies five weakened turns and five shieldable poison starts; rep
 
 test('steal transfers only peace and knuckles, preserves hands, marks and general states, and discards item overflow',()=>{
  const s=fixture('steal');Object.assign(s.players[0],{props:['add','sub'],knuckles:2,peace:2,peaceSince:0});
- Object.assign(s.players[1],{hands:[8,9],props:['double','lock','boon'],knuckles:4,peace:3,foam:5,echo:true,mirror:true,nine:1,weak:2});
+ Object.assign(s.players[1],{hands:[8,9],props:['double','lock','grace'],knuckles:4,peace:3,foam:5,echo:true,mirror:true,nine:1,weak:2});
  const n=attack(s),[p,e]=n.players;assert.deepEqual(p.props,['add','sub','double']);assert.deepEqual(e.props,[]);assert.deepEqual(p.hands,[1,1]);assert.deepEqual(e.hands,[8,9]);
  assert.equal(p.knuckles,6);assert.equal(e.knuckles,0);assert.equal(p.peace,4);assert.equal(e.peace,0);assert.equal(e.foam,5);assert.equal(e.echo,true);assert.equal(e.mirror,true);assert.equal(e.nine,1);assert.equal(e.weak,2);
  const fresh=fixture('steal');fresh.players[1].peace=3;assert.equal(attack(fresh).players[0].peace,3);

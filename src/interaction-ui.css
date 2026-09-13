@@ -133,6 +133,8 @@
 .nine-finale .taiji-wave { border-color:var(--ritual-color); box-shadow:0 0 24px color-mix(in srgb,var(--ritual-color) 30%,transparent); }
 #info-popover .info-close { top:10px; right:10px; width:36px; height:36px; }
 #info-popover .info-heading { padding-right:38px; }
+#info-popover .info-rules summary { min-height:30px; padding:5px 0; color:#bdcdeb; font-size:13px; }
+#info-popover .info-rules .info-note { color:#d7e0f0; font-size:13px; line-height:1.8; }
 @media(max-width:1100px) { .game-shell .reference-recipe { min-width:78px; flex-basis:78px; } }
 @media(max-height:540px) and (orientation:landscape) {
  #dialog:has(.settings-body) { width:min(650px,calc(100vw - 32px)); }
@@ -191,4 +193,12 @@
  .game-shell .stage:not([data-dueling="true"]) .hand-value { bottom:10px; }
  .game-shell .stage:not([data-dueling="true"]) .hand-hotspot.blue .hand-value { right:20px; }
  .game-shell .stage:not([data-dueling="true"]) .hand-hotspot.red .hand-value { left:20px; }
+}
+
+/* Both reference pages reserve the taller item row, including its scrollbar. */
+.game-shell .reference-deck { height:120px; min-height:120px; flex-shrink:0; box-sizing:border-box; }
+.game-shell .recipe-shelf { height:94px; min-height:94px; box-sizing:border-box; overflow-y:hidden; }
+@media(max-height:540px) and (orientation:landscape) {
+ .game-shell .reference-deck { height:80px; min-height:80px; }
+ .game-shell .recipe-shelf { height:70px; min-height:70px; padding:4px 5px; }
 }

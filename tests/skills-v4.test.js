@@ -39,7 +39,7 @@ test('buff stacking: foam adds charges, knuckles permanent stacking; true attack
  const k=fixture('knuckles');k.players[0].knuckles=true;assert.equal(attack(k).players[0].knuckles,2);
  const t=fixture('sniper');t.players[0].knuckles=true;assert.equal(attack(t).players[1].hp,59);
  const d=fixture('seven');d.players[0].knuckles=true;assert.equal(attack(d).players[1].hp,92);
- const p=run(createGame(),{type:'advance'});p.players[0].knuckles=true;p.players[0].props=['ruin'];p.players[1].hands=[5,5];p.players[1].foam=2;const n=run(p,{type:'prop',slot:0,target:1});assert.equal(n.players[1].hp,89);assert.equal(n.players[1].foam,2);assert.deepEqual(n.players[1].hands,[5,5]);
+ const p=run(createGame(),{type:'advance'});p.players[0].knuckles=true;p.players[0].props=['ruin'];p.players[1].hands=[5,5];p.players[1].foam=2;const n=run(p,{type:'prop',slot:0,target:1});assert.equal(n.players[1].hp,91);assert.equal(n.players[1].foam,2);assert.deepEqual(n.players[1].hands,[5,5]);
 });
 test('seven injury runs for precisely seven target starts, repeats extend count, permanent DOT coexists',()=>{
  let s=fixture('seven');s.players[1].hands=[5,5];s.players[1].foam=2;s=attack(s);assert.equal(s.players[1].seven,6);assert.equal(s.players[1].hp,92);

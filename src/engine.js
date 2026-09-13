@@ -1,7 +1,7 @@
 import {effectDetail,defenseDetail} from "./effect-copy.js";
 import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
-export const RULES_VERSION = 14;
+export const RULES_VERSION = 15;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -212,10 +212,9 @@ export function applyCommand(state, command) {
         const counts=s.players.map(player=>player.props.length);
         s.players.forEach(player=>player.props=[]);
         s.players.forEach((player,i)=>{for(let n=0;n<counts[i];n++)draw(s,player,"制衡");});
-      } else if(id==="boon")s.players.forEach(player=>{while(player.props.length<3)draw(s,player,"天降的宝札");});
-      else if(id==="greed"){draw(s,p,"强欲");draw(s,p,"强欲");log(s,`${name(s.active)}强欲生效${p.resilience?"，坚韧使本回合继续":"，立即结束回合"}。`);if(!p.resilience)endTurn(s,true);}
-      else if(id==="grace"){const amount=Math.min(MAX_HP-p.hp,p.hands[0]+p.hands[1]);p.hp+=amount;}
-      else if(id==="ruin")damage(s,1-s.active,enemy.hands[0]+enemy.hands[1],true,"破坏");
+      } else if(id==="greed"){p.hands=[1,1];draw(s,p,"强欲");draw(s,p,"强欲");log(s,`${name(s.active)}强欲生效${p.resilience?"，坚韧使本回合继续":"，立即结束回合"}。`);if(!p.resilience)endTurn(s,true);}
+      else if(id==="grace")s.players.forEach(player=>{player.hp=Math.min(MAX_HP,player.hp+player.hands[0]+player.hands[1]);});
+      else if(id==="ruin")damage(s,1-s.active,Math.abs(p.hands[0]+p.hands[1]-enemy.hands[0]-enemy.hands[1]),true,"破坏");
       checkWinner(s);
       const detail=effectDetail(state,s,command);if(detail)log(s,detail);
       break;

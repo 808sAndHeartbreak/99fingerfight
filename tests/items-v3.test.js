@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {handPropNumber,PROPS,PROP_IDS} from '../src/catalog.js';
-test('new item pool contains fifteen supported items without removed healing/poison',()=>{
- assert.equal(PROP_IDS.length,15);assert.equal(PROPS.heal,undefined);assert.equal(PROPS.poison,undefined);assert.equal(PROPS.sub.name,'退化');
+test('new item pool contains thirteen supported items without removed healing/poison',()=>{
+ assert.equal(PROP_IDS.length,13);assert.equal(PROPS.heal,undefined);assert.equal(PROPS.poison,undefined);assert.equal(PROPS.sub.name,'退化');
 });
 test('civil war and doubling preserve decimal hands across all input pairs',()=>{
  for(let a=0;a<10;a++)for(let b=0;b<10;b++){
@@ -24,8 +24,8 @@ const use=(id,{hands=[1,1],enemy=[1,1],target=0,targetHand,props=[id]}={})=>{
  return [s,run(s,{type:'prop',slot:0,target,...(targetHand===undefined?{}:{targetHand})})];
 };
 test('99 starting life and every new item can appear in deterministic turn supplies',()=>{
- const seen=new Set();for(let seed=0;seed<512;seed++){const s=createGame(seed);assert.deepEqual(s.players.map(p=>p.hp),[99,99]);seen.add(s.players[0].props[0]);assert.equal(s.events[0].source,'回合补给');}
- assert.equal(seen.size,15);assert.equal(supplyIn({turns:1}),3);assert.equal(supplyIn({turns:3}),1);
+ const seen=new Set();for(let seed=0;seed<512;seed++){const s=createGame(Math.imul(seed,2654435761));assert.deepEqual(s.players.map(p=>p.hp),[99,99]);seen.add(s.players[0].props[0]);assert.equal(s.events[0].source,'回合补给');}
+ assert.equal(seen.size,13);assert.equal(supplyIn({turns:1}),3);assert.equal(supplyIn({turns:3}),1);
 });
 test('hand items may affect either side including locked hands; no implicit forge',()=>{
  for(const id of ['civil','double','add','sub'])for(const target of [0,1])for(const targetHand of [0,1]){
@@ -58,16 +58,15 @@ test('silence lasts until the affected player explicitly ends their next turn',(
  assert.equal(n.players[1].silenced,true);n=run(n,{type:'end'});assert.equal(n.players[1].silenced,false);
 });
 
-test('balance redraws post-consumption counts, boon fills both, greed ends once with capped inventory',()=>{
+test('balance redraws post-consumption counts, greed ends once with capped inventory',()=>{
  const s=planning();s.players[0].props=['balance','echo','lock'];s.players[1].props=['civil','double','ruin'];
  const n=run(s,{type:'prop',slot:0,target:0});assert.deepEqual(n.players.map(p=>p.props.length),[2,3]);assert.equal(n.events.filter(e=>e.type==='draw').length,5);assert.deepEqual(n,run(s,{type:'prop',slot:0,target:0}));
- const [,b]=use('boon');assert.deepEqual(b.players.map(p=>p.props.length),[3,3]);
  const [g]=use('greed',{props:['greed','echo','mirror']});g.players[0].echo=true;g.players[0].mirror=true;
  const gn=run(g,{type:'prop',slot:0,target:0});assert.equal(gn.turn,g.turn+1);assert.equal(gn.active,1);assert.equal(gn.players[0].props.length,3);assert.equal(gn.players[0].echo,false);assert.equal(gn.players[0].mirror,false);
 });
-test('grace caps healing and ruin uses enemy sum, bypassing and preserving shields',()=>{
+test('grace caps healing and ruin uses sum difference, bypassing and preserving shields',()=>{
  const [s]=use('grace',{hands:[9,9]});s.players[0].hp=95;const n=run(s,{type:'prop',slot:0,target:0});assert.equal(n.players[0].hp,99);
- const [r]=use('ruin',{enemy:[5,9],target:1});r.players[1].hp=13;const rn=run(r,{type:'prop',slot:0,target:1});assert.equal(rn.winner,0);assert.equal(rn.players[1].hp,0);assert.deepEqual(rn.players[1].hands,[5,9]);
+ const [r]=use('ruin',{enemy:[5,9],target:1});r.players[1].hp=12;const rn=run(r,{type:'prop',slot:0,target:1});assert.equal(rn.winner,0);assert.equal(rn.players[1].hp,0);assert.deepEqual(rn.players[1].hands,[5,9]);
  assert.throws(()=>run(s,{type:'prop',slot:0,target:1}),/自己/);assert.throws(()=>run(r,{type:'prop',slot:0,target:0}),/对手/);
  const [,z]=use('grace',{hands:[0,0]});assert.equal(z.players[0].props.length,0);assert.equal(z.players[0].hp,99);
 });
