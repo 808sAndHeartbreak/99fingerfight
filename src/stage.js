@@ -432,6 +432,15 @@ export class DuelStage {
     });
     this.renderer.render(this.scene, this.camera);
   }
+  handBounds(owner, hand) {
+    const h=this.hands.find(h=>h.owner===owner&&h.hand===hand);
+    if(this.failed||!h)return null;
+    const box=new THREE.Box3().setFromObject(h.root),points=[];
+    for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z]){
+      const p=new THREE.Vector3(x,y,z).project(this.camera);points.push({x:(p.x*.5+.5)*this.width,y:(-p.y*.5+.5)*this.height});
+    }
+    return {left:Math.min(...points.map(p=>p.x)),right:Math.max(...points.map(p=>p.x)),top:Math.min(...points.map(p=>p.y)),bottom:Math.max(...points.map(p=>p.y))};
+  }
   dispose() {
     this.cancel();
     cancelAnimationFrame(this.raf);

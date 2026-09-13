@@ -26,20 +26,33 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
       const duel=document.querySelector('.duel'),card=document.createElement('aside');card.className='item-receipt';card.dataset.owner=owner;card.setAttribute('role','status');
       card.innerHTML=`<img src="${asset(art.image)}" alt=""><div><small>${escapeHtml(playerName(participants(),owner))} 使用 · ${escapeHtml(names)}</small><strong>${art.name}</strong><span class="item-purpose">${escapeHtml(art.detail)}</span><b>${escapeHtml(result)}</b></div>`;
       noticeRoot().append(card);register(card);
-      const bounds=duel.getBoundingClientRect(),source=document.querySelector(`#items-${owner} .prop-slot:nth-of-type(${command.slot+2}) .prop-use`),icon=card.querySelector('img');
-      const to=icon.getBoundingClientRect(),from=source?.getBoundingClientRect()||to;
-      const flight=document.createElement('img');flight.src=asset(art.image);flight.className='released-item';flight.style.left=`${to.x+to.width/2-bounds.x}px`;flight.style.top=`${to.y+to.height/2-bounds.y}px`;duel.append(flight);register(flight);
-      icon.style.visibility='hidden';
-      if(source)animate(source,[{opacity:1},{opacity:0,offset:.08},{opacity:0}],{duration:actionDuration(old,next,command),fill:'forwards'});
-      animate(card,[{opacity:0,transform:'scale(.96)'},{opacity:1,transform:'scale(1)'}],{duration:350,fill:'forwards'});
+      const source=document.querySelector(`#items-${owner} [data-slot="${command.slot}"]`),icon=card.querySelector('img');
+      const center=()=>{const r=icon.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};};
+      const to=center(),from=source?.getBoundingClientRect();
+      const flight=document.createElement('img');flight.src=asset(art.image);flight.className='released-item';flight.style.position='fixed';flight.style.left=`${to.x}px`;flight.style.top=`${to.y}px`;document.body.append(flight);register(flight);
+      icon.style.visibility='hidden';card.style.opacity='0';
+      if(source)source.style.opacity='0';
       sound('release',.65);
-      await animate(flight,[{opacity:1,transform:`translate(calc(-50% + ${from.x+from.width/2-to.x-to.width/2}px),calc(-50% + ${from.y+from.height/2-to.y-to.height/2}px)) scale(.55)`},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}],{duration:350,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'}).finished.catch(()=>{});
+      await animate(flight,[{opacity:1,transform:`translate(calc(-50% + ${(from?from.x+from.width/2:to.x)-to.x}px),calc(-50% + ${(from?from.y+from.height/2:to.y)-to.y}px)) scale(.55)`},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}],{duration:350,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'}).finished.catch(()=>{});
       if(generation()!==epoch)return false;
+      flight.style.visibility='hidden';icon.style.visibility='visible';
+      animate(card,[{opacity:0},{opacity:1}],{duration:150,fill:'forwards'});
       if(!await wait(card,3000))return false;
-      const target=document.querySelector(command.targetHand===undefined?`#player-${command.target}`:`#hand-${command.target}-${command.targetHand}`),r=target.getBoundingClientRect();
-      await animate(flight,[{opacity:1,transform:'translate(-50%,-50%) scale(1)'},{opacity:0,transform:`translate(calc(-50% + ${r.x+r.width/2-to.x-to.width/2}px),calc(-50% + ${r.y+r.height/2-to.y-to.height/2}px)) scale(.2)`}],{duration:350,fill:'forwards',easing:'ease-in'},true).finished.catch(()=>{});
+      const origin=center();flight.style.left=`${origin.x}px`;flight.style.top=`${origin.y}px`;flight.style.visibility='visible';icon.style.visibility='hidden';
+      const destination=o=>{
+        const el=document.querySelector(command.targetHand===undefined?(['balance','boon','greed'].includes(id)?`#items-${o}`:`#player-${o}`):`#hand-${o}-${command.targetHand}`),r=el.getBoundingClientRect();
+        if(command.targetHand!==undefined&&el.closest('.stage').dataset.renderer==='webgl'){
+          const host=el.closest('.stage').getBoundingClientRect();return {el,x:host.x+parseFloat(el.style.left),y:host.y+parseFloat(el.style.top)};
+        }
+        return {el,x:r.x+r.width/2,y:r.y+r.height/2};
+      };
+      await Promise.all(targets.map((o,i)=>{
+        const target=destination(o),moving=i?flight.cloneNode(true):flight;
+        if(i){document.body.append(moving);register(moving);}
+        return animate(moving,[{opacity:1,transform:'translate(-50%,-50%) scale(1)'},{opacity:1,offset:.8},{opacity:0,transform:`translate(calc(-50% + ${target.x-origin.x}px),calc(-50% + ${target.y-origin.y}px)) scale(.3)`}],{duration:350,fill:'forwards',easing:'ease-in'},true).finished.catch(()=>{});
+      }));
       if(generation()!==epoch)return false;
-      for(const o of targets){const el=document.querySelector(command.targetHand===undefined?`#player-${o}`:`#hand-${o}-${command.targetHand}`);animate(el,[{filter:'brightness(1)'},{filter:'brightness(1.4)',offset:.2},{filter:'brightness(1)'}],{duration:600});}
+      for(const o of targets)animate(destination(o).el,[{filter:'brightness(1)'},{filter:'brightness(1.4)',offset:.2},{filter:'brightness(1)'}],{duration:600});
       for(const beat of beats)onBeat(beat);onBeat({type:'settle'});
       sound(id==='grace'?'heal':['lock','silence','ruin'].includes(id)?'curse':'item',.65);
       if(!await wait(card,1120))return false;

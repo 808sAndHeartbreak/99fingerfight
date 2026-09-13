@@ -2,6 +2,10 @@ import {escapeHtml,playerName} from './identity.js';
 export function compactRecord(text) {
  return text.replace(/回合补给获得/g,'补给').replace(/获得「/g,'获得「').replace(/合成「([^」]+)」，双手重置为 1。/g,'合成「$1」 · 双手归 1').replace(/使用「/g,'使用「').replace(/造成 (\d+) 点真实伤害/g,'HP−$1 · 真实').replace(/造成 (\d+) 点普通伤害/g,'HP−$1').replace(/恢复 (\d+) 生命/g,'HP+$1').replace(/，之后还需跳过 (\d+) 回合/g,' · 剩余 $1 回合').replace(/[。]$/,'');
 }
+export function historyText(log,participants) {
+ const names=[0,1].map(owner=>`${playerName(participants,owner)}（${owner?'红':'蓝'}方）`);
+ return ['99 Finger Fight · 对局记录',`${names[0]} vs ${names[1]}`,'最近 120 条 · 按发生顺序',...log.slice(-120).map(line=>line.replace(/玩家一|玩家二|蓝方|红方/g,n=>names[['玩家一','蓝方'].includes(n)?0:1]))].join('\n');
+}
 export function historyMarkup(log,participants) {
  const groups=[];let phase='回合结算';
  for(const [index,line] of log.entries()){const m=line.match(/^\[回合 (\d+)\] (.*)$/),round=m?.[1]||'开局',text=m?.[2]||line;
@@ -20,5 +24,5 @@ export function historyMarkup(log,participants) {
   value=value.replace(/玩家一|玩家二|蓝方|红方/g,n=>{const owner=['玩家一','蓝方'].includes(n)?0:1;return `${playerName(participants,owner)}（${owner?'红':'蓝'}方）`;});
   return escapeHtml(value).replace(/HP([−+])(\d+)/g,(_,sign,n)=>`<em class="record-${sign==='+'?'heal':'damage'}">HP${sign}${n}</em>`);
  };
- return `<div class="dialog-body match-history"><button class="dialog-close" data-close aria-label="关闭对局记录">×</button><h2>对局记录</h2><p class="history-note">最近 120 条 · 新回合在上方，同回合按发生顺序阅读</p>${groups.reverse().map(g=>`<section><h3>${g.round==='开局'?'开局':`回合 ${g.round}`}</h3>${g.parts.map(p=>`<div class="history-phase"><ul>${p.lines.map(t=>`<li>${render(t)}</li>`).join('')}</ul></div>`).join('')}</section>`).join('')}</div>`;
+ return `<div class="dialog-body match-history"><button class="dialog-close" data-close aria-label="返回">×</button><header class="history-header"><div><small class="scene-kicker">BATTLE LOG</small><h2>对局记录</h2></div><button class="secondary" data-copy-history>复制记录</button></header><p class="history-note">最近 120 条 · 新回合在上，同回合从上往下阅读</p><div class="history-entries" tabindex="0" aria-label="对战记录内容">${groups.reverse().map(g=>`<section><h3>${g.round==='开局'?'开局':`回合 ${g.round}`}</h3>${g.parts.map(p=>`<div class="history-phase"><ul>${p.lines.map(t=>`<li class="record-team-${/^蓝方/.test(t.text)?0:/^红方/.test(t.text)?1:'event'}">${render(t)}</li>`).join('')}</ul></div>`).join('')}</section>`).join('')||'<p>本局还没有记录</p>'}</div><button class="secondary history-back" data-close>返回</button></div>`;
 }

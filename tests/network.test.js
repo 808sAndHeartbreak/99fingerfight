@@ -126,8 +126,8 @@ test('v4 status counters survive public snapshots, duplicate attacks, and reconn
 
 test('initial introduction reserves time before the unified turn clock',()=>{
  const x=harness({animationMs:null});x.req(x.a,'create');x.req(x.b,'join',{code:x.room().code});x.req(x.a,'ready',{ready:true});x.req(x.b,'ready',{ready:true});
- assert.equal(x.room().readyAt,2400);assert.equal(x.room().deadlineAt,2400);
- x.tick(1399);assert.equal(x.room().state.phase,'start');x.tick(1);assert.equal(x.room().state.phase,'action');
+ assert.equal(x.room().readyAt,3800);assert.equal(x.room().deadlineAt,3800);
+ x.tick(2799);assert.equal(x.room().state.phase,'start');x.tick(1);assert.equal(x.room().state.phase,'action');
  assert.equal(x.room().deadlineAt-x.room().readyAt,30000);
 });
 
@@ -143,7 +143,7 @@ test('unnamed online seats are distinct and submitted names survive reconnect',(
 });
 
 test('calculation is available immediately when the turn opens',()=>{
- const x=harness({animationMs:null});x.req(x.a,'create');x.req(x.b,'join',{code:x.room().code});x.req(x.a,'ready',{ready:true});x.req(x.b,'ready',{ready:true});x.tick(1401);
+ const x=harness({animationMs:null});x.req(x.a,'create');x.req(x.b,'join',{code:x.room().code});x.req(x.a,'ready',{ready:true});x.req(x.b,'ready',{ready:true});x.tick(2801);
  const r=x.room();assert.equal(r.state.phase,'action');
  assert.equal(r.state.phase,'action');
  x.req(x.a,'command',{matchId:r.matchId,command:{type:'add',hand:0,targetHand:1,revision:r.state.revision}});

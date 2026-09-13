@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync, renameSync, mkdirSync } from '
 import { dirname } from 'node:path';
 import { createGame, applyCommand, canEndTurn, RULES_VERSION } from '../src/engine.js';
 import { turnSeconds, phaseCue } from '../src/phase-cue.js';
-import { presentationDuration } from '../src/presentation.js';
+import { presentationDuration, hasSupply, SUPPLY_REVEAL_MS } from '../src/presentation.js';
 import { normalizeParticipants } from '../src/identity.js';
 const hash = token => createHash('sha256').update(token).digest('hex');
 const check = (ok, message) => { if (!ok) throw new Error(message); };
@@ -68,7 +68,7 @@ export class MatchHub {
   begin(r) {
     check(r.seats.length===2&&r.seats.every(id=>this.connected(id)),'需要两位在线玩家');
     r.state=createGame(randomBytes(4).readUInt32LE());r.matchId=randomUUID();r.status='playing';r.ready=[false,false];r.rematch=[false,false];r.seatNames=r.seats.map(id=>this.userById(id).name);r.cache={};r.finishReason=null;
-    r.readyAt=this.now()+(this.animationMs===null ? phaseCue(null,r.state).duration : 0);r.deadlineAt=r.readyAt+(this.animationMs===null?0:1000);
+    r.readyAt=this.now()+(this.animationMs===null ? phaseCue(null,r.state).duration+(hasSupply(r.state)?SUPPLY_REVEAL_MS:0) : 0);r.deadlineAt=r.readyAt+(this.animationMs===null?0:1000);
   }
   create(u) {
     check(!u.room&&!u.queued,'请先离开当前房间或取消匹配');check(this.rooms.size<1000,'房间已满，请稍后重试');

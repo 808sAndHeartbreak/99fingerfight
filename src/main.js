@@ -1,6 +1,7 @@
 import { createCombatCinema } from "./combat-cinema.js";
 import { createAudioSettings } from "./audio-settings.js";
-import { historyMarkup } from "./match-history.js";
+import { historyMarkup, historyText } from "./match-history.js";
+import { beforeSupply, hasSupply, SUPPLY_REVEAL_MS } from "./presentation.js";
 
 import { createBattleSound } from "./battle-sound.js";
 import { TutorialSession, LESSONS } from "./tutorial.js";
@@ -135,6 +136,13 @@ function announceSupply(next) {
  const notes=[0,1].flatMap(owner=>(next.events||[]).some(e=>e.type==='supply-full'&&e.owner===owner)?[`${playerName(participants(),owner)}背包已满，本次补给跳过`]:[]);
  if(notes.length)toast(notes.join('；'),3600);
 }
+async function revealSupply(next) {
+  state=next;render();announceSupply(next);
+  if(!hasSupply(next))return;
+  feedback.changes(beforeSupply(next),next,3000);
+  battleSound.play('item',.55);
+  await feedback.animate(document.querySelector(`#items-${next.active}`),[{filter:'brightness(1)'},{filter:'brightness(1.5)',offset:.2},{filter:'brightness(1)'}],{duration:SUPPLY_REVEAL_MS}).finished.catch(()=>{});
+}
 
 function canTarget(owner, hand) {
   if (!selected || busy || remotePending || (mode==='tutorial' && !session.canProceed) || (mode === "online" && online.status !== "connected") || !humanTurn() || state.winner !== null) return false;
@@ -221,7 +229,7 @@ function updateNetworkNotice() {
   document.querySelector("#network-notice").textContent=online.status==="outdated"?"版本已更新 · 请刷新页面后重新准备":online.status==="replaced"?"此身份已在其他页面打开 · 请刷新恢复":online.status!=="connected"?"连接中断 · 正在自动重连，请稍候":`对手已断线 · 重连剩余 ${seconds} 秒 · 对局计时继续`;
 }
 function render(preserveInfo=false) {
-  if(mode === "online") {
+  if(mode === "online"&&!busy) {
     const until=online.packet?.room?.deadlineAt;
     remaining=until ? Math.max(0,Math.ceil((until-Math.max(online.serverNow(),online.packet.room.readyAt||0))/1000)) : 0;
   }
@@ -276,7 +284,7 @@ function render(preserveInfo=false) {
     document.querySelector(`#items-${owner}`).classList.toggle("items-remaining",usable && state.calculated && propCommands(state).length>0 && !synthesisOptions(state).length);
     document.querySelector(`#items-${owner}`).innerHTML=`<div class="supply-dots" data-info="supply:${owner}" tabindex="0" aria-label="道具补给：${supply} 回合后">${[1,2,3].map(n=>`<i class="${n<=3-supply?'filled':''}"></i>`).join('')}</div>`+[0,1,2].map(slot=>{
       const id=player.props[slot], mine=owner===state.active && humanTurn();
-      return id ? `<div class="prop-slot ${mine&&selected?.kind==='prop'&&selected.slot===slot?'selected':''}"><button class="prop-use" ${mine?`data-prop="${slot}"`:'data-info-only'} data-info="prop:${id}:${owner}" aria-disabled="${!usable || !propCommands(state).some(c=>c.slot===slot)}" aria-label="${mine?'使用':'查看'}${PROPS[id].name}">${propArt(id)}<b>${PROPS[id].name}</b></button>${mine&&selected?.kind==='prop'&&selected.slot===slot&&PROPS[id].target!=='hand'?`<button class="prop-confirm" id="use-prop" ${usable?'':'disabled'}>确认使用</button>`:''}</div>` : '<div class="prop-slot empty" aria-label="空道具位"><span>＋</span></div>';
+      return id ? `<div class="prop-slot ${mine&&selected?.kind==='prop'&&selected.slot===slot?'selected':''}"><button class="prop-use" data-slot="${slot}" ${mine?`data-prop="${slot}"`:'data-info-only'} data-info="prop:${id}:${owner}" aria-disabled="${!usable || !propCommands(state).some(c=>c.slot===slot)}" aria-label="${mine?'使用':'查看'}${PROPS[id].name}">${propArt(id)}<b>${PROPS[id].name}</b></button>${mine&&selected?.kind==='prop'&&selected.slot===slot&&PROPS[id].target!=='hand'?`<button class="prop-confirm" id="use-prop" ${usable?'':'disabled'}>确认使用</button>`:''}</div>` : '<div class="prop-slot empty" aria-label="空道具位"><span>＋</span></div>';
     }).join('');
   }
   renderReference();
@@ -467,12 +475,12 @@ async function send(command) {
   try {
     const full = { ...command, actor: old.active, revision: old.revision };
     const next = await current.send(full,{timeout:mode!=="tutorial" && remaining===0});
-    const completed = await animateCommand(full, old, next, (visual) => {
+    const completed = await animateCommand(full, old, beforeSupply(next), (visual) => {
       if (current === session && serial === actionSerial)
         showContact(visual, old, next);
     });
     if (!completed || current !== session || serial !== actionSerial) return;
-    state = next;
+    state = beforeSupply(next);
     if (old.phase === "start" || old.turn !== next.turn)
       remaining = turnSeconds(next);
     deadline = Date.now() + remaining * 1000;
@@ -480,13 +488,13 @@ async function send(command) {
       document.querySelector("#combat-callout").textContent = "";
     document.querySelector("#contact-fx").classList.remove("visible");
     render();
-    announceSupply(next);
     const cue = phaseCue(old, next, participants());
     if (cue) {
       if (cue.kind === "finish") play("victory");else battleSound.play("turn",.35);
       await feedback.phase(cue, asset);
       if (current !== session || serial !== actionSerial) return;
     }
+    await revealSupply(next);
   } catch (error) {
     if (current === session) {
       state = session.getSnapshot();
@@ -501,7 +509,7 @@ async function send(command) {
       document.querySelector("#contact-fx").classList.remove("visible");
       render();
       if (mode === "tutorial") {
-        scheduleAI();
+        if(session.done&&session.chapter===LESSONS.length-1)showResult();else scheduleAI();
       } else if (state.winner !== null) {
         showResult();
       } else {
@@ -541,7 +549,7 @@ function savePve(){if(mode==='ai'&&started&&session){try{
  localStorage.setItem('ff-pve',JSON.stringify({...session.exportSave(),remainingMs}));
  }catch{}}}
 listen(window,'pagehide',savePve);
-function startGame(newMode = mode, chapter = 0, saved = null) {
+function startGame(newMode = mode, chapter = 0, saved = null, matchParticipants = []) {
   actionSerial++;
   stage?.cancel();
   unsubscribe?.();
@@ -557,7 +565,7 @@ function startGame(newMode = mode, chapter = 0, saved = null) {
   paused = false;
   remaining = TURN_SECONDS;
   deadline = Date.now() + TURN_SECONDS * 1000;
-  session = mode === "tutorial" ? new TutorialSession(chapter) : saved ? LocalSession.restore(saved) : new LocalSession(crypto.getRandomValues(new Uint32Array(1))[0],{difficulty:aiDifficulty});
+  session = mode === "tutorial" ? new TutorialSession(chapter) : saved ? LocalSession.restore(saved) : new LocalSession(crypto.getRandomValues(new Uint32Array(1))[0],{difficulty:aiDifficulty,participants:matchParticipants});
   if(mode==="ai")aiDifficulty=session.difficulty;
   if(saved&&Number.isFinite(saved.remainingMs)){remaining=Math.max(0,Math.min(TURN_SECONDS,saved.remainingMs/1000));deadline=Date.now()+remaining*1000;}
   unsubscribe = session.subscribe((next) => {
@@ -576,9 +584,12 @@ function startGame(newMode = mode, chapter = 0, saved = null) {
 }
 async function introPhase() {
   const serial = actionSerial;
+  const next=state;state=beforeSupply(next);
   busy = true;
   render();
   await feedback.intro(participants(),mode==="local"?state.active:0);
+  if (serial !== actionSerial) return;
+  await revealSupply(next);
   if (serial !== actionSerial) return;
   busy = false;
   deadline = Date.now() + remaining * 1000;
@@ -628,6 +639,8 @@ async function showMenu(page = "home") {
   root.classList.remove('menu-entering');buttons.forEach(b=>b.disabled=false);dialog.setAttribute('tabindex','-1');dialog.focus({preventScroll:true});
 }
 function dismissDialog() {
+  if(dialog.dataset.view==='result')return;
+  if(dialog.dataset.view==='history'&&state.winner!==null){showResult();return;}
   if(dialog.dataset.view==='settings'){
     if(settingsReturn?.view==='battle'){showBattleMenu();return;}
     if(settingsReturn?.view==='menu'){showMenu(settingsReturn.page||'home');return;}
@@ -638,6 +651,7 @@ function dismissDialog() {
   if(dialog.dataset.view==="developer-slide"){showDeveloper();dialog.querySelector("[data-developer-slide]").focus({preventScroll:true});return;}
   if(dialog.dataset.view==="developer"){showMenu("home");return;}
   if(dialog.dataset.view==="online") {
+    if(online?.packet?.room?.status==='finished'){showResult();return;}
     if(online?.packet?.queued || online?.packet?.room?.status==="waiting") {
       toast("请先取消匹配或离开房间");return;
     }
@@ -675,13 +689,33 @@ function showSettings() {
   dialog.dataset.view='settings';
 }
 
+function showHistory() {
+  openDialog(historyMarkup(state.log,participants()),'history-dialog');dialog.dataset.view='history';
+}
+let leavingForMenu=false;
+function resultHome() {
+  leavingForMenu=false;started=false;closeDialog();startGame('ai');showMenu('home');
+}
+async function returnToMenu() {
+  try {
+    if(online?.packet?.room){leavingForMenu=true;await online.request('leave');return;}
+    resultHome();
+  }catch(error){leavingForMenu=false;toast(error.message);}
+}
+function replayMatch() {
+  if(mode==='online'){showOnline();onlineAction('online-rematch');return;}
+  const currentMode=mode,names=participants();started=true;closeDialog();startGame(currentMode,0,null,names);
+}
 function showResult() {
-  const winner = state.winner;
+  const tutorial=mode==='tutorial',winner=tutorial?0:state.winner;
+  if(winner===null)return;
   const lost = mode === "online" ? winner !== online.packet.room.seat : mode === "ai" && winner !== 0;
+  const reason=state.winReason || (mode==='online'&&online.packet.room.finishReason) || (state.players[1-winner].hp<=0?playerName(participants(),1-winner)+' HP 归零':state.log.some(line=>line.includes('认输'))?playerName(participants(),1-winner)+'认输':'对局结束');
   openDialog(
-    `<div class="result-art"><span aria-hidden="true">${lost ? "DEFEAT" : "VICTORY"}</span></div><div class="result-content"><div class="result-stamp">${lost ? "败北" : "胜利"}<i>!</i></div><h2>${name(winner)}<span>获胜</span></h2><p class="result-reason">第 ${Math.ceil(state.turn/2)} 回合 · ${state.winReason ? escapeHtml(state.winReason) : mode === "online" && online.packet.room.finishReason ? escapeHtml(online.packet.room.finishReason) : name(1-winner)+" HP 归零"}</p><div class="result-scores">${state.players.map((p,i)=>`<div class="${i===winner?'won':''}"><small>${name(i)}</small><strong>${p.hp}<span> HP</span></strong><b>${p.nine} / 2 归一</b></div>`).join('')}</div>${mode === "online" ? '<button class="primary" id="online">返回房间 / 再战 </button>' : `<button class="primary" data-mode="${mode}">再战一局 </button>`}<button class="text-button" data-close>查看战场</button></div>`,
-    `result-dialog manga-result ${lost ? "defeat" : "victory"} winner-${winner}`,
+    `<div class="result-art"><span aria-hidden="true">${tutorial?'COMPLETE':lost?'DEFEAT':'VICTORY'}</span></div><div class="result-content"><small class="scene-kicker">${tutorial?'TRAINING COMPLETE':'MATCH COMPLETE'}</small><div class="result-stamp">${tutorial?'完成教学':lost?'败北':'胜利'}<i>!</i></div>${tutorial?'':`<h2>${name(winner)}<span>获胜</span></h2><p class="result-reason">第 ${Math.ceil(state.turn/2)} 回合 · ${escapeHtml(reason)}</p><div class="result-scores">${state.players.map((p,i)=>`<div class="${i===winner?'won':''}"><small>${name(i)}</small><strong>${p.hp}<span> HP</span></strong><b>${p.nine} / 2 归一</b></div>`).join('')}</div>`}<div class="result-actions">${tutorial?'':`<button class="primary" data-result-again>再来一局</button><button class="secondary" data-result-history>查看对战记录</button>`}<button class="${tutorial?'primary':'secondary'}" data-result-home>返回${tutorial?'主':''}菜单</button></div></div>`,
+    `result-dialog manga-result ${tutorial?'tutorial-result ':''}${lost ? "defeat" : "victory"} winner-${winner}`,
   );
+  dialog.dataset.view='result';
 }
 
 function showOnline(reveal = true) {
@@ -714,7 +748,7 @@ async function onlineAction(id) {
     online.busy=true;online.error="";refreshLobby();
     if(["create","queue","ready","rematch"].includes(op))await online.saveDraft();
     await online.request(op,op==="ready"?{ready:!online.packet.room.ready[online.packet.room.seat]}:{});
-    if(op==="rematch")showOnline();
+    if(op==="rematch"&&online.packet?.room?.status==='finished')showOnline();
   } catch(error){online.error=error.message;if(dialog.dataset.view!=="online")toast(error.message);}
   finally {if(online){online.busy=false;refreshLobby();}}
 }
@@ -735,6 +769,7 @@ listen(dialog,"submit",async e=>{
 });
 function receiveRemote(packet) {
   const room=packet.room;
+  if(leavingForMenu&&!room){resultHome();return;}
   if(room){online.view="home";online.joinCode="";const url=new URL(location.href);if(url.searchParams.has("room")){url.searchParams.delete("room");history.replaceState(null,"",url);}}
   refreshLobby();
   if(!room?.state){if(room?.status==="waiting"&&dialog.dataset.view==="menu")showOnline();if(mode==="online"){remoteMatch=null;remoteQueue=[];started=false;startGame("ai");showOnline();}return;}
@@ -748,10 +783,11 @@ function receiveRemote(packet) {
   remoteQueue.push(packet);drainRemote();
 }
 async function introRemote() {
-  const serial=actionSerial;busy=true;remoteApplying=true;render();
+  const serial=actionSerial,next=state;state=beforeSupply(next);busy=true;remoteApplying=true;render();
   await feedback.intro(participants(),online.packet.room.seat);
   if(serial!==actionSerial)return;
-  busy=false;remoteApplying=false;render();announceSupply(state);drainRemote();
+  await revealSupply(next);if(serial!==actionSerial)return;
+  busy=false;remoteApplying=false;render();drainRemote();
 }
 async function drainRemote() {
   if(remoteApplying)return;remoteApplying=true;const serial=actionSerial;
@@ -762,15 +798,17 @@ async function drainRemote() {
       busy=true;selected=null;info?.hide();render();
       const event=room.event;
       if(!document.hidden&&!dialog.open&&remoteQueue.length<2&&event&&next.revision===old.revision+1&&online.serverNow()<=(room.readyAt||0)+500) {
-        await animateCommand(event.command,old,next,visual=>{if(serial===actionSerial)showContact(visual,old,next);});
+        await animateCommand(event.command,old,beforeSupply(next),visual=>{if(serial===actionSerial)showContact(visual,old,next);});
         if(serial!==actionSerial)return;
 
       }
       if(serial!==actionSerial)return;
-      state=next;document.querySelector('#combat-callout').textContent='';document.querySelector('#combat-callout').classList.remove('visible');document.querySelector('#contact-fx').classList.remove('visible');render();
+      state=beforeSupply(next);if(old.turn!==next.turn||old.phase==='start')remaining=TURN_SECONDS;document.querySelector('#combat-callout').textContent='';document.querySelector('#combat-callout').classList.remove('visible');document.querySelector('#contact-fx').classList.remove('visible');render();
       if(!document.hidden&&!dialog.open&&!remoteQueue.length)await feedback.phase(phaseCue(old,next,participants()),asset);
       if(serial!==actionSerial)return;
-      busy=false;render();announceSupply(state);if(state.winner!==null)showResult();
+      if(!document.hidden&&!dialog.open&&!remoteQueue.length)await revealSupply(next);else state=next;
+      if(serial!==actionSerial)return;
+      busy=false;render();if(state.winner!==null)showResult();
     }
   } finally {if(serial===actionSerial){remoteApplying=false;busy=false;render();}}
 }
@@ -785,7 +823,7 @@ listen(app, "click", (e) => {
   if(mode==='tutorial') {
     if(tutorialAction==='tutorial-exit'){exitTutorial();return;}
     if(tutorialAction==='tutorial-retry'){nextTutorial(session.chapter);return;}
-    if(tutorialAction==='tutorial-next'&&!busy){if(session.chapter===LESSONS.length-1)exitTutorial();else nextTutorial(session.chapter+1);return;}
+    if(tutorialAction==='tutorial-next'&&!busy){if(session.chapter===LESSONS.length-1)showResult();else nextTutorial(session.chapter+1);return;}
     if(tutorialAction==='tutorial-demo'&&!busy){send({type:'demo'});return;}
     if(tutorialAction==='online'){toast('先退出教学，再选择联机对战');return;}
   }
@@ -859,7 +897,7 @@ listen(app, "click", (e) => {
       selected = null;
       render();
     },
-    again: () => mode === "online" ? showOnline() : startGame(),
+    again: replayMatch,
     online: showOnline,
     menu: showBattleMenu,
     settings: showSettings,
@@ -869,7 +907,7 @@ listen(app, "click", (e) => {
       button.innerHTML = `音效 <span>${sound ? "开" : "关"}</span>`;
       play("click");
     },
-    history: () => openDialog(historyMarkup(state.log,participants())),
+    history: showHistory,
     replay: () => {
       const url = URL.createObjectURL(
         new Blob([JSON.stringify(session.exportReplay(), null, 2)], {
@@ -892,12 +930,16 @@ listen(dialog, "click", (e) => {
   }
   const b = e.target.closest("button");
   if (!b || b.disabled) return;
+  if(b.hasAttribute('data-copy-history')){navigator.clipboard.writeText(historyText(state.log,participants())).then(()=>{if(b.isConnected)b.textContent='已复制';},()=>toast('复制失败，请检查浏览器剪贴板权限'));return;}
+  if(b.hasAttribute('data-result-history')){showHistory();return;}
+  if(b.hasAttribute('data-result-again')){replayMatch();return;}
+  if(b.hasAttribute('data-result-home')){returnToMenu();return;}
   if (b.dataset.menu) {showMenu(b.dataset.menu);return;}
   if(b.dataset.ai){aiDifficulty=b.dataset.ai;started=true;closeDialog();startGame("ai");return;}
   if(b.hasAttribute("data-battle-online")){mode==="online"?showOnline():showNameEditor(mode==="local"?state.active:0);return;}
   if(b.hasAttribute("data-resume-pve")){const saved=savedPve();if(saved){started=true;closeDialog();startGame("ai",0,saved);}return;}
   if(b.hasAttribute("data-tutorial-understood")){closeDialog();render();return;}
-  if(b.hasAttribute("data-tutorial-next")){if(session.chapter===LESSONS.length-1)exitTutorial();else nextTutorial(session.chapter+1);return;}
+  if(b.hasAttribute("data-tutorial-next")){if(session.chapter===LESSONS.length-1)showResult();else nextTutorial(session.chapter+1);return;}
   if(b.hasAttribute("data-tutorial-retry")){nextTutorial(session.chapter);return;}
   if(b.hasAttribute("data-tutorial-exit")){exitTutorial();return;}
   if(b.hasAttribute("data-tutorial-help")){showTutorialNote();return;}
@@ -934,7 +976,7 @@ listen(document, "visibilitychange", () => {
     if(room?.state && room.matchId===remoteMatch) {
       actionSerial++;stage?.cancel();feedback.reset();info?.hide();
       remoteQueue=[];remoteApplying=false;busy=false;selected=null;state=room.state;render();
-      if(!document.hidden&&state.winner!==null)showResult();
+      if(!document.hidden&&state.winner!==null&&dialog.dataset.view!=='history')showResult();
     }
     return;
   }
@@ -945,6 +987,7 @@ const ticker = setInterval(() => {
   if(mode === "online") {
     const room=online.packet?.room;
     updateNetworkNotice();
+    if(busy)return;
     if(room?.state){remaining=room.deadlineAt ? Math.max(0,Math.ceil((room.deadlineAt-Math.max(online.serverNow(),room.readyAt||0))/1000)):0;document.querySelector("#clock").textContent=online.status==="connected"?Math.ceil(remaining):"—";updateClockWarning();
       const ready = online.status === 'connected' && online.serverNow() >= room.readyAt;
       if(!busy && !remotePending && ready !== renderedRemoteReady)render();}
@@ -1015,13 +1058,21 @@ if (import.meta.hot)
 let spotlightFrame=0,spotlightMarkup="";
 const spotlight=document.createElementNS('http://www.w3.org/2000/svg','svg');
 spotlight.id='tutorial-spotlight';spotlight.setAttribute('aria-hidden','true');document.body.append(spotlight);
+function guideBounds(el) {
+  const r=el.getBoundingClientRect();
+  if(!el.matches('.hand-hotspot')||!stage?.handBounds)return r;
+  const box=stage.handBounds(Number(el.dataset.owner),Number(el.dataset.hand));if(!box)return r;
+  const host=document.querySelector('#stage').getBoundingClientRect();
+  const left=Math.min(r.left,host.left+box.left),top=Math.min(r.top,host.top+box.top),right=Math.max(r.right,host.left+box.right),bottom=Math.max(r.bottom,host.top+box.bottom);
+  return {left,top,width:right-left,height:bottom-top};
+}
 function updateSpotlight(){
   spotlight.style.display=mode==='tutorial'&&!busy&&!dialog.open&&!session.done&&(!session.guide.auto||!session.canProceed||!document.querySelector('#info-popover').hidden)?'block':'none';
   if(spotlight.style.display==='block'){
     const holes=[...document.querySelectorAll('.tutorial-target, .arena-actions, #forge-options, .scoreboard, .hud-tools')].filter(el=>el.getClientRects().length).map(el=>{
-      const r=el.getBoundingClientRect();return `<rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" rx="8" fill="black"/>`;
+      const r=guideBounds(el);return `<rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" rx="8" fill="black"/>`;
     }).join('');
-    const markers=[...document.querySelectorAll('.tutorial-target')].filter(el=>el.matches('.reference-recipe,.prop-use')).map(el=>{const r=el.getBoundingClientRect(),x=Math.max(58,Math.min(innerWidth-58,r.left+r.width/2)),y=Math.max(38,r.top-20);return `<g class="tutorial-click-cue"><rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" fill="none" stroke="#ffcf60" stroke-width="4"/><path d="M${x-9} ${y} L${x} ${y+12} L${x+9} ${y}" fill="#ffcf60"/><rect x="${x-52}" y="${y-30}" width="104" height="28" fill="#ffcf60"/><text x="${x}" y="${y-10}" text-anchor="middle" fill="#111a2e" font-size="16" font-weight="900">点击这里</text></g>`;}).join('');
+    const markers=[...document.querySelectorAll('.tutorial-target')].filter(el=>el.matches('.reference-recipe,.prop-use,.hand-hotspot')).map(el=>{const r=guideBounds(el),x=Math.max(58,Math.min(innerWidth-58,r.left+r.width/2)),y=Math.max(38,el.matches('.hand-hotspot')?r.top+33:r.top-20);return `<g class="tutorial-click-cue"><rect x="${r.left-5}" y="${r.top-5}" width="${r.width+10}" height="${r.height+10}" rx="10" fill="none" stroke="#ffcf60" stroke-opacity="${.7+.3*Math.sin(performance.now()/380)}" stroke-width="${el.matches('.hand-hotspot')?3:4}"/><path d="M${x-9} ${y} L${x} ${y+12} L${x+9} ${y}" fill="#ffcf60"/><rect x="${x-52}" y="${y-30}" width="104" height="28" fill="#ffcf60"/><text x="${x}" y="${y-10}" text-anchor="middle" fill="#111a2e" font-size="16" font-weight="900">点击这里</text></g>`;}).join('');
     const markup=`<defs><mask id="tutorial-holes"><rect width="100%" height="100%" fill="white"/>${holes}</mask></defs><rect width="100%" height="100%" fill="#060b19" opacity=".68" mask="url(#tutorial-holes)"/>${markers}`;
     if(markup!==spotlightMarkup){spotlight.innerHTML=markup;spotlightMarkup=markup;}
   }

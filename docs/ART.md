@@ -26,6 +26,6 @@ Teko 与 Noto Sans SC 本地字体随附 SIL OFL 许可证，必须保留。中�
 
 用户提供的原始幻灯片截图存于 `assets/story/inspiration-full.png`。按用户要求完整显示原截图，包括编辑器边栏，不裁切。战斗背景为单次 WebGL shader：纸色、斜切墨块、青红套印、缓慢网点漂移；手势中央保持留白，沿用减少动态效果设置。
 
-当前 BGM 为用户提供的 `Pixel Afternoon Streets (8-Bit Loop Mix).mp3`，运行资源为 `assets/music/pixel-afternoon-streets-seamless.mp3`。由原曲按约 140 BPM 修剪到第 81 小节边界，首尾一小节（1.714 秒）交叉淡化，成品循环 137.143 秒、44.1 kHz 立体声。Web Audio 缓冲循环避免逐次重新加载，默认音乐 50%，保留用户自设音量和静音。旧运行音轨已删除；处理脚本 `scripts/prepare-bgm.py` 接收用户原曲路径。
+当前 BGM 为用户提供的 `Pixel Afternoon Streets (8-Bit Loop Mix).mp3`，运行资源为 `assets/music/pixel-afternoon-streets-seamless.mp3`。由原曲按约 140 BPM 修剪到第 81 小节边界，首尾一小节（1.714 秒）交叉淡化，成品循环 137.143 秒、44.1 kHz 立体声。Web Audio 缓冲循环避免逐次重新加载，默认音乐 30%，保留用户自设音量和静音。旧运行音轨已删除；处理脚本 `scripts/prepare-bgm.py` 接收用户原曲路径。
 
 2026-09-13：删除 blue/red 人物插画及全部运行时引用。战场保留手势与色块；归一使用 SVG 太极半幅填充、第二次完整填充与旋转，护盾改用分片碎裂。主菜单封面保持原图。

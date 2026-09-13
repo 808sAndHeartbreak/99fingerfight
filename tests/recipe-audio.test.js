@@ -10,10 +10,10 @@ test('quiet default music preserves explicit saved volume including mute',()=>{
  class FakeAudio{dataset={};play(){return Promise.resolve();}pause(){}}
  globalThis.Audio=FakeAudio;globalThis.document={body:{append(){}},addEventListener(){},hidden:false};
  globalThis.localStorage={getItem:()=>stored,setItem:(k,v)=>{stored=v;}};
- try{const fresh=createAudioSettings('music');assert.equal(fresh.values.music,.5);assert.equal(fresh.values.effects,.5);
+ try{const fresh=createAudioSettings('music');assert.equal(fresh.values.music,.3);assert.equal(fresh.values.effects,.5);
  fresh.set('music',.8);assert.equal(createAudioSettings('music').values.music,.8);
  fresh.set('music',0);assert.equal(createAudioSettings('music').values.music,0);
- stored='invalid';assert.equal(createAudioSettings('music').values.music,.5);
+ stored='invalid';assert.equal(createAudioSettings('music').values.music,.3);
  }finally{Object.assign(globalThis,previous);}
 });
 test('each recipe detail exposes every matching skill with its own art and full effect',()=>{
