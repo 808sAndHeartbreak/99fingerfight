@@ -325,3 +325,7 @@
  .game-shell:not(.is-tutorial) .arena-center:has(.notice-stack) #instruction { font-size:14px; line-height:1.2; padding:1px 8px; }
  .game-shell:not(.is-tutorial) .arena-center:has(.notice-stack) :is(#end-turn,#open-forge,#cancel) { min-height:32px; font-size:14px; padding:4px 10px; }
 }
+
+.result-reason .result-difficulty { display:block; width:fit-content; margin-bottom:8px; padding:4px 12px; border-left:3px solid #8bb6ff; background:#263652; color:#eef3ff; font-size:18px; }
+.result-difficulty strong { color:#ffda81; font-weight:900; }
+@media(max-height:540px) and (orientation:landscape) { .result-reason .result-difficulty { font-size:14px; padding:2px 8px; margin-bottom:4px; } }
