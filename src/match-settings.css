@@ -1,61 +1,149 @@
-/* Match setup shares the menu's ink, paper and red selection treatment. */
-.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"]) { width:42%;max-width:550px;left:6%; }
-.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"]) h2 { font-size:clamp(28px,3.7vw,52px);margin-bottom:24px; }
-.match-settings { background:#10192eea;border:2px solid #f5eddb;padding:24px 26px 18px;box-shadow:7px 7px 0 #060b1799;color:#fff3dc; }
-.match-setting { border:0;padding:0;margin:0 0 20px;min-width:0; }
-.match-setting legend { font-size:17px;font-weight:800;letter-spacing:.09em;margin-bottom:9px;padding:0;line-height:1.25;color:#f5eddb; }
-.setting-segments { display:flex;gap:4px;background:#070f21;padding:4px;border:1px solid #65718b; }
-.game-menu .setting-segments button,.online-lobby .setting-segments button { flex:1;min-width:0;margin:0;padding:12px 8px;border:0;box-shadow:none;transform:none;background:transparent;color:#9caac4;font:800 20px/1.2 MangaSans,sans-serif;min-height:0;transition:background .16s,color .16s; }
-.setting-segments button[aria-pressed="true"] { background:#ef4535;color:#fff8e7;box-shadow:2px 2px 0 #070c1b; }
-.setting-segments button:hover:not(:disabled):not([aria-pressed="true"]) { background:#2a3b5b;color:#fff8e7; }
-.setting-segments button:focus-visible { outline:2px solid #ffe5a7;outline-offset:2px; }
-.setting-segments button:disabled { opacity:.7;cursor:default; }
-.match-setting-note { font-size:13px;line-height:1.55;color:#b7c1d4;margin:0;min-height:21px; }
-.game-menu .setup-start { display:flex;align-items:center;justify-content:space-between;width:100%;padding:17px 24px;margin:10px 0 0;background:#ef4535;border:2px solid #fff1d6;color:#fff6e3;font-size:28px;line-height:1.2;font-weight:900;box-shadow:5px 5px 0 #081026;transform:skew(-3deg); }
-.game-menu .setup-start:hover { background:#ff5944; }
-.game-menu .setup-start span { font-size:30px; }
-.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"])>.menu-back { display:block;width:fit-content;padding:9px 22px!important;margin-top:18px; }
-.room-settings { margin:18px 0; }
-.room-settings-heading { display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px; }
-.room-settings-heading h3,.lobby-setup h3 { margin:0;font-size:22px; }
-.room-settings-heading small { color:#a8b6d2;font-size:12px; }
-.online-lobby .match-settings { padding:16px 18px;box-shadow:none;border-color:#71819e; }
-.online-lobby .match-setting { margin-bottom:14px; }
-.online-lobby .setting-segments button { font-size:17px;padding:10px 6px; }
-.lobby-setup { margin-bottom:22px; }
-.lobby-setup h3 { margin-bottom:12px; }
-.online-dialog:has(.lobby-setup) { width:min(1100px,94vw);max-width:94vw; }
-.online-lobby.lobby-home .lobby-content:has(.lobby-setup) { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px 26px;align-items:start; }
-.lobby-content:has(.lobby-setup) .online-options { margin:0; }
-.lobby-content:has(.lobby-setup) .online-error,.lobby-content:has(.lobby-setup) .lobby-back { grid-column:1/-1; }
-.game-shell.no-items .field-items,.game-shell.no-items #reference-toggle { display:none!important; }
-.game-shell.no-items .reference-deck { grid-template-columns:auto minmax(0,1fr); }
+/* Cut-paper settings: labels orient; the moving red ticket owns selection. */
+#dialog.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"]) {left:6%;width:46%;max-width:650px;}
+#dialog.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"]) h2 {font-size:clamp(38px,4.8vw,70px);margin:0 0 26px;transform:rotate(-3deg);text-shadow:4px 5px 0 #060b17;line-height:1.15;}
+#dialog.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"]) h2 span {display:inline;color:#ff4b37;}
+.match-settings {color:#fff4df;isolation:isolate;min-width:0;}
+.match-setting {position:relative;border:0;padding:17px 14px 17px 158px;margin:0 0 13px;min-width:0;background:#080e1ded;box-shadow:5px 6px 0 #0005;transform:skew(-3deg);}
+.match-setting::before {content:'';position:absolute;inset:0;border-left:5px solid #f5eedb;pointer-events:none;}
+.match-setting legend {position:absolute;left:18px;top:50%;transform:translateY(-50%) skew(3deg);float:none;width:auto;padding:0;margin:0;color:#fff1dc;font:900 23px/1.25 MangaSans,sans-serif;letter-spacing:.03em;}
+.setting-segments {position:relative;display:flex;gap:0;isolation:isolate;min-height:52px;}
+.setting-segments::before {content:'';position:absolute;z-index:-1;inset:0 auto 0 0;width:calc(100% / var(--count));background:#ed3e30;box-shadow:3px 4px 0 #fff2dc;transform:translateX(calc(var(--selected) * 100%));transition:transform .32s cubic-bezier(.2,.85,.2,1.15);}
+#dialog .match-settings .setting-segments button {position:relative;flex:1;min-width:0;min-height:52px;padding:8px 6px;margin:0;border:0;border-radius:0;box-shadow:none;clip-path:none;background:transparent!important;color:#a6adbe;font:900 24px/1.1 MangaSans,sans-serif;transform:none;transition:color .18s,translate .18s;outline:none;}
+#dialog .match-settings .setting-segments button span {display:block;transform:skew(3deg);}
+#dialog .match-settings .setting-segments button small {font-size:.52em;margin-left:2px;font-family:MangaSans,sans-serif;}
+#dialog .match-settings [data-match-setting="turnSeconds"] {font:700 37px/1 Teko,sans-serif;}
+#dialog .match-settings .setting-segments button[aria-pressed="true"] {color:#fff7e9;}
+#dialog .match-settings .setting-segments button:is(:hover,:focus-visible):not(:disabled) {color:#fff7e9!important;outline:2px solid #fff4df;outline-offset:-4px;translate:0 -2px;}
+#dialog .match-settings .setting-segments button:disabled {opacity:.72;cursor:default;}
+.match-setting-note {font:13px/1.65 'Microsoft YaHei',sans-serif;color:#e6e0d3;margin:18px 10px 5px;padding-left:13px;border-left:3px solid #ed3e30;min-height:22px;}
+#dialog.game-menu .setup-start {position:relative;display:flex;align-items:center;justify-content:space-between;width:94%;margin:14px 0 0 3%;padding:17px 25px;border:3px solid #fff3dc;border-radius:0;color:#0b1223;background:#fff2dc;font:900 32px/1.2 MangaSans,sans-serif;transform:rotate(-2deg) skew(-4deg);box-shadow:8px 8px 0 #e13d2f;transition:translate .18s,box-shadow .18s;}
+#dialog.game-menu .setup-start span {font-size:40px;line-height:1;}
+#dialog.game-menu .setup-start:hover {translate:4px -3px;box-shadow:4px 11px 0 #e13d2f;}
+#dialog.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"])>.menu-back {display:block;width:fit-content;margin:24px 0 0!important;padding:8px 18px!important;font-size:16px!important;border:0;border-bottom:2px solid #f3ecd9;box-shadow:none;}
+#dialog.game-menu .menu-keyart {transition:transform .5s cubic-bezier(.2,.8,.2,1),filter .5s;}
+#dialog.game-menu[data-page="difficulty"] .menu-keyart,#dialog.game-menu[data-page="pvp"] .menu-keyart {transform:translateX(3%) scale(1.03);}
+#dialog.game-menu .menu-wordmark {transition:translate .5s cubic-bezier(.2,.8,.2,1);}
+#dialog.game-menu:is([data-page="difficulty"],[data-page="pvp"]) .menu-wordmark {translate:4% 5%;}
+.game-shell.no-items .field-items,.game-shell.no-items #reference-toggle {display:none!important;}
+.game-shell.no-items .reference-deck {grid-template-columns:auto minmax(0,1fr);}
+.room-settings {margin:0;min-width:0;}
+.room-settings-heading {display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:18px;}
+.room-settings-heading h3,.lobby-setup h3 {margin:0;font:900 26px/1.3 MangaSans,sans-serif;}
+.room-settings-heading small {font:12px/1.5 'Microsoft YaHei',sans-serif;color:#c3c7d0;max-width:200px;}
+.lobby-setup {min-width:0;}
+.lobby-setup h3 {margin:0 0 18px;}
+#dialog.online-dialog {width:min(1180px,94vw);max-width:94vw;}
+#dialog .online-lobby {display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.85fr);gap:24px 38px;padding:34px 44px;}
+#dialog .online-lobby .lobby-header {grid-column:1;grid-row:1;border:0;padding:0;margin:0;}
+#dialog .online-lobby .lobby-header h2 {display:table;margin:8px 0 0;padding:0;background:none;font-size:48px;line-height:1.1;}
+#dialog .online-lobby .lobby-header h2::after {display:none;}
+#dialog .online-lobby .network-state {position:absolute;top:34px;right:52px;margin:0;font-size:12px;}
+#dialog .online-lobby .lobby-identity {grid-column:2;grid-row:1;align-self:end;padding:0;border:0;}
+#dialog .online-lobby .lobby-identity label {margin:0 0 6px;font-size:13px;}
+#dialog .online-lobby .lobby-identity label small {display:none;}
+#dialog .online-lobby .lobby-identity .name-entry {display:flex;flex-wrap:nowrap;gap:8px;}
+#dialog .online-lobby .lobby-identity input {width:100%;min-width:0;padding:9px 12px;min-height:40px;}
+#dialog .online-lobby .lobby-identity button {margin:0;min-width:70px;padding:8px 12px;}
+#dialog .online-lobby .lobby-content {grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px 38px;align-items:start;}
+#dialog .online-lobby .match-setting {padding:15px 10px 15px 122px;margin-bottom:14px;}
+#dialog .online-lobby .match-setting legend {font-size:20px;left:15px;}
+#dialog .online-lobby .setting-segments button {font-size:22px;}
+#dialog .online-lobby [data-match-setting="turnSeconds"] {font-size:34px;}
+#dialog .online-lobby .match-setting-note {font-size:12px;min-height:40px;margin-top:14px;}
+#dialog .online-options {display:grid;gap:14px;margin:0;padding-top:48px;}
+#dialog .online-options .menu-choice {padding:14px 22px;min-height:70px;margin:0;border:2px solid #eee4d0;clip-path:none;background:#10192e;box-shadow:5px 5px 0 #0006;transform:skew(-4deg);}
+#dialog .online-options .menu-choice span {font:900 25px/1.2 MangaSans,sans-serif;}
+#dialog .online-options .menu-choice small {font:12px/1.5 'Microsoft YaHei',sans-serif;color:#c3c9d6;margin-top:6px;}
+#dialog .online-options #online-queue {background:#ed3e30;color:#fff3dc;}
+#dialog .online-lobby .online-error,#dialog .online-lobby .lobby-content>.lobby-back {grid-column:1/-1;}
+#dialog .online-lobby .online-error:empty {display:none;}
+#dialog .online-lobby .lobby-content>.lobby-back {justify-self:start;width:auto;min-width:160px;padding:10px 20px;margin:2px 0 0;font-size:17px;background:#182339;box-shadow:none;}
+#dialog .online-lobby.has-room .room-code {grid-column:2;grid-row:1;display:grid;grid-template-columns:auto 1fr;align-items:center;margin:0;padding:12px 18px;background:#f4eedc;color:#11192b;}
+#dialog .online-lobby.has-room .room-code strong {font-size:44px;letter-spacing:.1em;color:#10192e;}
+#dialog .online-lobby.has-room #copy-room {grid-column:1/-1;justify-self:start;margin-top:8px;background:#19243c;color:#fff4df;}
+#dialog .online-lobby.has-room .room-players {grid-column:2;grid-row:2;display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0;}
+#dialog .online-lobby.has-room .room-seat {min-width:0;padding:14px 16px;}
+#dialog .online-lobby.has-room .room-seat b {font-size:25px;}
+#dialog .online-lobby.has-room .room-settings {grid-column:1;grid-row:1/3;}
+#dialog .online-lobby.has-room .lobby-content>.primary {grid-column:1;grid-row:3;margin:0;}
+#dialog .online-lobby.has-room .lobby-hint {grid-column:1;grid-row:4;margin:0;font-size:12px;}
+#dialog .online-lobby.has-room .lobby-back {grid-column:2;grid-row:3;}
+#dialog .online-lobby.is-searching .lobby-content,#dialog .online-lobby .lobby-content:has(#join-form) {display:block;}
+#dialog .online-lobby .lobby-content:has(#join-form) {max-width:680px;justify-self:center;width:100%;}
 @media(max-height:650px) and (orientation:landscape) {
- .game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"]) { top:50%;bottom:auto;left:5%;width:44%;transform:translateY(-50%); }
- .game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"]) h2 { font-size:28px;margin-bottom:12px; }
- .game-menu .match-settings { padding:12px 16px; }
- .game-menu .match-setting { margin-bottom:9px; }
- .game-menu .match-setting legend { font-size:13px;margin-bottom:5px; }
- .game-menu .setting-segments button,.online-lobby .setting-segments button { padding:7px 6px;font-size:16px; }
- .game-menu .match-setting-note { font-size:11px;min-height:17px; }
- .game-menu .setup-start { font-size:22px;padding:9px 18px;margin-top:5px; }
- .game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"])>.menu-back { margin-top:10px;padding:5px 18px!important;font-size:14px!important; }
+ #dialog.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"]) {top:50%;bottom:auto;transform:translateY(-50%);width:49%;left:4%;}
+ #dialog.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"]) h2 {font-size:35px;margin-bottom:18px;}
+ #dialog .match-setting {padding:11px 9px 11px 120px;margin-bottom:10px;}
+ #dialog .match-setting legend {left:15px;font-size:19px;}
+ #dialog .match-settings .setting-segments,#dialog .match-settings .setting-segments button {min-height:40px;font-size:19px;}
+ #dialog .match-settings [data-match-setting="turnSeconds"] {font-size:29px;}
+ #dialog .match-setting-note {font-size:11px;margin:12px 6px 0;min-height:20px;}
+ #dialog.game-menu .setup-start {font-size:25px;padding:10px 20px;margin-top:8px;}
+ #dialog.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"])>.menu-back {margin-top:18px!important;padding:5px 14px!important;}
+ #dialog .online-lobby {padding:22px 28px;gap:20px;}
+ #dialog .online-lobby .lobby-content {gap:12px 24px;}
+ #dialog .online-lobby .lobby-header h2 {font-size:36px;}
 }
-@media(max-width:750px) {
- .online-lobby.lobby-home .lobby-content:has(.lobby-setup) { grid-template-columns:1fr; }
- .room-settings-heading { flex-wrap:wrap; }
+@media(max-height:450px) and (orientation:landscape) {
+ #dialog.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"]) {width:53%;}
+ #dialog .match-setting {padding:7px 8px 7px 105px;margin-bottom:9px;}
+ #dialog .match-setting legend {font-size:16px;left:12px;}
+ #dialog .match-settings .setting-segments,#dialog .match-settings .setting-segments button {min-height:33px;font-size:17px;padding:5px 3px;}
+ #dialog .match-setting-note {font-size:10px;line-height:1.5;}
+ #dialog.game-menu .setup-start {padding:7px 16px;font-size:22px;}
+ #dialog.game-menu .setup-start span {font-size:28px;}
+ #dialog.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"]) h2 {font-size:28px;margin-bottom:12px;}
+ #dialog .online-lobby {padding:18px 24px;gap:14px;}
+ #dialog .online-lobby .lobby-content {gap:10px 18px;}
+ #dialog .online-lobby .lobby-header h2 {font-size:30px;}
+ #dialog .online-lobby .network-state {top:18px;right:65px;}
+ #dialog .online-options {padding-top:36px;gap:8px;}
+ #dialog .online-options .menu-choice {min-height:51px;padding:8px 16px;}
+ #dialog .online-options .menu-choice span {font-size:19px;}
+ #dialog .online-options .menu-choice small {font-size:10px;margin-top:3px;}
+ #dialog .online-lobby .match-setting {padding:10px 6px 10px 98px;margin-bottom:10px;}
+ #dialog .online-lobby .match-setting legend {left:10px;font-size:16px;}
+ #dialog .online-lobby .match-setting-note {min-height:0;margin:8px 0 0;font-size:10px;}
 }
-
-.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"]) h2 span { display:inline; }
-.game-menu .setting-segments button:hover:not(:disabled):not([aria-pressed="true"]),.online-lobby .setting-segments button:hover:not(:disabled):not([aria-pressed="true"]) { background:#2a3b5b;color:#fff8e7; }
-.game-menu .setting-segments button[aria-pressed="true"],.online-lobby .setting-segments button[aria-pressed="true"] { background:#ef4535;color:#fff8e7; }
-@media(max-height:500px) and (orientation:landscape) {
- .game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"]) { width:48%; }
- .game-menu .match-setting { display:grid;grid-template-columns:65px minmax(0,1fr);align-items:center;gap:8px;margin-bottom:8px; }
- .game-menu .match-setting legend { float:left;width:65px;margin:0;letter-spacing:0; }
- .game-menu .setting-segments { padding:2px;gap:2px; }
- .game-menu .setting-segments button { padding:7px 3px;font-size:14px; }
- .game-menu .match-setting-note { margin:4px 0 0;line-height:1.3; }
- .game-menu .match-settings { padding:12px; }
- .game-menu .setup-start { min-height:0; }
+@media(prefers-reduced-motion:reduce) {
+ .setting-segments::before,#dialog.game-menu .menu-keyart,#dialog.game-menu .menu-wordmark {transition:none;}
+}
+#dialog.game-menu {overflow:hidden;}
+#dialog .match-setting-note {margin-bottom:5px;}
+#dialog .match-settings .setting-segments button:is(:hover,:focus-visible):not(:disabled) {background:transparent!important;}
+#dialog .online-lobby .network-state {right:90px;top:22px;}
+#dialog .online-lobby.has-room .room-code {grid-template-areas:'label copy' 'code copy';grid-template-columns:1fr auto;gap:8px 18px;min-height:116px;align-self:start;}
+#dialog .online-lobby.has-room .room-code>span {grid-area:label;color:#3c4557;align-self:end;}
+#dialog .online-lobby.has-room .room-code>strong {grid-area:code;font-size:52px;align-self:start;}
+#dialog .online-lobby.has-room #copy-room {grid-area:copy;margin:0;justify-self:end;text-decoration:none;}
+#dialog.game-menu {background:#0b1326;}
+#dialog.game-menu:is([data-page="difficulty"],[data-page="pvp"]) .menu-keyart {transform:translateX(1%) scale(1.04);}
+@media(max-height:450px) and (orientation:landscape) {
+ #dialog .match-settings .setting-segments {padding:0;}
+ #dialog.game-menu .menu-body:is([data-menu-page="difficulty"],[data-menu-page="pvp"])>.menu-back {margin-top:12px!important;}
+ #dialog .online-lobby {padding:9px 22px;gap:10px;}
+ #dialog .online-lobby .network-state {top:8px;right:72px;font-size:10px;}
+ #dialog .online-lobby .lobby-header h2 {font-size:26px;margin-top:4px;}
+ #dialog .online-lobby .lobby-header>span {font-size:9px;}
+ #dialog .online-lobby .lobby-identity input,#dialog .online-lobby .lobby-identity button {min-height:32px;padding:5px 10px;font-size:14px;}
+ #dialog .online-lobby .lobby-identity label {font-size:10px;margin-bottom:4px;}
+ #dialog .online-lobby:not(.has-room) .lobby-identity {padding-right:36px;}
+ #dialog .online-options {padding-top:24px;gap:7px;}
+ #dialog .online-options .menu-choice {min-height:47px;padding:6px 16px;font:900 20px/1.1 MangaSans,sans-serif;}
+ #dialog .online-options .menu-choice small {font-size:10px;line-height:1.3;margin-top:3px;}
+ #dialog .online-lobby .lobby-content>.lobby-back {min-height:32px;padding:6px 16px;font-size:16px;}
+ #dialog .online-lobby.has-room .lobby-content {gap:8px 18px;}
+ #dialog .online-lobby.has-room .room-code {min-height:72px;padding:8px 14px;gap:3px 12px;}
+ #dialog .online-lobby.has-room .room-code>strong {font-size:32px;}
+ #dialog .online-lobby.has-room #copy-room {min-height:34px;padding:7px 12px;font-size:16px;}
+ #dialog .online-lobby.has-room .room-players {gap:8px;}
+ #dialog .online-lobby.has-room .room-seat {padding:8px 12px;min-height:82px;}
+ #dialog .online-lobby.has-room .room-seat b {font-size:19px;margin:5px 0;}
+ #dialog .online-lobby.has-room .room-seat :is(small,p) {font-size:10px;margin:3px 0;}
+ #dialog .online-lobby.has-room .room-settings-heading {margin-bottom:8px;gap:8px;}
+ #dialog .online-lobby.has-room .room-settings-heading h3 {font-size:21px;}
+ #dialog .online-lobby.has-room .room-settings-heading small {font-size:9px;}
+ #dialog .online-lobby.has-room .match-setting {padding-top:6px;padding-bottom:6px;margin-bottom:8px;}
+ #dialog .online-lobby.has-room .lobby-content>:is(.primary,.lobby-back) {min-height:34px;padding:7px 14px;font-size:17px;}
+ #dialog .online-lobby.has-room .lobby-hint {font-size:10px;line-height:1.4;}
 }

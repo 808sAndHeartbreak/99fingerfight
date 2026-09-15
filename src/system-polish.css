@@ -1,0 +1,63 @@
+/* Shared print treatment for secondary scenes and the battle's actionable UI. */
+#dialog:is(.pause-dialog,.history-dialog,.scene-dialog,.settings-dialog,.online-dialog) {border:0;border-top:4px solid #fff2dc;box-shadow:9px 11px 0 #040916,14px 16px 0 #e63b2d;}
+#dialog:is(.pause-dialog,.history-dialog,.scene-dialog,.settings-dialog,.online-dialog)::backdrop {background:#050a18bf;backdrop-filter:blur(8px);}
+#dialog .dialog-close {width:44px;height:44px;right:18px;top:18px;font-size:30px;border:2px solid #fff0d7;transform:rotate(4deg);transition:rotate .18s,background .18s;}
+#dialog .dialog-close:hover {rotate:8deg;}
+#dialog :is(.battle-menu,.settings-body,.tutorial-intro,.match-history) h2 {display:table;max-width:calc(100% - 34px);background:#f6efdd;color:#0b1223;text-shadow:none;padding:6px 18px;box-shadow:6px 6px 0 #e54230;transform:rotate(-3deg);margin-bottom:26px;}
+#dialog .scene-kicker {color:#9ba6be;letter-spacing:.18em;}
+#dialog .battle-menu>button:not(.dialog-close) {background:#0a1123;border:0;border-bottom:1px solid #fff3dd60;box-shadow:none;min-height:48px;padding:13px 18px;margin:7px 0;transition:translate .18s,background .18s;}
+#dialog .battle-menu>button:not(.dialog-close)::before {content:'↗';display:inline-block;margin-right:13px;color:#b6bfd0;}
+#dialog .battle-menu>button.resume-choice:not(.dialog-close)::before {display:none;}
+#dialog .battle-menu .resume-choice {background:#fff0d9!important;color:#10192c!important;border:0!important;box-shadow:6px 7px 0 #e54130;}
+#dialog .battle-menu .pause-context {font-size:14px;line-height:1.65;border:0;padding:0;margin-bottom:22px;}
+#dialog .settings-body .volume-row {padding:18px 20px;margin:20px 0;background:#080f20;border-left:4px solid #fff1d9;transform:skew(-2deg);}
+#dialog .settings-body .volume-row output {font-family:Teko,sans-serif;font-size:40px;}
+#dialog .settings-body input[type=range] {accent-color:#f44232;}
+#dialog .match-history .history-header {align-items:center;}
+#dialog .match-history .history-header h2 {margin:8px 0 18px;font-size:36px;max-width:none;white-space:nowrap;}
+#dialog .result-content .result-actions button {transition:translate .18s,box-shadow .18s;}
+#dialog .result-content .result-actions button:hover {translate:5px -2px;}
+#dialog.manga-result .result-content .result-stamp {text-shadow:5px 6px 0 #080f21,-2px -2px 0 #080f21;}
+#dialog.manga-result .result-content .result-scores>div.won {border-color:#f4eddc;}
+#dialog.manga-result .result-content .result-reason {font-size:15px;line-height:1.7;}
+#dialog .tutorial-intro .tutorial-goals b {background:#0a1123;border:2px solid #fff2d8;color:#fff2d8;box-shadow:5px 5px 0 #e03d2e;}
+.game-shell .reference-deck {border-top:3px solid #fff0d530;background:#090f1f;}
+.game-shell .reference-deck .hud-tools {gap:9px;padding-right:18px;}
+.game-shell .reference-deck .hud-tools :is(#history,#menu) {background:#eee7d5;color:#11192c;border:0;border-radius:0;box-shadow:3px 4px 0 #000;min-height:46px;font:900 15px/1.25 MangaSans,sans-serif;padding:10px 14px;transform:skew(-4deg);transition:translate .18s,background .18s;}
+.game-shell .reference-deck .hud-tools :is(#history,#menu):hover {background:#ee4433;color:#fff5df;translate:0 -3px;}
+.game-shell .reference-deck #history {font-size:15px;}
+.game-shell .reference-deck #reference-toggle {background:#16223a;border:1px solid #f2ead680;box-shadow:none;}
+.game-shell .reference-deck .reference-recipe {border:1px solid #eee6d44a;background:#131d32;transition:translate .18s,background .18s;box-shadow:3px 4px 0 #060a16;}
+.game-shell .reference-deck .reference-recipe:is(:hover,:focus-visible) {background:#ef4130;translate:0 -3px;}
+.game-shell .recipe-shelf {scrollbar-color:#61718c #10182b;scrollbar-width:thin;}
+.game-shell .recipe-shelf[data-page='skills'] {gap:8px;}
+.game-shell .recipe-shelf[data-page='skills'] .reference-recipe {flex:1 0 72px;min-width:72px;}
+.game-shell .recipe-shelf[data-page='skills'] .shield-reference {flex:.65 0 48px;min-width:48px;}
+.game-shell .recipe-shelf[data-page='skills'] .reference-recipe b {font-size:clamp(19px,1.65vw,24px);}
+.game-shell .arena-actions #instruction {font-family:MangaSans,sans-serif;font-size:18px;line-height:1.65;color:#11192c;text-shadow:none;}
+.game-shell .arena-actions .end-turn:not(:disabled) {border:2px solid #efe8d9;box-shadow:5px 6px 0 #080d1b;background:#15213a;color:#fff3dc;transition:scale .18s,background .18s;}
+.game-shell .arena-actions .end-turn:not(:disabled)::after {content:'↗';margin-left:14px;display:inline-block;}
+.game-shell .arena-actions .end-turn.urgent:not(:disabled) {background:#fff1d9;color:#11192c;box-shadow:6px 7px 0 #da3f31;}
+.game-shell .arena-actions .end-turn:not(:disabled):hover {background:#ed4431;color:#fff2dd;scale:1.025;}
+.game-shell .notice-stack .arena-skill .cinema-heading h2 {display:table;background:#fff2dd;color:#10182b;text-shadow:none;padding:4px 10px;transform:rotate(-2deg)!important;box-shadow:3px 3px 0 #d64132;font-size:27px;}
+.game-shell .notice-stack .combat-cinema.skill.arena-skill {border:2px solid #ede6d2;border-left:5px solid #85aaff;background:#0b1326;box-shadow:6px 7px 0 #040918;}
+.game-shell .notice-stack .combat-cinema.skill.arena-skill[data-team="1"] {border-left-color:#ed5544;}
+.game-shell .notice-stack .arena-skill .cinema-heading small {color:#d6dae3;}
+.game-shell .notice-stack .arena-skill .cinema-result {font-variant-numeric:tabular-nums;}
+@media(max-height:540px) and (orientation:landscape) {
+ #dialog.scene-dialog.pause-dialog {width:min(850px,94vw);}
+ #dialog .battle-menu {display:grid;grid-template-columns:1fr 1fr;column-gap:28px;padding:28px 52px 24px 30px;}
+ #dialog .battle-menu>:is(.scene-kicker,h2,.pause-context) {grid-column:1;min-width:0;}
+ #dialog .battle-menu>h2 {font-size:32px;align-self:start;margin:12px 0;}
+ #dialog .battle-menu>.pause-context {margin:0;}
+ #dialog .battle-menu>button:not(.dialog-close) {grid-column:2;font-size:17px;margin:5px 0;min-height:38px;padding:8px 15px;}
+ #dialog .battle-menu>.resume-choice {grid-row:1/3;padding:12px 16px!important;font-size:23px!important;margin:0 0 10px!important;}
+ #dialog .battle-menu>button.resume-choice {grid-column:2;}
+ .game-shell .reference-deck .hud-tools {gap:5px;padding-right:8px;}
+ .game-shell .reference-deck .hud-tools :is(#history,#menu) {font-size:11px;min-width:60px;min-height:34px;padding:5px 8px;}
+ .game-shell .arena-actions #instruction {font-size:12px;}
+ #dialog .dialog-close {width:34px;height:34px;font-size:24px;right:12px;top:12px;}
+}
+@media(prefers-reduced-motion:reduce) {
+ #dialog button,.game-shell .reference-deck button {transition:none!important;}
+}

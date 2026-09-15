@@ -1,4 +1,4 @@
-import {matchSettings} from './match-settings.js';
+import {updateMatchSettings} from './match-settings.js';
 import {DEFAULT_MATCH_OPTIONS,matchOptions,matchSummary} from './match-options.js';
 import { createCombatCinema } from "./combat-cinema.js";
 import { createAudioSettings } from "./audio-settings.js";
@@ -24,6 +24,7 @@ import "./arena-poster.css";
 import "./scene-ui.css";
 import "./interaction-ui.css";
 import './match-settings.css';
+import './system-polish.css';
 import { WEAPONS, PROPS, MAX_HP, weaponById } from "./catalog.js";
 import { LocalSession } from "./session.js";
 import { chooseCommand, AI_LEVELS } from "./ai.js";
@@ -673,17 +674,22 @@ function showFullscreenHint(root) {
 async function showMenu(page = "home") {
   if(mode === "online" || online?.packet?.room || online?.packet?.queued) {showOnline();return;}
   if(typeof page !== "string")page="home";
-  openDialog(menuMarkup(page,{started,resumable:!!savedPve(),options:localSetup,difficulty:setupDifficulty}),"menu-dialog game-menu");
+  const markup=menuMarkup(page,{started,resumable:!!savedPve(),options:localSetup,difficulty:setupDifficulty});
+  if(dialog.open&&dialog.classList.contains('game-menu')) {
+    const content=document.createElement('template');content.innerHTML=markup;
+    dialog.querySelector('.menu-body').replaceWith(content.content.querySelector('.menu-body'));
+  }else openDialog(markup,"menu-dialog game-menu");
   dialog.dataset.view="menu";dialog.dataset.page=page;
   const firstEntrance=!menuLoaded,entrance=++menuEntrance,root=dialog.querySelector('.menu-body'),buttons=[...dialog.querySelectorAll('.menu-body button')];
-  buttons.forEach(b=>b.disabled=true);root.classList.add('menu-entering');
+  buttons.forEach(b=>b.disabled=true);if(firstEntrance)root.classList.add('menu-entering');
   const loader=document.createElement('div');loader.className='menu-loader';loader.setAttribute('role','status');loader.innerHTML='<div class="loader-emblem" aria-hidden="true"><b>99</b></div><span>LOADING</span>';if(firstEntrance)dialog.append(loader);
   await Promise.all([dialog.querySelector('.menu-keyart img').decode().catch(()=>{}),new Promise(resolve=>setTimeout(resolve,firstEntrance?650:0))]);
   if(entrance!==menuEntrance||!root.isConnected)return;
   loader.remove();menuLoaded=true;if(firstEntrance)await new Promise(resolve=>setTimeout(resolve,500));
   if(entrance!==menuEntrance||!root.isConnected)return;
   const quiet=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  await Promise.all(buttons.map((b,i)=>b.animate(quiet?[{opacity:0},{opacity:1}]:[{opacity:0,transform:'translateY(18px) scale(1.12)'},{opacity:1,transform:'translateY(-2px) scale(.99)',offset:.75},{opacity:1,transform:'none'}],{duration:firstEntrance?300:160,delay:i*(firstEntrance?200:50),fill:'both',easing:'cubic-bezier(.2,.8,.2,1)'}).finished.catch(()=>{})));
+  const entering=firstEntrance?buttons:[...root.children];
+  await Promise.all(entering.map((b,i)=>{const animation=b.animate(quiet?[{opacity:0},{opacity:1}]:firstEntrance?[{opacity:0,transform:'translateY(18px) scale(1.12)'},{opacity:1,transform:'translateY(-2px) scale(.99)',offset:.75},{opacity:1,transform:'none'}]:[{opacity:0,translate:'-42px 12px'},{opacity:1,translate:'0 0'}],{duration:firstEntrance?300:320,delay:i*(firstEntrance?200:35),fill:'both',easing:'cubic-bezier(.2,.8,.2,1)'});return animation.finished.catch(()=>{}).finally(()=>animation.cancel());}));
   if(entrance!==menuEntrance||!root.isConnected)return;
   root.classList.remove('menu-entering');buttons.forEach(b=>b.disabled=false);dialog.setAttribute('tabindex','-1');dialog.focus({preventScroll:true});
   if(firstEntrance)showFullscreenHint(root);
@@ -775,7 +781,16 @@ function showOnline(reveal = true) {
 function refreshLobby() {
   if(dialog.dataset.view!=="online")return;
   const field=dialog.querySelector(":focus"), id=field?.id, value=field?.value, start=field?.selectionStart, end=field?.selectionEnd;
+  const controls=dialog.querySelector('.match-settings');
   dialog.innerHTML=onlineMarkup(online);
+  const replacement=dialog.querySelector('.match-settings');
+  if(controls&&replacement&&controls.dataset.scope===replacement.dataset.scope) {
+    const disabled=replacement.querySelector('button').disabled;
+    replacement.replaceWith(controls);
+    controls.getBoundingClientRect();
+    updateMatchSettings(controls,{options:online.packet?.room?.options||online.options,disabled});
+    if(field?.dataset.matchSetting&&!disabled)field.focus({preventScroll:true});
+  }
   if(id){const input=dialog.querySelector(`#${id}`);if(input){if(input.tagName==="INPUT"){if(id!=="online-name")input.value=value;input.setSelectionRange(start,end);}input.focus();}}
 }
 async function updateOnlineSetting(key,value) {
@@ -785,7 +800,7 @@ async function updateOnlineSetting(key,value) {
     online.busy=true;online.error='';refreshLobby();
     try{await online.request('configure',{options:matchOptions({...room.options,[key]:value})});}
     catch(error){online.error=error.message;}
-    finally{online.busy=false;refreshLobby();}
+    finally{online.busy=false;refreshLobby();if([document.body,dialog].includes(document.activeElement))dialog.querySelector(`[data-match-setting="${key}"][data-value="${value}"]`)?.focus({preventScroll:true});}
   }else{online.options=matchOptions({...online.options,[key]:value});refreshLobby();}
 }
 async function onlineAction(id) {
@@ -998,7 +1013,7 @@ listen(dialog, "click", (e) => {
     const key=b.dataset.matchSetting,value=key==='difficulty'?b.dataset.value:key==='itemsEnabled'?b.dataset.value==='true':Number(b.dataset.value);
     if(b.dataset.settingScope==='local'){
       if(key==='difficulty')setupDifficulty=value;else localSetup=matchOptions({...localSetup,[key]:value});
-      const target=dialog.querySelector('.match-settings');target.outerHTML=matchSettings({options:localSetup,difficulty:dialog.dataset.page==='difficulty'?setupDifficulty:null});
+      updateMatchSettings(dialog.querySelector('.match-settings'),{options:localSetup,difficulty:setupDifficulty});
       dialog.querySelector(`[data-match-setting="${key}"][data-value="${value}"]`)?.focus({preventScroll:true});
     }else updateOnlineSetting(key,value);
     return;
