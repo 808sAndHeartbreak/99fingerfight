@@ -88,11 +88,16 @@ let cinema, aiWorker, aiJob=0, aiDifficulty='advanced';
 function stopAI(){clearTimeout(aiTimer);aiJob++;aiWorker?.terminate();aiWorker=null;}
 function requestAI(){
  const job=++aiJob,revision=state.revision,current=session;
+ let provisional=null;
  const accept=command=>{if(job!==aiJob||session!==current||state.revision!==revision||paused||busy||mode!=='ai')return;clearTimeout(aiTimer);aiWorker?.terminate();aiWorker=null;if(command)send(command);};
- const fallback=()=>accept(chooseCommand(state,aiDifficulty));
+ const fallback=()=>{
+  if(job!==aiJob||session!==current||state.revision!==revision)return;
+  aiWorker?.terminate();aiWorker=null;
+  accept(provisional||chooseCommand(state,'easy'));
+ };
  try{
   aiWorker=new Worker(new URL('./ai-worker.js',import.meta.url),{type:'module'});
-  aiWorker.onmessage=({data})=>data.error?fallback():accept(data.command);
+  aiWorker.onmessage=({data})=>{if(data.id!==job)return;if(data.provisional){provisional=data.command;return;}data.error?fallback():accept(data.command);};
   aiWorker.onerror=fallback;
   aiWorker.postMessage({id:job,state,difficulty:aiDifficulty});
   aiTimer=setTimeout(fallback,2500);

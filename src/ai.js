@@ -1,4 +1,5 @@
-import { applyCommand, legalCommands, emptyTurnPenalty } from "./engine.js";
+import { chooseMasterCommand } from "./ai-search.js";
+import { applyCommand, legalCommands } from "./engine.js";
 import { WEAPONS, weaponById, matchingWeapons } from "./catalog.js";
 
 function skillValue(w,p) {
@@ -80,14 +81,9 @@ export function chooseCommand(state,difficulty='advanced') {
  const s=structuredClone(state);s.rng=(Math.imul(s.revision+1,2654435761)^0x6a09e667)>>>0;
  const actor=s.active,legal=moves(s);if(!legal.length)return;
  if(legal.length===1)return legal[0];
- if(difficulty==='easy') {
-  // Beginner makes simple local choices and frequently misses combinations.
-  const turn=(s.turn*13+s.revision*7)>>>0;
-  const pool=legal.filter(c=>c.type==='add'||(c.type==='end'&&!emptyTurnPenalty(s))||(c.type==='forge'&&turn%4===0)||(c.type==='prop'&&turn%3===0));
-  return (pool.length?pool:legal)[turn%(pool.length||legal.length)];
- }
+ if(difficulty==='master')return chooseMasterCommand(s);
  const options=ranked(s,actor);
- if(difficulty==='advanced') {
+ if(difficulty==='easy') {
   // A short tactical continuation understands item -> combination and lethal skills.
   return options.map(n=>({c:n.c,value:n.next.winner!==null?score(n.next,actor):n.next.active===actor?Math.max(n.value,...ranked(n.next,actor).map(r=>r.value)) : n.value}))
    .sort((a,b)=>b.value-a.value)[0]?.c;
