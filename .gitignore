@@ -9,3 +9,9 @@ data/
 *.log
 *.conf
 __pycache__/
+*.zip
+*.tgz
+*.pem
+*.key
+.npmrc
+.netrc

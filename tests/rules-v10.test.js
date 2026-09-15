@@ -44,5 +44,5 @@ test('event deltas identify shield loss, copied digits and inventory without tre
  const changes=stateChanges(s,n);assert.equal(changes.filter(c=>c.kind==='inventory').length,1);assert.ok(changes.some(c=>c.owner===1&&c.hand===0&&c.label==='[5] → [1]'));assert.ok(changes.some(c=>c.key==='foam'));
 });
 test('turn-start periodic damage gets reading time and the server can reserve that same duration',()=>{
- const s=ready();s.calculated=true;s.players[1].seven=2;s.players[1].poison=2;const n=run(s,{type:'end'});assert.equal(n.events.filter(e=>e.type==='damage').length,2);assert.equal(presentationDuration(s,n,{type:'end'}),4200);
+ const s=ready();s.calculated=true;s.players[1].seven=2;s.players[1].poison=2;const n=run(s,{type:'end'});assert.equal(n.events.filter(e=>e.type==='damage').length,2);assert.equal(presentationDuration(s,n,{type:'end'}),5600);
 });

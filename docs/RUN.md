@@ -1,6 +1,6 @@
 # RUN 部署
 
-服务：https://fingerfight.run.ingarena.net/ · RUN 项目 2112。
+部署目标与项目编号由维护者在平台后台确认，不随源码保存。
 
 1. 在项目根目录执行 `npm ci`、`npm test`、`npm run build`。
 2. 通过 RUN 官方 API 获取当前 SSH 信息，凭据禁止入库。
@@ -9,12 +9,12 @@
 5. 后端更新须安装锁定依赖并重启托管服务。规则不兼容时另行安排旧房间迁移，不可直接覆写对局数据。
 6. 验证 `/health`、首页、新资源 HTTP 和实际 WebSocket 双人交互。
 
-服务端口 3000；生产 `ALLOWED_ORIGIN` 为上述域名，重连宽限 60000ms。持久化默认为 `data/rooms.json`，可用 `STATE_FILE` 调整。服务器使用 Supervisor 托管，配置位于 `server/supervisord.conf`，服务名 `finger-fight`。数据与进程配置仅在服务器保存。
+服务端口 3000；生产 `ALLOWED_ORIGIN` 为实际部署域名，重连宽限 60000ms。持久化默认为 `data/rooms.json`，可用 `STATE_FILE` 调整。服务器使用 Supervisor 托管，配置位于 `server/supervisord.conf`，服务名 `finger-fight`。数据与进程配置仅在服务器保存。
 
 程序回滚只还原程序和入口，不覆盖发布后生成的新对局数据。发布包由 `python scripts/package-release.py` 生成。平台访问范围以 RUN 当前政策为准。
 
 ## 当前发布约束
 
-规则 15 / 协议 2。规则不兼容的旧客户端须刷新，旧房间回到等待准备，旧 PVE 存档拒绝恢复；同版本存档保留。以 /health 和部署文件哈希确认版本，不用历史测试数量判断发布是否成功。
+规则版本以 `src/engine.js` 为准 / 协议 2。规则不兼容的旧客户端须刷新，旧房间回到等待准备，旧 PVE 存档拒绝恢复；同版本存档保留。以 /health 和部署文件哈希确认版本，不用历史测试数量判断发布是否成功。
 
 清理时先核对引用和来源清单，只删除明确废弃的资源及其对应线上路径。旧哈希构建文件暂留，避免仍打开的页面延迟加载失败；它们不是当前入口引用的版本。不要清除 data/、备份、依赖或 Supervisor 配置。历史规则与发布记录见 Git 历史。

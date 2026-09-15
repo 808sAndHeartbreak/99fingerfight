@@ -1,3 +1,4 @@
+import {matchOptions,sameMatchOptions} from '../src/match-options.js';
 import { randomBytes, createHash, randomUUID } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -20,6 +21,7 @@ export class MatchHub {
       for(const r of this.rooms.values()) {
         if(r.state && r.state.rulesVersion!==RULES_VERSION) {r.state=null;r.status='waiting';r.ready=[false,false];r.seats=r.seats.filter(Boolean);r.matchId=null;r.readyAt=0;r.deadlineAt=null;r.cache={};r.finishReason=null;}
         if(r.seatNames)r.seatNames=r.seatNames.map(cleanName);
+        r.options=matchOptions(r.options);
         r.rematch=[false,false];
       }
     }
@@ -33,8 +35,8 @@ export class MatchHub {
   connected(id) {return this.clients.has(id);}
   packet(u, event=null) {
     const r=this.rooms.get(u.room);
-    return {type:'snapshot',serverNow:this.now(),profile:{displayName:u.name},queued:!!u.queued,
-      room:r ? {code:r.code,matchId:r.matchId,status:r.status,seat:r.seats.indexOf(u.id),ready:r.ready,rematch:r.rematch,
+    return {type:'snapshot',serverNow:this.now(),profile:{displayName:u.name},queued:!!u.queued,queueOptions:u.queued?u.queueOptions:null,
+      room:r ? {options:r.options,code:r.code,matchId:r.matchId,status:r.status,seat:r.seats.indexOf(u.id),ready:r.ready,rematch:r.rematch,
         participants:r.seats.map((id,seat)=> {const p=this.userById(id);return {seat,departed:!p,displayName:p?.name || r.seatNames?.[seat] || (seat===0?'玩家一':'玩家二'),connected:!!p&&this.connected(id),reconnectUntil:p&&!this.connected(id)&&r.status==='playing'?p.disconnectedAt+this.graceMs:null};}),
         state:r.state ? this.publicState(r.state):null,deadlineAt:r.deadlineAt,readyAt:r.readyAt,event,
         finishReason:r.finishReason || null} : null};
@@ -67,13 +69,14 @@ export class MatchHub {
   }
   begin(r) {
     check(r.seats.length===2&&r.seats.every(id=>this.connected(id)),'需要两位在线玩家');
-    r.state=createGame(randomBytes(4).readUInt32LE());r.matchId=randomUUID();r.status='playing';r.ready=[false,false];r.rematch=[false,false];r.seatNames=r.seats.map(id=>this.userById(id).name);r.cache={};r.finishReason=null;
+    r.state=createGame(randomBytes(4).readUInt32LE(),r.options);r.matchId=randomUUID();r.status='playing';r.ready=[false,false];r.rematch=[false,false];r.seatNames=r.seats.map(id=>this.userById(id).name);r.cache={};r.finishReason=null;
     r.readyAt=this.now()+(this.animationMs===null ? phaseCue(null,r.state).duration+(hasSupply(r.state)?SUPPLY_REVEAL_MS:0) : 0);r.deadlineAt=r.readyAt+(this.animationMs===null?0:1000);
   }
-  create(u) {
+  create(u,options={}) {
+    options=matchOptions(options);
     check(!u.room&&!u.queued,'请先离开当前房间或取消匹配');check(this.rooms.size<1000,'房间已满，请稍后重试');
     let code;do{code=randomBytes(4).toString('hex').slice(0,6).toUpperCase();}while(this.rooms.has(code));
-    const r={code,seats:[u.id],ready:[false,false],rematch:[false,false],status:'waiting',state:null,matchId:null,deadlineAt:null,readyAt:0,cache:{}};
+    const r={code,options,seats:[u.id],ready:[false,false],rematch:[false,false],status:'waiting',state:null,matchId:null,deadlineAt:null,readyAt:0,cache:{}};
     this.rooms.set(code,r);u.room=code;return r;
   }
   leave(u) {
@@ -108,16 +111,22 @@ export class MatchHub {
     const {op,id}=message;check(typeof id==='string'&&id.length<=80,'无效请求');
     let r=this.rooms.get(u.room),event=null;
     if(op==='name') {check(typeof message.name==='string'&&message.name.length<=200,'名字过长');u.name=cleanName(message.name);if(r?.seatNames)r.seatNames[r.seats.indexOf(u.id)]=u.name;}
-    else if(op==='create') r=this.create(u);
+    else if(op==='create') r=this.create(u,message.options);
+    else if(op==='configure') {
+      check(r && ['waiting','finished'].includes(r.status),'对局中不能修改规则');
+      check(r.seats[0]===u.id,'只有房主可以修改规则');
+      r.options=matchOptions(message.options);r.ready=[false,false];r.rematch=[false,false];
+    }
     else if(op==='join') {
       const code=String(message.code||'').trim().toUpperCase();check(/^[A-F0-9]{6}$/.test(code),'请输入六位房间码');
       if(u.room===code){check(r?.seats.includes(u.id),'无法恢复此席位');}
       else {check(!u.room&&!u.queued,'请先退出当前房间或匹配');r=this.rooms.get(code);check(r&&r.status==='waiting','房间不存在或已开始');check(r.seats.length<2,'房间已满');r.seats.push(u.id);u.room=code;}
     } else if(op==='queue') {
       check(!u.room,'请先离开房间');
-      if(!u.queued){const other=this.queue.find(id=>id!==u.id&&this.connected(id)&&!this.userById(id)?.room);
-        if(other){const p=this.userById(other);this.queue=this.queue.filter(id=>id!==other);p.queued=false;r=this.create(p);r.seats.push(u.id);u.room=r.code;this.begin(r);}
-        else {u.queued=true;this.queue.push(u.id);}}
+      const options=matchOptions(message.options);
+      if(!u.queued){const other=this.queue.find(id=>id!==u.id&&this.connected(id)&&!this.userById(id)?.room&&sameMatchOptions(this.userById(id).queueOptions,options));
+        if(other){const p=this.userById(other);this.queue=this.queue.filter(id=>id!==other);p.queued=false;r=this.create(p,options);r.seats.push(u.id);u.room=r.code;this.begin(r);}
+        else {u.queued=true;u.queueOptions=options;this.queue.push(u.id);}}
     } else if(op==='cancel') {this.queue=this.queue.filter(id=>id!==u.id);u.queued=false;}
     else if(op==='leave') {this.leave(u);r=null;}
     else if(op==='ready') {check(r?.status==='waiting','当前不能准备');r.ready[r.seats.indexOf(u.id)]=message.ready===true;if(r.seats.length===2&&r.ready.every(Boolean))this.begin(r);}

@@ -40,7 +40,7 @@ test("eight recipes require explicit synthesis and never form during calculation
 test("skills check only actor recipe and may be ignored without a phase transition",()=>{
  let s=planning();s.players[1].hands=[9,9];assert.equal(synthesisOptions(s).length,0);
  s.players[0].hands=[9,9];assert.throws(()=>run(s,{type:'forge',weapon:'serious'}));
- assert.ok(legalCommands(s).some(c=>c.type==='add'));assert.equal(legalCommands(s).some(c=>c.type==='end'),false);
+ assert.ok(legalCommands(s).some(c=>c.type==='add'));assert.equal(legalCommands(s).some(c=>c.type==='end'),true);
  const n=run(s,{type:'end'});assert.equal(n.active,1);assert.deepEqual(n.players[0].hands,[9,9]);
 });
 

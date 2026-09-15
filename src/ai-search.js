@@ -14,7 +14,8 @@ function attackValue(damage,enemy,trueDamage=false,hits=1) {
   }
   return Math.min(enemy.hp,total);
 }
-function skillValue(w,p,e) {
+function skillValue(w,p,e,items=true) {
+  if(w.id==='scissors')return 1;
   if(w.id==='unify')return p.nine?WIN/4:85;
   const special={seven:e.seven?12:35,dark:e.dark?0:38,peace:p.hp<25?18:4,foam:18,knuckles:32+12*p.knuckles,steal:e.props.reduce((n,id)=>n+itemValues[id],0)+30*e.knuckles+8*e.wine,serpent:18};
   if(w.id in special)return special[w.id];
@@ -24,13 +25,13 @@ function skillValue(w,p,e) {
   let value=attackValue(Math.max(0,base+bonus),e,['serious','claw','sniper'].includes(w.id),hits);
   if(p.wine)value+=attackValue(p.wine*10,e,['serious','claw','sniper'].includes(w.id));
   if(w.id==='buddha'||w.id==='taser')value+=50;
-  if(w.id==='dual')value+=(3-p.props.length)*8;
+  if(w.id==='dual'&&items)value+=(3-p.props.length)*8;
   if(w.id==='fan')value+=e.props.length?8:0;
   if(w.id==='serious')value-=18;
   return value;
 }
-function position(p,e) {
-  const pair=matchingWeapons(p.hands).reduce((best,w)=>Math.max(best,skillValue(w,p,e)),0);
+function position(p,e,state) {
+  const pair=matchingWeapons(p.hands,undefined,state).reduce((best,w)=>Math.max(best,skillValue(w,p,e,state.options.itemsEnabled)),0);
   // Reachable pairs depend on the opponent's actual digits, not numeric distance.
   let nextPair=0;
   for(let h=0;h<2;h++)for(let t=0;t<2;t++) {
@@ -38,7 +39,7 @@ function position(p,e) {
     const n=(p.hands[h]+e.hands[t])%10;
     if(p.echo||n===p.hands[1-h]) {
       const hands=p.echo?[n,n]:p.hands.map((v,i)=>i===h?n:v);
-      nextPair=Math.max(nextPair,...matchingWeapons(hands).map(w=>skillValue(w,p,e)));
+      nextPair=Math.max(nextPair,...matchingWeapons(hands,undefined,state).map(w=>skillValue(w,p,e,state.options.itemsEnabled)));
     }
   }
   return p.hp+pair*.55+nextPair*.2+p.nine*85+p.props.reduce((n,id)=>n+itemValues[id],0)
@@ -48,7 +49,7 @@ function position(p,e) {
 }
 function evaluate(s,actor) {
   if(s.winner!==null)return s.winner===actor?WIN:-WIN;
-  return position(s.players[actor],s.players[1-actor])-position(s.players[1-actor],s.players[actor]);
+  return position(s.players[actor],s.players[1-actor],s)-position(s.players[1-actor],s.players[actor],s);
 }
 function step(s,c,budget) {
   budget.left--;
@@ -61,18 +62,22 @@ function step(s,c,budget) {
 }
 function stateKey(s) {return JSON.stringify([s.active,s.turn,s.calculated,s.acted,s.rng,s.players]);}
 function turnPlans(s,actor,budget,width=18,depth=7) {
-  let frontier=[{s,first:null,value:evaluate(s,actor)}],finished=[];
+  let frontier=[{s,first:null,value:evaluate(s,actor),cost:0}],finished=[];
   const seen=new Set();
   for(let d=0;d<depth&&frontier.length&&budget.left>0;d++) {
     const next=[];
     for(const node of frontier) {
       for(const c of legalCommands(node.s)) {
+        // Do not repeatedly calculate against zero when a changing move exists.
+        if(node.s.options.itemsEnabled===false && c.type==='add' && node.s.players[1-node.s.active].hands[c.targetHand]===0 && node.s.players[1-node.s.active].hands.some((v,i)=>v!==0&&!node.s.players[1-node.s.active].locks[i]))continue;
         if(budget.left<=0)break;
         if(c.type==='prop'&&node.s.players[actor].props[c.slot]==='lock'&&c.target===actor)continue;
         const n=step(node.s,c,budget),key=stateKey(n);
         if(seen.has(key))continue;
         seen.add(key);
-        const child={s:n,first:node.first||c,value:evaluate(n,actor),length:d+1};
+        const preparesScissors=c.type==='add'&&n.players[actor].hands.every(v=>v===2);
+        const cost=node.cost+(n.winner===null?(c.type==='forge'&&c.weapon==='scissors'?12:preparesScissors?20:0):0);
+        const child={s:n,first:node.first||c,value:evaluate(n,actor)-cost,cost,length:d+1};
         if(n.winner===actor)return [child];
         if(n.winner!==null||n.active!==actor||n.turn!==s.turn)finished.push(child);
         else next.push(child);
@@ -85,7 +90,7 @@ function turnPlans(s,actor,budget,width=18,depth=7) {
   for(const node of frontier) {
     if(budget.left<=0)break;
     const c=legalCommands(node.s).find(c=>c.type==='end');
-    if(c){const n=step(node.s,c,budget);finished.push({...node,s:n,value:evaluate(n,actor)});}
+    if(c){const n=step(node.s,c,budget);finished.push({...node,s:n,value:evaluate(n,actor)-node.cost});}
   }
   return finished.sort((a,b)=>b.value-a.value||a.length-b.length);
 }
@@ -119,11 +124,11 @@ export function chooseMasterCommand(state) {
         const replies=turnPlans(plan.s,responder,replyBudget,8,6);
         budget.left-=Math.min(700,budget.left)-replyBudget.left;
         if(replies.length) {
-          const reply=replies[0];value=evaluate(reply.s,actor);
+          const reply=replies[0];value=evaluate(reply.s,actor)-plan.cost;
           // Look past the reply to recover a prepared winning combination.
           if(reply.s.winner===null&&reply.s.active===actor) {
             const follow=turnPlans(reply.s,actor,{left:250},5,4);
-            if(follow[0])value=value*.35+evaluate(follow[0].s,actor)*.65;
+            if(follow[0])value=(value+plan.cost)*.35+evaluate(follow[0].s,actor)*.65-plan.cost;
           }
         }
       }
@@ -137,4 +142,37 @@ export function chooseMasterCommand(state) {
   }
   const robust=n=>n.values.reduce((a,b)=>a+b,0)/n.values.length*.7+Math.min(...n.values)*.3;
   return [...candidates.values()].sort((a,b)=>robust(b)-robust(a))[0]?.command||legal[0];
+}
+
+// Without item preparation, spend the search budget on successive player turns.
+// Complete-turn minimax includes skipped turns, damage over time and 99 threats.
+export function chooseNoItemCommand(state,difficulty) {
+  const actor=state.active,s=structuredClone(state);
+  s.rng=(0x9e3779b9+Math.imul(s.revision+1,2246822519))>>>0;s.log=[];s.events=[];
+  const depth={easy:1,advanced:2,master:4}[difficulty]||2;
+  const roots=turnPlans(s,actor,{left:3500},depth===1?6:18,6).slice(0,12);
+  if(!roots.length)return legalCommands(state)[0];
+  function search(node,remaining,budget,alpha=-WIN,beta=WIN) {
+    if(!remaining||node.winner!==null||budget.left<=0)return evaluate(node,actor);
+    const who=node.active,maximize=who===actor;
+    const plans=turnPlans(node,who,budget,6,5).slice(0,4);
+    if(!plans.length)return evaluate(node,actor);
+    let best=maximize?-Infinity:Infinity;
+    for(const plan of plans) {
+      const value=search(plan.s,remaining-1,budget,alpha,beta);
+      best=maximize?Math.max(best,value):Math.min(best,value);
+      if(maximize)alpha=Math.max(alpha,best);else beta=Math.min(beta,best);
+      if(beta<=alpha||budget.left<=0)break;
+    }
+    return best;
+  }
+  for(const root of roots) {
+    root.future=search(root.s,depth-1,{left:depth===4?2200:700})-root.cost;
+    // Break strategically equivalent loops without consulting the live RNG.
+    let tie=state.revision+1;
+    for(const ch of JSON.stringify(root.first))tie=Math.imul(tie^ch.charCodeAt(0),16777619);
+    if(Math.abs(root.future)<WIN/2)root.future+=((tie>>>0)%1000)/1000;
+  }
+  roots.sort((a,b)=>b.future-a.future||b.value-a.value||a.length-b.length);
+  return roots[0].first;
 }

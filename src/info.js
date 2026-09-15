@@ -1,6 +1,7 @@
+import {turnSeconds} from './phase-cue.js';
 import { supplyIn } from "./engine.js";
 import { playerName, escapeHtml } from "./identity.js";
-import { PROPS, MAX_HP, WEAPONS, weaponById } from "./catalog.js";
+import { PROPS, MAX_HP, WEAPONS, weaponForMode, weaponById } from "./catalog.js";
 
 const PROP_INFO = {
   add: "一只手数字 +1。",
@@ -10,12 +11,12 @@ const PROP_INFO = {
 export function describe(key, state, participants) {
   const [kind, id, hand] = key.split(":");
   if(kind === "recipe" || kind === "combo") {
-    const options=WEAPONS.filter(w=>w.recipe.every(n=>n===Number(id)));
+    const options=WEAPONS.filter(w=>w.recipe.every(n=>n===Number(id))).map(w=>weaponForMode(w,state));
     if(!options.length)return null;
     return {title:`[${id}] + [${id}]`,tag:"配方选项",options,stats:[],body:(kind==="combo"?`组合已满足，行动时可合成。${id==="5"?"[5] + [5]：免疫普通伤害，不消耗数字；真实伤害仍可生效。":""}<br><br>`:"")+options.map(w=>`${w.name}：${w.detail}`).join("<br><br>"),note:""};
   }
   if (kind === "weapon") {
-    const w = weaponById(id);
+    const w = weaponById(id,state);
     if (!w) return null;
     return {
       title: w.name,
@@ -30,7 +31,7 @@ export function describe(key, state, participants) {
     };
   }
   if (kind === "prop") {
-    const prop=PROPS[id];if(!prop)return null;
+    const prop=PROPS[id];if(!prop||state.options?.itemsEnabled===false)return null;
     const owner=hand===undefined?state.active:Number(hand),p=state.players[owner],e=state.players[1-owner];
     const sum=p.hands[0]+p.hands[1],enemySum=e.hands[0]+e.hands[1],ruinDamage=Math.abs(sum-enemySum);
     const preview={wine:`当前叠加后，首段伤害 +${(p.wine+1)*10}。`,grace:`当前自己回复 ${Math.min(MAX_HP-p.hp,sum)} HP，对手回复 ${Math.min(MAX_HP-e.hp,enemySum)} HP。`,ruin:`当前差值 |${sum} − ${enemySum}| = ${ruinDamage}，实际扣血 ${e.peace>0?0:Math.min(e.hp,ruinDamage)} HP。`,greed:`当前获得 ${Math.min(2,3-p.props.length+(p.props.includes(id)?1:0))} 个道具。${p.resilience?'坚韧生效：双手仍归 [1]，本回合继续。':''}`}[id]||'';
@@ -71,9 +72,10 @@ export function describe(key, state, participants) {
       resilience:["坚韧",`剩余 ${p.resilience} 个己方回合`,"免疫跳过回合与行动。连续两个己方回合被跳过后获得；强欲不再结束回合。可被窃取；不解除封印。"],
       nine:["归一次数",`${p.nine} / 2`,"再使用一次归一即可获胜！计数永久保留，无法被清除或转移。"]
     }[id];
-    return data?{title:data[0],tag:"持续状态",stats:[["时限 / 数量",data[1]]],body:data[2],note:""}:null;
+    return data?{title:data[0],tag:"持续状态",stats:[["时限 / 数量",data[1]]],body:state.options?.itemsEnabled===false?data[2].replace("补给、持续伤害和状态计数照常。","持续伤害和状态计数照常。").replace("包括真实伤害、道具与持续伤害","包括真实伤害与持续伤害").replace("不增加道具或持续伤害","不增加持续伤害").replace("不影响道具与持续伤害","不影响持续伤害"):data[2],note:""}:null;
   }
   if(kind==="supply") {
+    if(state.options?.itemsEnabled===false)return null;
     const p=state.players[Number(id)];
     const rounds=p.turns===0?1:supplyIn(p);
     return {title:"道具补给",tag:"",stats:[],body:`将在 ${rounds} 个己方回合开始时获得一个随机道具。`,note:"按该玩家自己的回合计数；背包满时跳过本次补给。"};
@@ -92,7 +94,7 @@ export function describe(key, state, participants) {
       ],
       body: p.locks[h]
         ? PROP_INFO.lock
-        : "行动时先选自己的手，再选对方的手。两手触碰后，通常主动手变为两数之和的个位数。回响会复制给己方双手，镜像会改为写入对手目标手。",
+        : state.options?.itemsEnabled===false?"行动时先选自己的手，再选对方的手。两手数字相加，取个位更新自己的手。":"行动时先选自己的手，再选对方的手。两手触碰后，通常主动手变为两数之和的个位数。回响会复制给己方双手，镜像会改为写入对手目标手。",
       note:
         n === 5
           ? "单个 [5]：普通伤害减半并变为 [1]。双手 [5] + [5]：完全免疫普通伤害且数字不变，数字变化后立即失效。真实伤害不消耗防御。"
@@ -118,9 +120,9 @@ export function describe(key, state, participants) {
       tag: "对战角色",
       stats: [
         ["生命", `${p.hp} / ${MAX_HP}`],
-        ["道具", `${p.props.length} / 3`],
+        ...(state.options?.itemsEnabled===false?[]:[["道具", `${p.props.length} / 3`]]),
       ],
-      body: "生命先降为 0 的一方失败；累计使用两次归一立即获胜。双方开局 99 生命。悬停或点击状态、道具可查看详细规则。",
+      body: `生命先降为 0 的一方失败；累计使用两次归一立即获胜。双方开局 99 生命。悬停或点击状态${state.options.itemsEnabled?"、道具":""}可查看详细规则。`,
       note: `当前武器：${p.weapon ? weaponById(p.weapon).name : "尚未合成"}。${p.hands.includes(5) ? "护盾生效中。" : ""}`,
     };
   }
@@ -129,10 +131,10 @@ export function describe(key, state, participants) {
       title: "回合流程",
       tag: "行动规则",
       stats: [
-        ["每回合", "30 秒，动画时暂停"],
+        ["每回合", `${turnSeconds(state)} 秒，动画时暂停`],
         ["技能", "合成后自动释放"],
       ],
-      body: "道具、计算、合成没有先后限制。每回合最多计算一次，合成后自动释放技能。可随时点击双手中间的结束回合；建议先完成计算或合成，再考虑结束。",
+      body: `${state.options?.itemsEnabled===false?"计算、合成没有先后限制。":"道具、计算、合成没有先后限制。"}每回合最多计算一次，合成后自动释放技能。可随时点击双手中间的结束回合；建议先完成计算或合成，再考虑结束。`,
       note: "超时自动结束回合；计算后结束按钮亮起，没有可用操作时加强提示。本地对局在查看菜单、说明或切到后台时暂停，触碰演出期间不扣操作时间。",
     };
   return null;

@@ -65,7 +65,7 @@ export function guidance(state, selected, human, busy) {
 
 export function comboHint(state) {
   const p=state.players[state.active];
-  if(p.weapon) return `${weaponById(p.weapon).name} · ${weaponById(p.weapon).detail}`;
+  if(p.weapon) return `${weaponById(p.weapon).name} · ${weaponById(p.weapon,state).detail}`;
   const options=matchingWeapons(p.hands);
   return options.length ? "配方已满足 · 本回合可合成" : "组合数字可合成技能";
 }

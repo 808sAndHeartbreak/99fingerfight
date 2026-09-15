@@ -58,17 +58,5 @@
     "output": "assets/hand-9.webp",
     "originalBytes": 11905,
     "bytes": 5888
-  },
-  {
-    "source": "Assets/Resources/Sound/Confirm_03.wav",
-    "output": "assets/click.wav",
-    "originalBytes": 102024,
-    "bytes": 102024
-  },
-  {
-    "source": "Assets/Resources/Sound/victory.wav",
-    "output": "assets/victory.wav",
-    "originalBytes": 907200,
-    "bytes": 907200
   }
 ]

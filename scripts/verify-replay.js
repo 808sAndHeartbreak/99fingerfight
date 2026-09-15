@@ -10,7 +10,7 @@ try {
   const replay = JSON.parse(readFileSync(file, "utf8"));
   if (replay.rulesVersion !== RULES_VERSION || !Array.isArray(replay.commands))
     throw new Error("回放格式或版本不匹配");
-  const state = replay.commands.reduce(applyCommand, createGame(replay.seed));
+  const state = replay.commands.reduce(applyCommand, createGame(replay.seed,replay.options));
   console.log(
     JSON.stringify(
       {

@@ -1,16 +1,17 @@
-import { chooseMasterCommand } from "./ai-search.js";
+import { chooseMasterCommand,chooseNoItemCommand } from "./ai-search.js";
 import { applyCommand, legalCommands } from "./engine.js";
 import { WEAPONS, weaponById, matchingWeapons } from "./catalog.js";
 
 function skillValue(w,p) {
+  if(w.id==='scissors')return 1;
   return ({drunken:37.5,claw:10,seven:35,dark:30,foam:15,knuckles:22,peace:12,serpent:25,steal:10,unify:p.nine?200:35,dual:20,sorrow:99-p.hp,buddha:40,taser:28})[w.id] ?? w.damage;
 }
 function potential(p) {
   const distance = Math.min(
-    ...WEAPONS.map(w => Math.min(...[w.recipe, [...w.recipe].reverse()].map(recipe => p.hands.reduce((sum,n,i) => sum + Math.min((recipe[i]-n+10)%10,(n-recipe[i]+10)%10),0)))) ,
+    ...WEAPONS.filter(w=>w.id!=='scissors').map(w => Math.min(...[w.recipe, [...w.recipe].reverse()].map(recipe => p.hands.reduce((sum,n,i) => sum + Math.min((recipe[i]-n+10)%10,(n-recipe[i]+10)%10),0)))) ,
   );
   return (
-    matchingWeapons(p.hands).reduce((best,w) => Math.max(best,skillValue(w,p) + 16),0) +
+    matchingWeapons(p.hands).reduce((best,w) => Math.max(best,skillValue(w,p) + (w.id==='scissors'?0:16)),0) +
     (p.weapon ? skillValue(weaponById(p.weapon),p) * 2 + 12 : 0) -
     distance * 1.8 +
     (p.hands.includes(5) ? 3 : 0)
@@ -47,7 +48,7 @@ function moves(s) {
  });
 }
 function ranked(s,actor) {
- return moves(s).map(c=>{const next=simulate(s,c);return {c,next,value:score(next,actor)};}).sort((a,b)=>b.value-a.value);
+ return moves(s).map(c=>{const next=simulate(s,c),cost=next.winner===null?(c.type==='forge'&&c.weapon==='scissors'?60:c.type==='add'&&next.players[actor].hands.every(v=>v===2)?30:0):0;return {c,next,cost,value:score(next,actor)-cost};}).sort((a,b)=>b.value-a.value);
 }
 function responseValue(s,actor) {
  let next=s;
@@ -62,7 +63,7 @@ function searchTurn(first,actor) {
   const expanded=[];
   for(const node of frontier) {
    if(node.next.winner!==null||node.next.active!==actor){finished.push(node);continue;}
-   for(const n of ranked(node.next,actor).slice(0,5))expanded.push(n);
+   for(const n of ranked(node.next,actor).slice(0,5))expanded.push({...n,cost:node.cost+n.cost,value:n.value-node.cost});
   }
   if(!expanded.length){frontier=[];break;}
   const seen=new Set();frontier=expanded.sort((a,b)=>b.value-a.value).filter(n=>{
@@ -74,18 +75,19 @@ function searchTurn(first,actor) {
   if(next.winner===null&&next.active===actor&&next.phase==='action')next=simulate(next,{type:'end',actor,revision:next.revision});
   finished.push({...node,next,value:score(next,actor)});
  }
- return Math.max(...finished.sort((a,b)=>b.value-a.value).slice(0,3).map(n=>responseValue(n.next,actor)));
+ return Math.max(...finished.sort((a,b)=>b.value-a.value).slice(0,3).map(n=>responseValue(n.next,actor)-n.cost));
 }
 export function chooseCommand(state,difficulty='advanced') {
  if(!AI_LEVELS[difficulty])difficulty='advanced';
  const s=structuredClone(state);s.rng=(Math.imul(s.revision+1,2654435761)^0x6a09e667)>>>0;
  const actor=s.active,legal=moves(s);if(!legal.length)return;
  if(legal.length===1)return legal[0];
+ if(s.options.itemsEnabled===false)return chooseNoItemCommand(s,difficulty);
  if(difficulty==='master')return chooseMasterCommand(s);
  const options=ranked(s,actor);
  if(difficulty==='easy') {
   // A short tactical continuation understands item -> combination and lethal skills.
-  return options.map(n=>({c:n.c,value:n.next.winner!==null?score(n.next,actor):n.next.active===actor?Math.max(n.value,...ranked(n.next,actor).map(r=>r.value)) : n.value}))
+  return options.map(n=>({c:n.c,value:n.next.winner!==null?score(n.next,actor):n.next.active===actor?Math.max(n.value,...ranked(n.next,actor).map(r=>r.value-n.cost)) : n.value}))
    .sort((a,b)=>b.value-a.value)[0]?.c;
  }
  const roots=options.slice(0,8), totals=new Map(roots.map(n=>[key(n.c),0]));
@@ -93,7 +95,7 @@ export function chooseCommand(state,difficulty='advanced') {
   const scenario=structuredClone(s);scenario.rng=(0x9e3779b9+Math.imul(s.revision+1,2246822519)+sample*1013904223)>>>0;
   for(const root of roots) {
    const next=simulate(scenario,root.c);
-   totals.set(key(root.c),totals.get(key(root.c))+searchTurn({c:root.c,next,value:score(next,actor)},actor));
+   totals.set(key(root.c),totals.get(key(root.c))+searchTurn({c:root.c,next,cost:root.cost,value:score(next,actor)-root.cost},actor));
   }
  }
  roots.sort((a,b)=>totals.get(key(b.c))-totals.get(key(a.c))||b.value-a.value);

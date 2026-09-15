@@ -1,3 +1,5 @@
+import {matchSettings} from './match-settings.js';
+import {DEFAULT_MATCH_OPTIONS,matchOptions,matchSummary} from './match-options.js';
 import { createCombatCinema } from "./combat-cinema.js";
 import { createAudioSettings } from "./audio-settings.js";
 import { historyMarkup, historyText } from "./match-history.js";
@@ -21,6 +23,7 @@ import "./arena-layout.css";
 import "./arena-poster.css";
 import "./scene-ui.css";
 import "./interaction-ui.css";
+import './match-settings.css';
 import { WEAPONS, PROPS, MAX_HP, weaponById } from "./catalog.js";
 import { LocalSession } from "./session.js";
 import { chooseCommand, AI_LEVELS } from "./ai.js";
@@ -62,6 +65,7 @@ const name = (seat) => escapeHtml(playerName(participants(), seat));
 let renderedRemoteReady = false;
 let online, remoteMatch = null, remoteQueue = [], remoteApplying = false;
 let referencePage='skills';
+let localSetup={...DEFAULT_MATCH_OPTIONS},setupDifficulty='advanced';
 let handoffOwner=null, clockReadyTurn=null;
 let forgeUi={key:'',choice:null,hidden:false};
 function updateClockWarning(){
@@ -72,8 +76,8 @@ function updateClockWarning(){
   el.classList.toggle('handoff',handoff);el.dataset.team=owner;
   clock.hidden=handoff;arrow.hidden=!handoff;
   arrow.dataset.direction=owner?'right':'left';
-  clock.textContent=state.winner!==null?'—':mode==='tutorial'?'∞':mode==='online'&&online.status!=='connected'?'—':state.phase==='start'?TURN_SECONDS:seconds;
-  el.setAttribute('aria-label',handoff?`回合交接，轮到${playerName(participants(),owner)}`:mode==='tutorial'?'教学，无倒计时':`剩余 ${state.phase==='start'?TURN_SECONDS:seconds} 秒`);
+  clock.textContent=state.winner!==null?'—':mode==='tutorial'?'∞':mode==='online'&&online.status!=='connected'?'—':state.phase==='start'?turnSeconds(state):seconds;
+  el.setAttribute('aria-label',handoff?`回合交接，轮到${playerName(participants(),owner)}`:mode==='tutorial'?'教学，无倒计时':`剩余 ${state.phase==='start'?turnSeconds(state):seconds} 秒`);
   const counting=!handoff&&state.winner===null&&state.phase==='action'&&mode!=='tutorial'&&(mode!=='online'||online.status==='connected');
   el.classList.toggle('warning',counting&&seconds<=10);
   el.classList.toggle('urgent',counting&&seconds<=5);
@@ -293,12 +297,15 @@ function render(preserveInfo=false) {
   const forgeKey=`${mode}:${actionSerial}:${state.revision}`;
   if(forgeUi.key!==forgeKey)forgeUi={key:forgeKey,choice:null,hidden:false};
   const forgeAvailable=enabled && !selected && humanTurn() && state.phase==='action' && !p.weapon && synthesisOptions(state).length>0 && (mode!=='tutorial'||session.guide?.command.type==='forge');
-  const forgePanel=document.querySelector('#forge-options'),chosen=forgeUi.choice&&weaponById(forgeUi.choice);
+  const forgePanel=document.querySelector('#forge-options'),chosen=forgeUi.choice&&weaponById(forgeUi.choice,state);
   forgePanel.hidden=!forgeAvailable || forgeUi.hidden;
   for(const el of document.querySelectorAll('#stage,.field-items'))el.inert=!forgePanel.hidden;
   forgePanel.innerHTML=forgePanel.hidden?'':chosen?`<div class="forge-confirm-art">${img(chosen.image,'skill-icon')}</div><small class="forge-eyebrow">${p.hands.map(n=>`[${n}]`).join(' + ')} · 合成技能</small><h2>${chosen.name}</h2><p class="forge-detail">${chosen.detail}</p><p class="forge-note">确认后立即释放，结算后双手归 [1]</p><div class="forge-buttons"><button id="confirm-forge">确认释放</button><button id="back-forge">返回</button></div>`:`<div class="forge-heading"><div><small class="forge-eyebrow">${p.hands.map(n=>`[${n}]`).join(" + ")} · 数字合成</small><h2>选择你的技能</h2></div><button id="cancel-forge">放弃合成</button></div><p class="forge-intro">${mode==='tutorial'?`本次练习选择${weaponById(session.guide.command.weapon).name}；其他技能可在正式对局使用。`:'选择一种技能，确认后立即释放；结算后双手归 [1]。'}</p><div class="forge-choices">${synthesisOptions(state).map(w=>`<button data-forge="${w.id}" ${mode==='tutorial'&&session.guide?.command.weapon!==w.id?'disabled':''}>${img(w.image,'skill-icon')}<strong>${w.name}</strong><span>${w.detail}</span></button>`).join('')}</div>`;
   forgePanel.classList.toggle('confirming',!!chosen);
+  document.querySelector('.game-shell').classList.toggle('no-items',!state.options.itemsEnabled);
   for(const owner of [0,1]) {
+    const container=document.querySelector(`#items-${owner}`);container.hidden=!state.options.itemsEnabled;
+    if(!state.options.itemsEnabled){container.replaceChildren();continue;}
     const player=state.players[owner], usable=owner===state.active && enabled && state.phase==="action" && !p.weapon && !player.silenced;
     const supply=player.turns===0?1:supplyIn(player);
     document.querySelector(`#items-${owner}`).classList.toggle("items-usable",usable&&player.props.length>0);
@@ -335,7 +342,8 @@ let referenceTurning=false;
 function renderReference(){
   const p=state.players[state.active];
   const shelf=document.querySelector('#recipe-shelf');
-  if(mode==='tutorial')referencePage='skills';
+  if(mode==='tutorial'||!state.options.itemsEnabled)referencePage='skills';
+  document.querySelector('#reference-toggle').hidden=!state.options.itemsEnabled;
   let pages=referencePages.get(shelf);if(!pages){pages={};referencePages.set(shelf,pages);}
   if(shelf.dataset.page!==referencePage){
     if(shelf.dataset.page)pages[shelf.dataset.page]={nodes:[...shelf.children],scroll:shelf.scrollLeft};
@@ -352,7 +360,7 @@ function renderReference(){
   for(const el of shelf.querySelectorAll('.reference-recipe')){const n=Number(el.dataset.number);el.classList.toggle('ready',p.hands.every(v=>v===n));el.classList.toggle('related',!p.hands.every(v=>v===n)&&p.hands.includes(n));}
 }
 async function turnReference(){
-  if(referenceTurning)return;referenceTurning=true;info.hide();
+  if(referenceTurning||!state.options.itemsEnabled)return;referenceTurning=true;info.hide();
   const shelf=document.querySelector('#recipe-shelf'),direction=referencePage==='skills'?1:-1;
   shelf.setAttribute('aria-busy','true');
   const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -569,7 +577,7 @@ function scheduleAI() {
 function savedPve(){try{const data=JSON.parse(localStorage.getItem('ff-pve')||'null');if(data){const restored=LocalSession.restore(data);if(restored.getSnapshot().winner===null)return data;}}catch{}return null;}
 function savePve(){if(mode==='ai'&&started&&session){try{
  const snapshot=session.getSnapshot(),changedTurn=state&&snapshot.turn!==state.turn;
- const remainingMs=changedTurn?TURN_SECONDS*1000:Math.max(0,Math.min(TURN_SECONDS*1000,(busy||paused?remaining*1000:deadline-Date.now())));
+ const remainingMs=changedTurn?turnSeconds(snapshot)*1000:Math.max(0,Math.min(turnSeconds(snapshot)*1000,(busy||paused?remaining*1000:deadline-Date.now())));
  localStorage.setItem('ff-pve',JSON.stringify({...session.exportSave(),remainingMs}));
  }catch{}}}
 listen(window,'pagehide',savePve);
@@ -589,9 +597,10 @@ function startGame(newMode = mode, chapter = 0, saved = null, matchParticipants 
   paused = false;
   remaining = TURN_SECONDS;handoffOwner=null;clockReadyTurn=null;
   deadline = Date.now() + TURN_SECONDS * 1000;
-  session = mode === "tutorial" ? new TutorialSession(chapter) : saved ? LocalSession.restore(saved) : new LocalSession(crypto.getRandomValues(new Uint32Array(1))[0],{difficulty:aiDifficulty,participants:matchParticipants});
+  session = mode === "tutorial" ? new TutorialSession(chapter) : saved ? LocalSession.restore(saved) : new LocalSession(crypto.getRandomValues(new Uint32Array(1))[0],{difficulty:aiDifficulty,participants:matchParticipants,options:localSetup});
   if(mode==="ai")aiDifficulty=session.difficulty;
-  if(saved&&Number.isFinite(saved.remainingMs)){remaining=Math.max(0,Math.min(TURN_SECONDS,saved.remainingMs/1000));deadline=Date.now()+remaining*1000;}
+  remaining=turnSeconds(session.getSnapshot());deadline=Date.now()+remaining*1000;
+  if(saved&&Number.isFinite(saved.remainingMs)){remaining=Math.max(0,Math.min(turnSeconds(session.getSnapshot()),saved.remainingMs/1000));deadline=Date.now()+remaining*1000;}
   unsubscribe = session.subscribe((next) => {
     savePve();
     if (!busy) {
@@ -664,7 +673,7 @@ function showFullscreenHint(root) {
 async function showMenu(page = "home") {
   if(mode === "online" || online?.packet?.room || online?.packet?.queued) {showOnline();return;}
   if(typeof page !== "string")page="home";
-  openDialog(menuMarkup(page,{started,resumable:!!savedPve()}),"menu-dialog game-menu");
+  openDialog(menuMarkup(page,{started,resumable:!!savedPve(),options:localSetup,difficulty:setupDifficulty}),"menu-dialog game-menu");
   dialog.dataset.view="menu";dialog.dataset.page=page;
   const firstEntrance=!menuLoaded,entrance=++menuEntrance,root=dialog.querySelector('.menu-body'),buttons=[...dialog.querySelectorAll('.menu-body button')];
   buttons.forEach(b=>b.disabled=true);root.classList.add('menu-entering');
@@ -687,9 +696,8 @@ function dismissDialog() {
     if(settingsReturn?.view==='menu'){showMenu(settingsReturn.page||'home');return;}
   }
   if(dialog.dataset.view==='name-editor' && nameEditorReturn){showBattleMenu();return;}
-  if(dialog.dataset.view==="menu"){if(dialog.dataset.page!=="home")showMenu(dialog.dataset.page==="difficulty"?"local":dialog.dataset.page==="local"?"play":"home");return;}
+  if(dialog.dataset.view==="menu"){if(dialog.dataset.page!=="home")showMenu(['difficulty','pvp'].includes(dialog.dataset.page)?"local":dialog.dataset.page==="local"?"play":"home");return;}
   if(dialog.dataset.view==="tutorial-note"){closeDialog();render();return;}
-  if(dialog.dataset.view==="developer-slide"){showDeveloper();dialog.querySelector("[data-developer-slide]").focus({preventScroll:true});return;}
   if(dialog.dataset.view==="developer"){showMenu("home");return;}
   if(dialog.dataset.view==="online") {
     if(online?.packet?.room?.status==='finished'){showResult();return;}
@@ -714,12 +722,8 @@ function showBattleMenu() {
 }
 
 function showDeveloper(){
-  openDialog(`<article class="developer-story"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><header><h2>开发者<span>说。</span></h2></header><div class="developer-copy"><p>考虑 finger fight 稍作改编就可以贴合本次“99”主题，但之前就做过了，还是不做回锅肉，就新做了个躲避球游戏。本游戏其实是 2023 年首次 minigame 设计推出的（尊重给到 [UI&amp;特效] <span class="developer-credit">潘朱炜</span>，[程序] <span class="developer-credit">王璨、王崴、佘壕镪</span>），可惜完成度不高，也没有拿到任何奖项。</p><p>今年响应“超级个体”的号召，solo 参赛做了。躲避球晋级后自觉内容量已足够，不太想进一步开发了。于是移植了 finger fight 到网页端，补全了玩法，实现了联网，重做了美术，打磨了交互体验。既然今年躲避球晋级决赛，就私心把这个游戏再塞进来给大家再玩玩了。</p><p>至于这个游戏的灵感来源，可以点击<button class="story-slide-link" data-developer-slide>当时的幻灯片页面<svg class="story-link-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2v17l5-5 4 8 4-2-4-7h7Z"/></svg></button>查看。大家可以按F11全屏游玩以获得更好体验。感谢体验！</p></div><footer>开发者：<span class="developer-signature">谭越天</span></footer></article>`,"developer-dialog");
+  openDialog(`<article class="developer-story"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><header><h2>开发者<span>说。</span></h2></header><div class="developer-copy"><p>考虑 finger fight 稍作改编就可以贴合本次“99”主题，但之前就做过了，还是不做回锅肉，就新做了个躲避球游戏。本游戏其实是 2023 年首次 minigame 设计推出的（尊重给到 [UI&amp;特效] <span class="developer-credit">潘朱炜</span>，[程序] <span class="developer-credit">王璨、王崴、佘壕镪</span>），可惜完成度不高，也没有拿到任何奖项。</p><p>今年响应“超级个体”的号召，solo 参赛做了。躲避球晋级后自觉内容量已足够，不太想进一步开发了。于是移植了 finger fight 到网页端，补全了玩法，实现了联网，重做了美术，打磨了交互体验。既然今年躲避球晋级决赛，就私心把这个游戏再塞进来给大家再玩玩了。</p><p>这个游戏的灵感来源于宿舍里的手指数字博弈。大家可以按F11全屏游玩以获得更好体验。感谢体验！</p></div><footer>开发者：<span class="developer-signature">谭越天</span></footer></article>`,"developer-dialog");
   dialog.dataset.view="developer";
-}
-function showDeveloperSlide(){
-  openDialog(`<div class="developer-slide"><img src="./assets/story/inspiration-full.png" alt="2023 年 Finger Fight 游戏介绍：灵感来源于宿舍里的手指数字博弈"><button class="dialog-close" data-close aria-label="返回开发者说">×</button></div>`,"developer-slide-dialog");
-  dialog.dataset.view="developer-slide";
 }
 function showTutorialIntro(){
  openDialog(`<div class="dialog-body tutorial-intro"><button class="dialog-close" data-close aria-label="返回主菜单">×</button><h2>指尖上的博弈</h2><p>改变双手数值，形成手势组合，解锁不同能力。</p><div class="tutorial-goals"><b>清空对手 HP</b><span>或</span><b>九九归一</b></div><button class="primary" data-tutorial-confirm>开始教学</button></div>`);
@@ -744,6 +748,7 @@ async function returnToMenu() {
   }catch(error){leavingForMenu=false;toast(error.message);}
 }
 function replayMatch() {
+  if(mode!=="online"&&mode!=="tutorial")localSetup=matchOptions(state.options);
   if(mode==='online'){showOnline();onlineAction('online-rematch');return;}
   const currentMode=mode,names=participants();started=true;closeDialog();startGame(currentMode,0,null,names);
 }
@@ -753,7 +758,7 @@ function showResult() {
   const lost = mode === "online" ? winner !== online.packet.room.seat : mode === "ai" && winner !== 0;
   const reason=state.winReason || (mode==='online'&&online.packet.room.finishReason) || (state.players[1-winner].hp<=0?playerName(participants(),1-winner)+' HP 归零':state.log.some(line=>line.includes('认输'))?playerName(participants(),1-winner)+'认输':'对局结束');
   openDialog(
-    `<div class="result-art"><span aria-hidden="true">${tutorial?'COMPLETE':lost?'DEFEAT':'VICTORY'}</span></div><div class="result-content"><small class="scene-kicker">${tutorial?'TRAINING COMPLETE':'MATCH COMPLETE'}</small><div class="result-stamp">${tutorial?'完成教学':lost?'败北':'胜利'}<i>!</i></div>${tutorial?'':`<h2>${name(winner)}<span>获胜</span></h2><p class="result-reason">${mode==='ai'?`<span class="result-difficulty">对手难度：<strong>${AI_LEVELS[session.difficulty]}</strong></span>`:''}第 ${Math.ceil(state.turn/2)} 回合 · ${escapeHtml(reason)}</p><div class="result-scores">${state.players.map((p,i)=>`<div class="${i===winner?'won':''}"><small>${name(i)}</small><strong>${p.hp}<span> HP</span></strong><b>${p.nine} / 2 归一</b></div>`).join('')}</div>`}<div class="result-actions">${tutorial?'':`<button class="primary" data-result-again>再来一局</button><button class="secondary" data-result-history>查看对战记录</button>`}<button class="${tutorial?'primary':'secondary'}" data-result-home>返回${tutorial?'主':''}菜单</button></div></div>`,
+    `<div class="result-art"><span aria-hidden="true">${tutorial?'COMPLETE':lost?'DEFEAT':'VICTORY'}</span></div><div class="result-content"><small class="scene-kicker">${tutorial?'TRAINING COMPLETE':'MATCH COMPLETE'}</small><div class="result-stamp">${tutorial?'完成教学':lost?'败北':'胜利'}<i>!</i></div>${tutorial?'':`<h2>${name(winner)}<span>获胜</span></h2><p class="result-reason">${mode==='ai'?`<span class="result-difficulty">对手难度：<strong>${AI_LEVELS[session.difficulty]}</strong></span>`:''}${matchSummary(state.options)}<br>第 ${Math.ceil(state.turn/2)} 回合 · ${escapeHtml(reason)}</p><div class="result-scores">${state.players.map((p,i)=>`<div class="${i===winner?'won':''}"><small>${name(i)}</small><strong>${p.hp}<span> HP</span></strong><b>${p.nine} / 2 归一</b></div>`).join('')}</div>`}<div class="result-actions">${tutorial?'':`<button class="primary" data-result-again>再来一局</button><button class="secondary" data-result-history>查看对战记录</button>`}<button class="${tutorial?'primary':'secondary'}" data-result-home>返回${tutorial?'主':''}菜单</button></div></div>`,
     `result-dialog manga-result ${tutorial?'tutorial-result ':''}${lost ? "defeat" : "victory"} winner-${winner}`,
   );
   dialog.dataset.view='result';
@@ -773,6 +778,16 @@ function refreshLobby() {
   dialog.innerHTML=onlineMarkup(online);
   if(id){const input=dialog.querySelector(`#${id}`);if(input){if(input.tagName==="INPUT"){if(id!=="online-name")input.value=value;input.setSelectionRange(start,end);}input.focus();}}
 }
+async function updateOnlineSetting(key,value) {
+  if(!online||online.busy)return;
+  const room=online.packet?.room;
+  if(room){
+    online.busy=true;online.error='';refreshLobby();
+    try{await online.request('configure',{options:matchOptions({...room.options,[key]:value})});}
+    catch(error){online.error=error.message;}
+    finally{online.busy=false;refreshLobby();}
+  }else{online.options=matchOptions({...online.options,[key]:value});refreshLobby();}
+}
 async function onlineAction(id) {
   if(online?.busy)return;
   if(id==="online-join"){online.view="join";online.error="";refreshLobby();dialog.querySelector('#room-code')?.focus();return;}
@@ -789,7 +804,7 @@ async function onlineAction(id) {
     const op=ops[id];if(!op)return;
     online.busy=true;online.error="";refreshLobby();
     if(["create","queue","ready","rematch"].includes(op))await online.saveDraft();
-    await online.request(op,op==="ready"?{ready:!online.packet.room.ready[online.packet.room.seat]}:{});
+    await online.request(op,op==="ready"?{ready:!online.packet.room.ready[online.packet.room.seat]}:["create","queue"].includes(op)?{options:online.options}:{});
     if(op==="rematch"&&online.packet?.room?.status==='finished')showOnline();
   } catch(error){online.error=error.message;if(dialog.dataset.view!=="online")toast(error.message);}
   finally {if(online){online.busy=false;refreshLobby();}}
@@ -847,7 +862,7 @@ async function drainRemote() {
 
       }
       if(serial!==actionSerial)return;
-      state=beforeSupply(next);if(old.turn!==next.turn||old.phase==='start')remaining=TURN_SECONDS;document.querySelector('#combat-callout').textContent='';document.querySelector('#combat-callout').classList.remove('visible');document.querySelector('#contact-fx').classList.remove('visible');render();
+      state=beforeSupply(next);if(old.turn!==next.turn||old.phase==='start')remaining=turnSeconds(next);document.querySelector('#combat-callout').textContent='';document.querySelector('#combat-callout').classList.remove('visible');document.querySelector('#contact-fx').classList.remove('visible');render();
       if(!document.hidden&&!dialog.open&&!remoteQueue.length)await feedback.phase(phaseCue(old,next,participants()),asset);
       if(serial!==actionSerial)return;
       if(!document.hidden&&!dialog.open&&!remoteQueue.length)await revealSupply(next);else state=next;
@@ -969,7 +984,7 @@ listen(app, "click", (e) => {
   handlers[button.id]?.();
 });
 listen(dialog, "click", (e) => {
-  if(e.target===dialog && ["recipes","developer-slide"].includes(dialog.dataset.view)) {
+  if(e.target===dialog && dialog.dataset.view==="recipes") {
     dismissDialog();return;
   }
   const b = e.target.closest("button");
@@ -978,8 +993,17 @@ listen(dialog, "click", (e) => {
   if(b.hasAttribute('data-result-history')){showHistory();return;}
   if(b.hasAttribute('data-result-again')){replayMatch();return;}
   if(b.hasAttribute('data-result-home')){returnToMenu();return;}
-  if (b.dataset.menu) {showMenu(b.dataset.menu);return;}
-  if(b.dataset.ai){aiDifficulty=b.dataset.ai;started=true;closeDialog();startGame("ai");return;}
+  if (b.dataset.menu) {if(['difficulty','pvp'].includes(b.dataset.menu)){localSetup={...DEFAULT_MATCH_OPTIONS};setupDifficulty='advanced';}showMenu(b.dataset.menu);return;}
+  if(b.dataset.matchSetting){
+    const key=b.dataset.matchSetting,value=key==='difficulty'?b.dataset.value:key==='itemsEnabled'?b.dataset.value==='true':Number(b.dataset.value);
+    if(b.dataset.settingScope==='local'){
+      if(key==='difficulty')setupDifficulty=value;else localSetup=matchOptions({...localSetup,[key]:value});
+      const target=dialog.querySelector('.match-settings');target.outerHTML=matchSettings({options:localSetup,difficulty:dialog.dataset.page==='difficulty'?setupDifficulty:null});
+      dialog.querySelector(`[data-match-setting="${key}"][data-value="${value}"]`)?.focus({preventScroll:true});
+    }else updateOnlineSetting(key,value);
+    return;
+  }
+  if(b.dataset.startMatch){aiDifficulty=setupDifficulty;started=true;closeDialog();startGame(b.dataset.startMatch);return;}
   if(b.hasAttribute("data-battle-online")){mode==="online"?showOnline():showNameEditor(mode==="local"?state.active:0);return;}
   if(b.hasAttribute("data-resume-pve")){const saved=savedPve();if(saved){started=true;closeDialog();startGame("ai",0,saved);}return;}
   if(b.hasAttribute("data-tutorial-understood")){closeDialog();render();return;}
@@ -988,7 +1012,6 @@ listen(dialog, "click", (e) => {
   if(b.hasAttribute("data-tutorial-exit")){exitTutorial();return;}
   if(b.hasAttribute("data-tutorial-help")){showTutorialNote();return;}
   if(b.hasAttribute("data-developer")){showDeveloper();return;}
-  if(b.hasAttribute("data-developer-slide")){showDeveloperSlide();return;}
   if(b.hasAttribute("data-tutorial")){showTutorialIntro();return;}
   if(b.hasAttribute("data-tutorial-confirm")){started=true;closeDialog();startGame("tutorial");return;}
   if (b.hasAttribute("data-menu-settings")) {showSettings();return;}

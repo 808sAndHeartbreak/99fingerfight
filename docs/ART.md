@@ -6,9 +6,9 @@
 
 Three.js 手部、灰色关节阴影、护盾碎片和 WebGL 阵营聚光由代码绘制。归一使用 SVG 太极，按玩家红蓝填充并在第二次直接衔接胜利页。常驻战场与结果页没有人物插画，旧人物图、纸纹和旧胜利背景均已移除。
 
-兼容手势 10 张与点击、胜利音效共 12 个素材保留原游戏出处，见 public/assets/manifest.json。手势图片供 WebGL 不可用时回退，仍属于运行必需素材。
+兼容手势 10 张保留原游戏出处，见 public/assets/manifest.json。手势图片供 WebGL 不可用时回退，仍属于运行必需素材。点击、胜利等效果音由 Web Audio 实时合成，已移除旧 WAV 文件。
 
-Teko 与 Noto Sans SC 本地字体随附 SIL OFL 许可证，必须保留。中文子集缺字时使用系统中文字体。开发者说原始截图位于 assets/story/inspiration-full.png，按用户要求完整呈现。
+Teko 与 Noto Sans SC 本地字体随附 SIL OFL 许可证，必须保留。中文子集缺字时使用系统中文字体。内部演示截图已从项目移除，开发者说保留文字介绍。
 
 当前 BGM 为用户提供的 `Pixel Afternoon Streets (8-Bit Loop Mix).mp3`，运行资源为 `assets/music/pixel-afternoon-streets-seamless.mp3`。由原曲按约 140 BPM 修剪到第 81 小节边界，首尾一小节（1.714 秒）交叉淡化，成品循环 137.143 秒、44.1 kHz 立体声。Web Audio 缓冲循环避免逐次重新加载，默认音乐 30%，保留用户自设音量和静音。旧运行音轨已删除；处理脚本 `scripts/prepare-bgm.py` 接收用户原曲路径。
 

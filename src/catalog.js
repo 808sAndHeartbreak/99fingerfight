@@ -53,9 +53,14 @@ export function handPropNumber(id, hands, hand) {
   const value=id==="add"?n+1:id==="sub"?n-1:id==="civil"?n-hands[1-hand]:id==="double"?n*2:n;
   return (value+10)%10;
 }
-export const weaponById = (id) => WEAPONS.find((w) => w.id === id);
+export function weaponForMode(w,state) {
+  if(!w || state?.options?.itemsEnabled!==false)return w;
+  const overrides={fan:{damage:20,detail:'造成 20 点普通伤害'},dual:{damage:10,detail:'连续 4 次各造成 10 点普通伤害'},steal:{detail:'夺走对手的增益（和平、指虎、酒、坚韧）'}};
+  return overrides[w.id]?{...w,...overrides[w.id]}:w;
+}
+export const weaponById = (id,state) => weaponForMode(WEAPONS.find((w) => w.id === id),state);
 
 export function matchesRecipe(hands, recipe) {
   return (hands[0] === recipe[0] && hands[1] === recipe[1]) || (hands[0] === recipe[1] && hands[1] === recipe[0]);
 }
-export const matchingWeapons = (hands, catalog = WEAPONS) => catalog.filter(w => matchesRecipe(hands, w.recipe));
+export const matchingWeapons = (hands, catalog=WEAPONS, state) => catalog.filter(w => matchesRecipe(hands, w.recipe)).map(w=>weaponForMode(w,state));

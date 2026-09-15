@@ -5,6 +5,9 @@ import {createFeedback} from '../src/feedback.js';
 
 test('reduced motion removes movement while preserving time to read phases and damage',async()=>{
   const previous=globalThis.matchMedia;
+  const previousObserver=globalThis.ResizeObserver,previousCancel=globalThis.cancelAnimationFrame;
+  globalThis.cancelAnimationFrame=()=>{};
+  globalThis.ResizeObserver=class {observe(){} unobserve(){} disconnect(){}};
   globalThis.matchMedia=()=>({matches:true});
   try {
     let recorded;
@@ -16,11 +19,11 @@ test('reduced motion removes movement while preserving time to read phases and d
     await feedback.animate(el,[{opacity:1},{opacity:1}],{duration:900}).finished;
     assert.equal(recorded.options.duration,900);
     feedback.reset();
-  } finally {globalThis.matchMedia=previous;}
+  } finally {globalThis.matchMedia=previous;globalThis.ResizeObserver=previousObserver;globalThis.cancelAnimationFrame=previousCancel;}
 });
 test('legacy provenance manifest retains only available runtime assets',()=>{
   const manifest=JSON.parse(readFileSync(new URL('../public/assets/manifest.json',import.meta.url),'utf8'));
-  assert.equal(manifest.length,12);
+  assert.equal(manifest.length,10);
   for(const entry of manifest)assert.ok(existsSync(new URL('../public/'+entry.output,import.meta.url)),entry.output);
   assert.ok(!existsSync(new URL('../public/assets/ink/',import.meta.url)));
 });

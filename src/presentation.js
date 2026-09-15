@@ -43,10 +43,10 @@ export function presentationDuration(old,next,c) {
  const cue=phaseCue(old,next);
  return actionDuration(old,next,c)+(['start','finish'].includes(cue?.kind)?cue.duration:0)+(hasSupply(next)?SUPPLY_REVEAL_MS:0);
 }
-export const commandArt=(old,c)=>c.type==='attack'?weaponById(old.players[old.active].weapon):c.type==='prop'?PROPS[old.players[old.active].props[c.slot]]:null;
+export const commandArt=(old,c)=>c.type==='attack'?weaponById(old.players[old.active].weapon,old):c.type==='prop'?PROPS[old.players[old.active].props[c.slot]]:null;
 
 export function skillSummary(old,next,command) {
- const weapon=weaponById(old.players[old.active].weapon);
+ const weapon=weaponById(old.players[old.active].weapon,old);
  const hits=(next.events||[]).filter(e=>e.type==='damage'&&e.owner===1-old.active&&e.source===weapon?.name);
  return {hits:hits.length,damage:hits.reduce((sum,e)=>sum+e.amount,0),effects:[...new Set([...actionBeats(old,next,command).filter(e=>e.type==='effect').map(e=>e.label),...hits.filter(e=>e.blocked).map(defenseDetail)])]};
 }

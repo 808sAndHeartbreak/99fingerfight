@@ -1,7 +1,8 @@
+import {matchOptions,matchSummary} from './match-options.js';
 import {effectDetail,defenseDetail} from "./effect-copy.js";
 import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
-export const RULES_VERSION = 16;
+export const RULES_VERSION = 17;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -13,7 +14,7 @@ const log = (s, message) => {
 const name = (p) => (p === 0 ? "蓝方" : "红方");
 
 function draw(s, p, source="道具效果") {
-  if (p.props.length >= 3) return null;
+  if (s.options.itemsEnabled===false || p.props.length >= 3) return null;
   const id=propForTicket(randomInt(s, PROP_WEIGHT_TOTAL)), owner=s.players.indexOf(p);
   p.props.push(id);
   s.events.push({type:"draw",owner,item:id,source});
@@ -30,7 +31,7 @@ export function calculationOutcome(s, command) {
 function begin(s) {
   const p = s.players[s.active];
   p.turns++;
-  if (p.turns % 3 === 1) {
+  if (s.options.itemsEnabled && p.turns % 3 === 1) {
     if(!draw(s,p,"回合补给")){s.events.push({type:"supply-full",owner:s.active});log(s,`${name(s.active)}补给时背包已满，本次不获得道具。`);}
   }
   s.phase = "start";
@@ -42,10 +43,11 @@ function begin(s) {
   if (s.winner === null && p.dark) damage(s,s.active,5,true,"玄冥神掌");
   if (s.winner === null && p.poison > 0) { p.poison--; damage(s,s.active,2,false,"中毒"); }
 }
-export function createGame(seed = 1) {
+export function createGame(seed = 1, options = {}) {
   assert(Number.isInteger(seed), "种子必须是整数");
   const s = {
     rulesVersion: RULES_VERSION,
+    options: matchOptions(options),
     revision: 0,
     rng: seed >>> 0,
     active: 0,
@@ -67,11 +69,12 @@ export function createGame(seed = 1) {
       turns: 0,
     })),
   };
+  log(s,matchSummary(s.options));
   begin(s);
   return s;
 }
 export const emptyTurnPenalty = s => !s.calculated && !s.acted ? Math.min(10,s.players[s.active].hp) : 0;
-export const synthesisOptions = s => matchingWeapons(s.players[s.active].hands);
+export const synthesisOptions = s => matchingWeapons(s.players[s.active].hands,undefined,s);
 export function touchCommands(s) {
   return [0,1].flatMap(hand => [0,1].flatMap(targetHand => !s.players[s.active].locks[hand] && !s.players[1-s.active].locks[targetHand] ? [{type:"add",hand,targetHand}] : []));
 }
@@ -186,6 +189,7 @@ export function applyCommand(state, command) {
       break;
     }
     case "prop": {
+      assert(s.options.itemsEnabled,"本局未启用道具");
       assert(s.phase === "action" && !p.weapon, "当前不能使用道具");
       assert(!p.silenced,"本回合被沉默，不能使用道具");
       assert(Number.isInteger(command.slot)&&command.slot>=0&&command.slot<p.props.length,"道具不存在");
@@ -217,7 +221,7 @@ export function applyCommand(state, command) {
     }
     case "attack": {
       assert(s.phase === "action" && p.weapon, "没有可以使用的武器");
-      const w = weaponById(p.weapon);
+      const w = weaponById(p.weapon,s);
       assert(w,"无效技能");
       log(s,`${name(s.active)}发动「${w.name}」。`);
       s.acted=true;
@@ -233,7 +237,7 @@ export function applyCommand(state, command) {
       if(s.winner===null) {
         if(id==="seven")enemy.seven+=7;
         if(id==="scissors")enemy.hands=enemy.hands.map(n=>mod10(n-1));
-        if(id==="fan"&&enemy.props.length) {const item=enemy.props.splice(randomInt(s,enemy.props.length),1)[0];log(s,`${name(target)}失去「${PROPS[item].name}」。`);}
+        if(id==="fan"&&s.options.itemsEnabled&&enemy.props.length) {const item=enemy.props.splice(randomInt(s,enemy.props.length),1)[0];log(s,`${name(target)}失去「${PROPS[item].name}」。`);}
         if(id==="buddha")enemy.hands=[1,1];
         if((id==="buddha"||id==="taser") && !enemy.resilience)enemy.skip+=3;
         if(id==="dark")enemy.dark=true;
@@ -241,8 +245,8 @@ export function applyCommand(state, command) {
         if(id==="knuckles")p.knuckles=Number(p.knuckles)+1;
         if(id==="peace")s.players.forEach(player=>{if(!player.peace)player.peaceSince=player.turns;player.peace+=3;});
         if(id==="serpent"){enemy.weak+=5;enemy.poison+=5;}
-        if(id==="dual")while(p.props.length<3)draw(s,p,"双枪");
-        if(id==="steal") {p.props.push(...enemy.props.slice(0,3-p.props.length));enemy.props=[];p.knuckles=Number(p.knuckles)+Number(enemy.knuckles);enemy.knuckles=0;
+        if(id==="dual"&&s.options.itemsEnabled)while(p.props.length<3)draw(s,p,"双枪");
+        if(id==="steal") {if(s.options.itemsEnabled){p.props.push(...enemy.props.slice(0,3-p.props.length));enemy.props=[];}p.knuckles=Number(p.knuckles)+Number(enemy.knuckles);enemy.knuckles=0;
           if(enemy.peace>0){if(!p.peace)p.peaceSince=p.turns;p.peace+=enemy.peace;enemy.peace=0;}
           p.wine+=enemy.wine;enemy.wine=0;
           if(enemy.resilience>0){if(!p.resilience)p.resilienceSince=p.turns;p.resilience+=enemy.resilience;enemy.resilience=0;p.skip=0;p.skippedTurns=0;}
@@ -274,7 +278,7 @@ export function applyCommand(state, command) {
 
 export function propCommands(s) {
   const p=s.players[s.active], commands=[];
-  if(s.winner!==null || s.phase!=="action" || p.weapon || p.silenced)return commands;
+  if(!s.options.itemsEnabled || s.winner!==null || s.phase!=="action" || p.weapon || p.silenced)return commands;
   p.props.forEach((id,slot)=>{
     if(s.calculated && ["echo","mirror"].includes(id))return;
     const prop=PROPS[id];

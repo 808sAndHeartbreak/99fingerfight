@@ -39,3 +39,12 @@ test('master does not spend healing or damage items with no effect',()=>{
  const s=ready();s.calculated=s.acted=true;s.players[0].props=['grace','ruin'];
  assert.equal(chooseCommand(s,'master').type,'end');
 });
+for(const itemsEnabled of [true,false])for(const level of ['easy','advanced','master'])test(`${level} lowers scissors preparation except for lethal, items=${itemsEnabled}`,()=>{
+ const s=createGame(1,{itemsEnabled,turnSeconds:30});s.phase='action';s.players.forEach(p=>p.props=[]);
+ s.players[0].hands=[1,2];s.players[1].hands=[1,3];
+ const c=chooseCommand(s,level),next=run(s,c);
+ assert.notDeepEqual(next.players[0].hands,[2,2]);
+ s.players[1].hp=5;let lethal=s;
+ for(let i=0;i<3&&lethal.winner===null;i++)lethal=finishAttack(lethal,chooseCommand(lethal,level));
+ assert.equal(lethal.winner,0);
+});
