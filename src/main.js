@@ -640,6 +640,22 @@ function closeDialog() {
   scheduleAI();
 }
 let menuEntrance=0,menuLoaded=false,settingsReturn=null,nameEditorReturn=false;
+let fullscreenHintDismissed=false;
+function dismissFullscreenHint() {
+  fullscreenHintDismissed=true;
+  document.querySelector('.fullscreen-hint')?.remove();
+}
+function showFullscreenHint(root) {
+  if(fullscreenHintDismissed || document.fullscreenElement)return;
+  const hint=document.createElement('p');
+  hint.className='fullscreen-hint';hint.setAttribute('role','status');
+  hint.innerHTML='按 <kbd>F11</kbd> 全屏，以获得最佳体验';
+  root.append(hint);
+  setTimeout(()=>{
+    if(!hint.isConnected)return;
+    hint.animate([{opacity:1},{opacity:0}],{duration:300,fill:'forwards'}).finished.then(()=>hint.remove()).catch(()=>hint.remove());
+  },5000);
+}
 async function showMenu(page = "home") {
   if(mode === "online" || online?.packet?.room || online?.packet?.queued) {showOnline();return;}
   if(typeof page !== "string")page="home";
@@ -647,7 +663,7 @@ async function showMenu(page = "home") {
   dialog.dataset.view="menu";dialog.dataset.page=page;
   const firstEntrance=!menuLoaded,entrance=++menuEntrance,root=dialog.querySelector('.menu-body'),buttons=[...dialog.querySelectorAll('.menu-body button')];
   buttons.forEach(b=>b.disabled=true);root.classList.add('menu-entering');
-  const loader=document.createElement('div');loader.className='menu-loader';loader.setAttribute('role','status');loader.innerHTML='<div class="loader-emblem" aria-hidden="true"><b>99</b></div><span>LOADING</span><p>按 <kbd>F11</kbd> 以获得更好体验</p>';if(firstEntrance)dialog.append(loader);
+  const loader=document.createElement('div');loader.className='menu-loader';loader.setAttribute('role','status');loader.innerHTML='<div class="loader-emblem" aria-hidden="true"><b>99</b></div><span>LOADING</span>';if(firstEntrance)dialog.append(loader);
   await Promise.all([dialog.querySelector('.menu-keyart img').decode().catch(()=>{}),new Promise(resolve=>setTimeout(resolve,firstEntrance?650:0))]);
   if(entrance!==menuEntrance||!root.isConnected)return;
   loader.remove();menuLoaded=true;if(firstEntrance)await new Promise(resolve=>setTimeout(resolve,500));
@@ -656,6 +672,7 @@ async function showMenu(page = "home") {
   await Promise.all(buttons.map((b,i)=>b.animate(quiet?[{opacity:0},{opacity:1}]:[{opacity:0,transform:'translateY(18px) scale(1.12)'},{opacity:1,transform:'translateY(-2px) scale(.99)',offset:.75},{opacity:1,transform:'none'}],{duration:firstEntrance?300:160,delay:i*(firstEntrance?200:50),fill:'both',easing:'cubic-bezier(.2,.8,.2,1)'}).finished.catch(()=>{})));
   if(entrance!==menuEntrance||!root.isConnected)return;
   root.classList.remove('menu-entering');buttons.forEach(b=>b.disabled=false);dialog.setAttribute('tabindex','-1');dialog.focus({preventScroll:true});
+  if(firstEntrance)showFullscreenHint(root);
 }
 function dismissDialog() {
   if(dialog.dataset.view==='result')return;
@@ -981,6 +998,7 @@ listen(dialog, "click", (e) => {
 });
 listen(dialog, "cancel", (e) => { e.preventDefault(); dismissDialog(); });
 listen(document, "keydown", (e) => {
+  if(e.key === "F11")dismissFullscreenHint();
   if(e.defaultPrevented)return;
   if(e.key === "Escape" && dialog.open){
     e.preventDefault();
