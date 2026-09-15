@@ -3,7 +3,7 @@ import {matchingWeapons} from './catalog.js';
 
 // All forecasts use independent hypothetical draws. No live RNG is consulted.
 const WIN=100000;
-const itemValues={add:9,sub:10,double:9,civil:9,echo:23,mirror:9,lock:6,silence:8,wine:8,balance:4,greed:7,grace:5,ruin:9};
+const itemValues={add:9,sub:10,double:9,civil:9,echo:23,mirror:9,lock:6,silence:8,wine:8,greed:7,grace:5,ruin:9};
 function attackValue(damage,enemy,trueDamage=false,hits=1) {
   if(enemy.peace)return 0;
   if(!trueDamage && enemy.hands.every(n=>n===5))return 0;

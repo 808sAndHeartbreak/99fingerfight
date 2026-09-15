@@ -10,7 +10,7 @@
 
 ## 消息
 
-同源 /ws，HTTPS 使用 WSS。hello 携带 protocolVersion:2、rulesVersion:15、displayName 和可选 token；welcome 返回 token。snapshot 包含 profile、queued、serverNow 和 room。room 包含 code、matchId、seat、participants、ready、rematch、status、state、readyAt、deadlineAt。
+同源 /ws，HTTPS 使用 WSS。hello 携带 protocolVersion:2、rulesVersion:16、displayName 和可选 token；welcome 返回 token。snapshot 包含 profile、queued、serverNow 和 room。room 包含 code、matchId、seat、participants、ready、rematch、status、state、readyAt、deadlineAt。
 
 请求格式：{type:'request', id:唯一请求ID, op:操作, ...参数}。操作包括 name、create、join、queue、cancel、leave、ready、rematch、sync、command。command 请求另带 matchId 和 command；command 含 type、revision、操作参数。服务器覆盖 actor，不接受客户端血量或数字结果。返回 ack/error 与权威快照。
 

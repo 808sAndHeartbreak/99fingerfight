@@ -1,7 +1,7 @@
 import {effectDetail,defenseDetail} from "./effect-copy.js";
 import { PROPS, PROP_WEIGHT_TOTAL, propForTicket, MAX_HP, handPropNumber, weaponById, matchingWeapons } from "./catalog.js";
 
-export const RULES_VERSION = 15;
+export const RULES_VERSION = 16;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -208,11 +208,7 @@ export function applyCommand(state, command) {
       else if(id==="mirror")p.mirror=true;
       else if(id==="silence")enemy.silenced=true;
       else if(id==="wine")p.wine++;
-      else if(id==="balance") {
-        const counts=s.players.map(player=>player.props.length);
-        s.players.forEach(player=>player.props=[]);
-        s.players.forEach((player,i)=>{for(let n=0;n<counts[i];n++)draw(s,player,"制衡");});
-      } else if(id==="greed"){p.hands=[1,1];draw(s,p,"强欲");draw(s,p,"强欲");log(s,`${name(s.active)}强欲生效${p.resilience?"，坚韧使本回合继续":"，立即结束回合"}。`);if(!p.resilience)endTurn(s,true);}
+      else if(id==="greed"){p.hands=[1,1];draw(s,p,"强欲");draw(s,p,"强欲");log(s,`${name(s.active)}强欲生效${p.resilience?"，坚韧使本回合继续":"，立即结束回合"}。`);if(!p.resilience)endTurn(s,true);}
       else if(id==="grace")s.players.forEach(player=>{player.hp=Math.min(MAX_HP,player.hp+player.hands[0]+player.hands[1]);});
       else if(id==="ruin")damage(s,1-s.active,Math.abs(p.hands[0]+p.hands[1]-enemy.hands[0]-enemy.hands[1]),true,"破坏");
       checkWinner(s);

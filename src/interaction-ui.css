@@ -58,8 +58,8 @@
 .game-shell :is(button,[role=button]):not(:disabled):focus-visible { outline:3px solid #ffcd61; outline-offset:3px; }
 .game-shell .reference-item:hover,.game-shell #reference-toggle:hover { background:#344361; border-color:#fff2d8; }
 .game-shell .stage::before { content:none; }
-.game-shell .stage.webgl-fallback::before { content:''; position:absolute; inset:0; width:70%; left:-10%; background:radial-gradient(ellipse,#88adff23,transparent 70%); transition:left .65s ease; pointer-events:none; }
-.game-shell .stage.webgl-fallback[data-active='1']::before { left:40%; background:radial-gradient(ellipse,#ffb2a723,transparent 70%); }
+.game-shell .stage.webgl-fallback::before { content:''; position:absolute; inset:0; width:70%; left:-10%; background:radial-gradient(ellipse,#88adff30,transparent 70%); transition:left .65s ease; pointer-events:none; }
+.game-shell .stage.webgl-fallback[data-active='1']::before { left:40%; background:radial-gradient(ellipse,#ffb2a730,transparent 70%); }
 .game-shell .stage[data-active='']::before { display:none; }
 .game-shell .supply-dots { display:flex; gap:8px; align-items:center; justify-content:center; min-height:22px; padding:4px; }
 .game-shell .supply-dots i { display:block; width:13px; height:13px; border-radius:50%; border:2px solid #aab5c9; background:#24334c; opacity:1; }

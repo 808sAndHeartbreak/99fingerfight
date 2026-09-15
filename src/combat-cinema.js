@@ -40,7 +40,7 @@ export function createCombatCinema({animate,register,generation,asset,sound,part
       if(!await wait(card,ITEM_FOCUS_MS))return false;
       const origin=center();flight.style.left=`${origin.x}px`;flight.style.top=`${origin.y}px`;flight.style.visibility='visible';icon.style.visibility='hidden';
       const destination=o=>{
-        const el=document.querySelector(command.targetHand===undefined?(['balance','greed'].includes(id)?`#items-${o}`:`#player-${o}`):`#hand-${o}-${command.targetHand}`),r=el.getBoundingClientRect();
+        const el=document.querySelector(command.targetHand===undefined?(id==='greed'?`#items-${o}`:`#player-${o}`):`#hand-${o}-${command.targetHand}`),r=el.getBoundingClientRect();
         if(command.targetHand!==undefined&&el.closest('.stage').dataset.renderer==='webgl'){
           const host=el.closest('.stage').getBoundingClientRect();return {el,x:host.x+parseFloat(el.style.left),y:host.y+parseFloat(el.style.top)};
         }

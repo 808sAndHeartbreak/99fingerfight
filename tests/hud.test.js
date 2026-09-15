@@ -5,7 +5,7 @@ import {createGame,applyCommand} from '../src/engine.js';
 import {phaseCue} from '../src/phase-cue.js';
 import {presentationDuration} from '../src/presentation.js';
 test('hover arithmetic belongs to the item owner and respects HP and inventory caps',()=>{
- const s=createGame();s.active=0;s.players[0].hands=[1,2];s.players[1].hands=[8,9];s.players[1].hp=97;s.players[1].props=['grace','balance','greed'];
+ const s=createGame();s.active=0;s.players[0].hands=[1,2];s.players[1].hands=[8,9];s.players[1].hp=97;s.players[1].props=['grace','wine','greed'];
  assert.match(describe('prop:grace:1',s).note,/自己回复 2 HP，对手回复 0 HP/);
  assert.match(describe('prop:ruin:1',s).note,/当前差值 \|17 − 3\| = 14/);
  assert.match(describe('prop:greed:1',s).note,/当前获得 1 个/);

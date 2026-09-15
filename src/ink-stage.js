@@ -52,7 +52,7 @@ export function createInkStage() {
         float activeX=mix(.26,.74,clamp(uActive,0.,1.));
         vec2 glow=(vUv-vec2(activeX,.5))*vec2(2.5,.85);
         float backing=exp(-dot(glow,glow)*3.2)*uActiveAlpha;
-        surface=mix(surface,mix(vec3(.36,.49,.72),vec3(.65,.35,.37),clamp(uActive,0.,1.)),backing*.3);
+        surface=mix(surface,mix(vec3(.36,.49,.72),vec3(.65,.35,.37),clamp(uActive,0.,1.)),backing*.4);
         float printDots=(1.-smoothstep(.08,.16,length(cell)))*smoothstep(.28,.7,r);
         surface+=printDots*.013;
         vec3 col=mix(surface,team,wash);

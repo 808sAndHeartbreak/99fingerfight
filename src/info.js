@@ -33,7 +33,7 @@ export function describe(key, state, participants) {
     const prop=PROPS[id];if(!prop)return null;
     const owner=hand===undefined?state.active:Number(hand),p=state.players[owner],e=state.players[1-owner];
     const sum=p.hands[0]+p.hands[1],enemySum=e.hands[0]+e.hands[1],ruinDamage=Math.abs(sum-enemySum);
-    const preview={wine:`当前叠加后，首段伤害 +${(p.wine+1)*10}。`,grace:`当前自己回复 ${Math.min(MAX_HP-p.hp,sum)} HP，对手回复 ${Math.min(MAX_HP-e.hp,enemySum)} HP。`,ruin:`当前差值 |${sum} − ${enemySum}| = ${ruinDamage}，实际扣血 ${e.peace>0?0:Math.min(e.hp,ruinDamage)} HP。`,greed:`当前获得 ${Math.min(2,3-p.props.length+(p.props.includes(id)?1:0))} 个道具。${p.resilience?'坚韧生效：双手仍归 [1]，本回合继续。':''}`,balance:`当前自己重抽 ${Math.max(0,p.props.length-(p.props.includes(id)?1:0))} 个，对手重抽 ${e.props.length} 个。`}[id]||'';
+    const preview={wine:`当前叠加后，首段伤害 +${(p.wine+1)*10}。`,grace:`当前自己回复 ${Math.min(MAX_HP-p.hp,sum)} HP，对手回复 ${Math.min(MAX_HP-e.hp,enemySum)} HP。`,ruin:`当前差值 |${sum} − ${enemySum}| = ${ruinDamage}，实际扣血 ${e.peace>0?0:Math.min(e.hp,ruinDamage)} HP。`,greed:`当前获得 ${Math.min(2,3-p.props.length+(p.props.includes(id)?1:0))} 个道具。${p.resilience?'坚韧生效：双手仍归 [1]，本回合继续。':''}`}[id]||'';
     const rules=prop.rules||({
       add:"可以对任意玩家使用。只保留个位，[9] 变成 [0]。",
       sub:"可以对任意玩家使用。[0] 变成 [9]。",
@@ -41,7 +41,6 @@ export function describe(key, state, participants) {
       echo:"本回合下一次计算复制同一个结果；另一只手被封印也会接收复制值。与镜像同时存在时，结果写入对手双手，己方不变。未计算则回合结束失效；重复使用不叠加。",
       mirror:"与回响同时存在时，以最初所选两手加和求值，再把同一个结果写入对手双手；己方不变。回合结束失效，重复使用不叠加。",
       silence:"持续到对手下一回合结束；禁止主动使用道具，不影响补给和技能补牌。",
-      balance:"先消耗制衡，再按双方各自剩余道具数量重抽。允许抽到同名道具。",
       greed:"先消耗强欲，将自己双手均设为 [1]，再获得 2 个道具，最多持有 3 个。强制结束不触发空过惩罚；坚韧期间不结束回合，但只用道具仍不算计算或合成。",
       grace:"使用时分别计算双方各自双手的数字之和，各自回复对应生命值，最多为 99。满血或数字总和为 0 仍会消耗道具。",
       ruin:"先分别求双方双手数字之和，再取两个总和之差的绝对值，对对手造成对应真实伤害。差值为 0 不造成伤害；无视且不消耗护盾，仍受和平影响。"

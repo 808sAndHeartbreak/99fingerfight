@@ -41,7 +41,7 @@ test('greed resets hands with or without resilience; forced end alone exempts pe
 });
 
 test('removed boon and old saves are rejected; catalog descriptions separate rules',()=>{
- assert.equal(PROPS.boon,undefined);assert.equal(PROP_IDS.length,13);
+ assert.equal(PROPS.boon,undefined);assert.equal(PROPS.balance,undefined);assert.equal(PROP_IDS.length,12);
  const save=new LocalSession().exportSave();assert.throws(()=>LocalSession.restore({...save,rulesVersion:14}),/不兼容/);
  assert.equal(describe('prop:boon:0',fixture('wine')),null);
  const s=fixture('wine');assert.equal(describe('prop:wine:0',s).body,'下一次攻击伤害 +10');

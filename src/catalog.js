@@ -31,7 +31,6 @@ export const PROPS = Object.freeze({
   echo: { name:"回响", detail:"本回合下一次计算，结果同时写入自己的两只手", target:"self", image:"ink-mono/echo.webp" },
   mirror: { name:"镜像", detail:"本回合下一次计算只改变对手目标手，自己的手不变", target:"self", image:"ink-mono/mirror.webp" },
   silence: { name:"沉默", detail:"对手下回合无法主动使用道具", target:"enemy", image:"ink-mono/silence.webp" },
-  balance: { name:"制衡", detail:"双方重抽剩余道具，数量不变", target:"all", image:"ink-mono/balance.webp" },
   greed: { name:"强欲", detail:"获得 2 个道具，自己双手归 [1]，立即结束回合", target:"self", image:"ink-mono/greed.webp" },
   grace: { name:"恩惠", detail:"双方都回复各自双手数字总和的生命值", target:"all", image:"ink-mono/grace.webp" },
   ruin: { name:"破坏", detail:"对手受到双方双手数字总和之差的真实伤害", target:"enemy", image:"ink-mono/ruin.webp" },
