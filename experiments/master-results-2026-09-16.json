@@ -1,0 +1,922 @@
+{
+  "baseline": "5365951",
+  "rulesVersion": 17,
+  "results": {
+    "pilot": {
+      "mode": "items",
+      "games": [
+        {
+          "seed": 101,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 67,
+          "turn": 17
+        },
+        {
+          "seed": 101,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 81,
+          "turn": 25
+        },
+        {
+          "seed": 102,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 148,
+          "turn": 43
+        },
+        {
+          "seed": 102,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 120,
+          "turn": 37
+        },
+        {
+          "seed": 103,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 278,
+          "turn": 79
+        },
+        {
+          "seed": 103,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 86,
+          "turn": 25
+        },
+        {
+          "seed": 104,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 188,
+          "turn": 55
+        },
+        {
+          "seed": 104,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 152,
+          "turn": 43
+        }
+      ],
+      "wins": 5,
+      "losses": 3,
+      "draws": 0,
+      "times": {
+        "candidate": {
+          "count": 566,
+          "mean": 124.0160469964664,
+          "p95": 488.2926000000007,
+          "max": 764.6389999999992,
+          "over2500": 0
+        },
+        "baseline": {
+          "count": 554,
+          "mean": 38.1395572202164,
+          "p95": 150.4114999999947,
+          "max": 269.1695999999938,
+          "over2500": 0
+        }
+      }
+    },
+    "holdout-a": {
+      "mode": "items",
+      "games": [
+        {
+          "seed": 2001,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 156,
+          "turn": 44
+        },
+        {
+          "seed": 2001,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 105,
+          "turn": 32
+        },
+        {
+          "seed": 2002,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 152,
+          "turn": 46
+        },
+        {
+          "seed": 2002,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 90,
+          "turn": 25
+        },
+        {
+          "seed": 2003,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 71,
+          "turn": 21
+        },
+        {
+          "seed": 2003,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 114,
+          "turn": 33
+        },
+        {
+          "seed": 2004,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 189,
+          "turn": 56
+        },
+        {
+          "seed": 2004,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 201,
+          "turn": 61
+        },
+        {
+          "seed": 2005,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 180,
+          "turn": 51
+        },
+        {
+          "seed": 2005,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 219,
+          "turn": 64
+        },
+        {
+          "seed": 2006,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 126,
+          "turn": 38
+        },
+        {
+          "seed": 2006,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 189,
+          "turn": 56
+        },
+        {
+          "seed": 2007,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 147,
+          "turn": 44
+        },
+        {
+          "seed": 2007,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 143,
+          "turn": 41
+        },
+        {
+          "seed": 2008,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 136,
+          "turn": 37
+        },
+        {
+          "seed": 2008,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 104,
+          "turn": 31
+        }
+      ],
+      "wins": 8,
+      "losses": 8,
+      "draws": 0,
+      "times": {
+        "candidate": {
+          "count": 1168,
+          "mean": 101.16098150684941,
+          "p95": 453.5935000000027,
+          "max": 1288.8264999999956,
+          "over2500": 0
+        },
+        "baseline": {
+          "count": 1154,
+          "mean": 32.68141585788571,
+          "p95": 133.03759999999602,
+          "max": 325.0340000000142,
+          "over2500": 0
+        }
+      }
+    },
+    "holdout-b": {
+      "mode": "items",
+      "games": [
+        {
+          "seed": 9001,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 113,
+          "turn": 32
+        },
+        {
+          "seed": 9001,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 99,
+          "turn": 27
+        },
+        {
+          "seed": 9002,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 234,
+          "turn": 69
+        },
+        {
+          "seed": 9002,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 265,
+          "turn": 78
+        },
+        {
+          "seed": 9003,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 43,
+          "turn": 13
+        },
+        {
+          "seed": 9003,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 126,
+          "turn": 37
+        },
+        {
+          "seed": 9004,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 193,
+          "turn": 57
+        },
+        {
+          "seed": 9004,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 111,
+          "turn": 32
+        },
+        {
+          "seed": 9005,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 321,
+          "turn": 97
+        },
+        {
+          "seed": 9005,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 115,
+          "turn": 34
+        },
+        {
+          "seed": 9006,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 326,
+          "turn": 97
+        },
+        {
+          "seed": 9006,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 90,
+          "turn": 26
+        },
+        {
+          "seed": 9007,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 132,
+          "turn": 37
+        },
+        {
+          "seed": 9007,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 132,
+          "turn": 37
+        },
+        {
+          "seed": 9008,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 236,
+          "turn": 67
+        },
+        {
+          "seed": 9008,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 85,
+          "turn": 25
+        }
+      ],
+      "wins": 11,
+      "losses": 5,
+      "draws": 0,
+      "times": {
+        "candidate": {
+          "count": 1324,
+          "mean": 118.02154146525645,
+          "p95": 504.1872000000003,
+          "max": 1198.2953999999881,
+          "over2500": 0
+        },
+        "baseline": {
+          "count": 1297,
+          "mean": 33.056559290670805,
+          "p95": 143.03599999999278,
+          "max": 482.31630000000587,
+          "over2500": 0
+        }
+      }
+    },
+    "pilot-b": {
+      "baselineRevision": "5365951",
+      "mode": "items",
+      "games": [
+        {
+          "seed": 301,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 166,
+          "turn": 49
+        },
+        {
+          "seed": 301,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 166,
+          "turn": 49
+        },
+        {
+          "seed": 302,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 105,
+          "turn": 32
+        },
+        {
+          "seed": 302,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 171,
+          "turn": 50
+        },
+        {
+          "seed": 303,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 155,
+          "turn": 43
+        },
+        {
+          "seed": 303,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 172,
+          "turn": 49
+        },
+        {
+          "seed": 304,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 128,
+          "turn": 37
+        },
+        {
+          "seed": 304,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 128,
+          "turn": 37
+        }
+      ],
+      "wins": 4,
+      "losses": 4,
+      "draws": 0,
+      "times": {
+        "candidate": {
+          "count": 594,
+          "mean": 32.96223720538718,
+          "p95": 129.58759999999984,
+          "max": 256.05870000000004,
+          "over2500": 0
+        },
+        "baseline": {
+          "count": 597,
+          "mean": 33.14125309882748,
+          "p95": 122.99059999999918,
+          "max": 267.76970000000006,
+          "over2500": 0
+        }
+      }
+    },
+    "holdout-b-score": {
+      "baselineRevision": "5365951",
+      "mode": "items",
+      "games": [
+        {
+          "seed": 17001,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 231,
+          "turn": 65
+        },
+        {
+          "seed": 17001,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 175,
+          "turn": 49
+        },
+        {
+          "seed": 17002,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 131,
+          "turn": 39
+        },
+        {
+          "seed": 17002,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 210,
+          "turn": 61
+        },
+        {
+          "seed": 17003,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 122,
+          "turn": 37
+        },
+        {
+          "seed": 17003,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 128,
+          "turn": 38
+        },
+        {
+          "seed": 17004,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 147,
+          "turn": 44
+        },
+        {
+          "seed": 17004,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 147,
+          "turn": 44
+        },
+        {
+          "seed": 17005,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 142,
+          "turn": 43
+        },
+        {
+          "seed": 17005,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 155,
+          "turn": 46
+        },
+        {
+          "seed": 17006,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 66,
+          "turn": 20
+        },
+        {
+          "seed": 17006,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 66,
+          "turn": 20
+        },
+        {
+          "seed": 17007,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 137,
+          "turn": 37
+        },
+        {
+          "seed": 17007,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 137,
+          "turn": 37
+        },
+        {
+          "seed": 17008,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 107,
+          "turn": 30
+        },
+        {
+          "seed": 17008,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 107,
+          "turn": 30
+        }
+      ],
+      "wins": 10,
+      "losses": 6,
+      "draws": 0,
+      "times": {
+        "candidate": {
+          "count": 1118,
+          "mean": 28.690499552772813,
+          "p95": 120.8176999999996,
+          "max": 280.77160000000003,
+          "over2500": 0
+        },
+        "baseline": {
+          "count": 1090,
+          "mean": 28.679514220183556,
+          "p95": 119.6588999999949,
+          "max": 277.22799999999916,
+          "over2500": 0
+        }
+      }
+    },
+    "holdout-b-confirm": {
+      "baselineRevision": "5365951",
+      "variant": "score",
+      "mode": "items",
+      "games": [
+        {
+          "seed": 27001,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 107,
+          "turn": 32
+        },
+        {
+          "seed": 27001,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 107,
+          "turn": 32
+        },
+        {
+          "seed": 27002,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 260,
+          "turn": 74
+        },
+        {
+          "seed": 27002,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 260,
+          "turn": 74
+        },
+        {
+          "seed": 27003,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 167,
+          "turn": 49
+        },
+        {
+          "seed": 27003,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 189,
+          "turn": 54
+        },
+        {
+          "seed": 27004,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 130,
+          "turn": 37
+        },
+        {
+          "seed": 27004,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 130,
+          "turn": 37
+        },
+        {
+          "seed": 27005,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 182,
+          "turn": 49
+        },
+        {
+          "seed": 27005,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 109,
+          "turn": 31
+        },
+        {
+          "seed": 27006,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 55,
+          "turn": 16
+        },
+        {
+          "seed": 27006,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 55,
+          "turn": 16
+        },
+        {
+          "seed": 27007,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 136,
+          "turn": 38
+        },
+        {
+          "seed": 27007,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 136,
+          "turn": 38
+        },
+        {
+          "seed": 27008,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 212,
+          "turn": 61
+        },
+        {
+          "seed": 27008,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 212,
+          "turn": 61
+        },
+        {
+          "seed": 27009,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 193,
+          "turn": 58
+        },
+        {
+          "seed": 27009,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 56,
+          "turn": 17
+        },
+        {
+          "seed": 27010,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 207,
+          "turn": 61
+        },
+        {
+          "seed": 27010,
+          "seat": 1,
+          "winner": 1,
+          "win": true,
+          "steps": 187,
+          "turn": 56
+        },
+        {
+          "seed": 27011,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 155,
+          "turn": 42
+        },
+        {
+          "seed": 27011,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 130,
+          "turn": 37
+        },
+        {
+          "seed": 27012,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 88,
+          "turn": 25
+        },
+        {
+          "seed": 27012,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 120,
+          "turn": 33
+        },
+        {
+          "seed": 27013,
+          "seat": 0,
+          "winner": 1,
+          "win": false,
+          "steps": 179,
+          "turn": 50
+        },
+        {
+          "seed": 27013,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 247,
+          "turn": 73
+        },
+        {
+          "seed": 27014,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 137,
+          "turn": 37
+        },
+        {
+          "seed": 27014,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 137,
+          "turn": 37
+        },
+        {
+          "seed": 27015,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 97,
+          "turn": 27
+        },
+        {
+          "seed": 27015,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 97,
+          "turn": 27
+        },
+        {
+          "seed": 27016,
+          "seat": 0,
+          "winner": 0,
+          "win": true,
+          "steps": 100,
+          "turn": 31
+        },
+        {
+          "seed": 27016,
+          "seat": 1,
+          "winner": 0,
+          "win": false,
+          "steps": 104,
+          "turn": 31
+        }
+      ],
+      "wins": 15,
+      "losses": 17,
+      "draws": 0,
+      "times": {
+        "candidate": {
+          "count": 2325,
+          "mean": 33.9976830537634,
+          "p95": 141.82760000000417,
+          "max": 362.7578999999969,
+          "over2500": 0
+        },
+        "baseline": {
+          "count": 2356,
+          "mean": 33.5088577249575,
+          "p95": 142.15630000000237,
+          "max": 378.04559999999765,
+          "over2500": 0
+        }
+      }
+    }
+  }
+}

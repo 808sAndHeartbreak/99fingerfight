@@ -55,7 +55,7 @@ test('save and replay retain both options and selected difficulty',async()=>{
  assert.equal(turnSeconds(restored.getSnapshot()),60);assert.equal(restored.getSnapshot().options.itemsEnabled,false);
  assert.throws(()=>LocalSession.restore({...saved,rulesVersion:16}),/不兼容/);
 });
-for(const level of ['easy','advanced','master'])test(`no-item ${level} recognises compensated dual lethal without changing input`,()=>{
+for(const level of ['easy','advanced','expert','master'])test(`no-item ${level} recognises compensated dual lethal without changing input`,()=>{
  const s=ready();s.players[0].hands=[8,8];s.players[1].hp=35;const before=structuredClone(s);
  const c=chooseCommand(s,level);assert.equal(c.type,'forge');assert.equal(c.weapon,'dual');assert.deepEqual(s,before);
  assert.deepEqual(c,chooseCommand({...s,rng:999},level));

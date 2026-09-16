@@ -32,7 +32,7 @@ test('master sees lethal wine into sniper and does not depend on the secret rand
  const n=run(s,command);assert.equal(chooseCommand(n,'master').weapon,'sniper');
 });
 test('all difficulties return legal commands without changing the source state',()=>{
- for(const difficulty of ['easy','advanced','master']){
+ for(const difficulty of ['easy','advanced','expert','master']){
   const s=ready(),copy=structuredClone(s),c=chooseCommand(s,difficulty);assert.deepEqual(s,copy);assert.ok(legalCommands(s).some(x=>JSON.stringify(x)===JSON.stringify(c)));
  }
 });

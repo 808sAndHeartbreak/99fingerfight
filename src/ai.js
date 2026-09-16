@@ -31,7 +31,7 @@ function score(s, actor) {
   );
 }
 
-export const AI_LEVELS = Object.freeze({easy:'简单',advanced:'进阶',master:'大师'});
+export const AI_LEVELS = Object.freeze({easy:'简单',advanced:'进阶',expert:'高手',master:'大师'});
 const key = c => JSON.stringify([c.type,c.slot,c.target,c.targetHand,c.hand,c.weapon]);
 // Simulation uses hypothetical random streams, never the live deck/RNG.
 function simulate(s,c) {
@@ -57,18 +57,18 @@ function responseValue(s,actor) {
  }
  return score(next,actor);
 }
-function searchTurn(first,actor) {
+function searchTurn(first,actor,depthLimit=4,branchWidth=5,beamWidth=4) {
  let frontier=[first],finished=[];
- for(let depth=0;depth<4;depth++) {
+ for(let depth=0;depth<depthLimit;depth++) {
   const expanded=[];
   for(const node of frontier) {
    if(node.next.winner!==null||node.next.active!==actor){finished.push(node);continue;}
-   for(const n of ranked(node.next,actor).slice(0,5))expanded.push({...n,cost:node.cost+n.cost,value:n.value-node.cost});
+   for(const n of ranked(node.next,actor).slice(0,branchWidth))expanded.push({...n,cost:node.cost+n.cost,value:n.value-node.cost});
   }
   if(!expanded.length){frontier=[];break;}
   const seen=new Set();frontier=expanded.sort((a,b)=>b.value-a.value).filter(n=>{
    const k=JSON.stringify([n.next.active,n.next.calculated,n.next.acted,n.next.players]);if(seen.has(k))return false;seen.add(k);return true;
-  }).slice(0,4);
+  }).slice(0,beamWidth);
  }
  for(const node of frontier) {
   let next=node.next;
@@ -86,16 +86,16 @@ export function chooseCommand(state,difficulty='advanced') {
  if(difficulty==='master')return chooseMasterCommand(s);
  const options=ranked(s,actor);
  if(difficulty==='easy') {
-  // A short tactical continuation understands item -> combination and lethal skills.
-  return options.map(n=>({c:n.c,value:n.next.winner!==null?score(n.next,actor):n.next.active===actor?Math.max(n.value,...ranked(n.next,actor).map(r=>r.value-n.cost)) : n.value}))
-   .sort((a,b)=>b.value-a.value)[0]?.c;
+  // Basic competence is shared: take visible wins, but do not plan a full turn.
+  const win=options.find(n=>n.next.winner===actor || n.next.winner===null&&n.next.active===actor&&ranked(n.next,actor).some(r=>r.next.winner===actor));
+  return (win||options[0])?.c;
  }
- const roots=options.slice(0,8), totals=new Map(roots.map(n=>[key(n.c),0]));
- for(let sample=0;sample<2;sample++) {
+ const roots=options.slice(0,difficulty==='advanced'?6:8), totals=new Map(roots.map(n=>[key(n.c),0]));
+ for(let sample=0;sample<(difficulty==='advanced'?1:2);sample++) {
   const scenario=structuredClone(s);scenario.rng=(0x9e3779b9+Math.imul(s.revision+1,2246822519)+sample*1013904223)>>>0;
   for(const root of roots) {
    const next=simulate(scenario,root.c);
-   totals.set(key(root.c),totals.get(key(root.c))+searchTurn({c:root.c,next,cost:root.cost,value:score(next,actor)-root.cost},actor));
+   totals.set(key(root.c),totals.get(key(root.c))+searchTurn({c:root.c,next,cost:root.cost,value:score(next,actor)-root.cost},actor,...(difficulty==='advanced'?[2,4,3]:[])));
   }
  }
  roots.sort((a,b)=>totals.get(key(b.c))-totals.get(key(a.c))||b.value-a.value);

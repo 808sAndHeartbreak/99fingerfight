@@ -54,7 +54,7 @@ test('item impacts happen within one second while readable receipts outlast the 
  assert.ok(ITEM_NOTICE_MS<=1000);assert.equal(actionDuration(s,n,c),1700);assert.ok(ITEM_READ_MS>=6000);
 });
 
-for(const level of ['advanced','master'])test(`${level} sees lethal difference damage and avoids a harmful grace`,()=>{
+for(const level of ['advanced','expert','master'])test(`${level} sees lethal difference damage and avoids a harmful grace`,()=>{
  const lethal=fixture('ruin');lethal.players[0].hands=[9,8];Object.assign(lethal.players[1],{hands:[1,2],hp:10});
  const c=chooseCommand(lethal,level);assert.equal(c.type,'prop');assert.equal(run(lethal,c).winner,0);
  const bad=fixture('grace');bad.calculated=true;bad.acted=true;bad.players[1].hands=[9,8];bad.players[1].hp=10;

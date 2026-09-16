@@ -1,5 +1,6 @@
-import {applyCommand, legalCommands} from './engine.js';
-import {matchingWeapons} from './catalog.js';
+// Offline experiment only. See experiments/README.md; not imported by the game.
+import {applyCommand, legalCommands} from '../src/engine.js';
+import {matchingWeapons} from '../src/catalog.js';
 
 // All forecasts use independent hypothetical draws. No live RNG is consulted.
 const WIN=100000;
@@ -61,7 +62,7 @@ function step(s,c,budget) {
   return n;
 }
 function stateKey(s) {return JSON.stringify([s.active,s.turn,s.calculated,s.acted,s.rng,s.players]);}
-function turnPlans(s,actor,budget,width=18,depth=7) {
+function turnPlans(s,actor,budget,width=24,depth=8) {
   let frontier=[{s,first:null,value:evaluate(s,actor),cost:0}],finished=[];
   const seen=new Set();
   for(let d=0;d<depth&&frontier.length&&budget.left>0;d++) {
@@ -99,11 +100,11 @@ export function chooseMasterCommand(state) {
   const actor=state.active,legal=legalCommands(state);
   if(legal.length<2)return legal[0];
   const candidates=new Map();
-  // Two independent draw scenarios; value the opponent's best complete turn.
-  for(let sample=0;sample<2;sample++) {
+  // Three independent draw scenarios; inspect multiple opposing continuations.
+  for(let sample=0;sample<3;sample++) {
     const s=structuredClone(state);s.log=[];s.events=[];
     s.rng=(0x9e3779b9+Math.imul(s.revision+1,2246822519)+sample*1013904223)>>>0;
-    const budget={left:16000};
+    const budget={left:32000};
     const plans=turnPlans(s,actor,budget);
     const selected=[];
     // Keep alternatives for each opening move, so one attractive combo cannot
@@ -120,16 +121,19 @@ export function chooseMasterCommand(state) {
       let value=plan.value;
       if(plan.s.winner===null && budget.left>0) {
         const responder=plan.s.active;
-        const replyBudget={left:Math.min(700,budget.left)};
-        const replies=turnPlans(plan.s,responder,replyBudget,8,6);
-        budget.left-=Math.min(700,budget.left)-replyBudget.left;
+        const replyLimit=Math.min(1500,budget.left),replyBudget={left:replyLimit};
+        const replies=turnPlans(plan.s,responder,replyBudget,12,7);
+        budget.left-=replyLimit-replyBudget.left;
         if(replies.length) {
-          const reply=replies[0];value=evaluate(reply.s,actor)-plan.cost;
-          // Look past the reply to recover a prepared winning combination.
-          if(reply.s.winner===null&&reply.s.active===actor) {
-            const follow=turnPlans(reply.s,actor,{left:250},5,4);
-            if(follow[0])value=(value+plan.cost)*.35+evaluate(follow[0].s,actor)*.65-plan.cost;
-          }
+          const outcomes=replies.slice(0,3).map(reply=>{
+            let outcome=evaluate(reply.s,actor);
+            if(reply.s.winner===null&&reply.s.active===actor) {
+              const follow=turnPlans(reply.s,actor,{left:400},7,5);
+              if(follow[0])outcome=outcome*.35+evaluate(follow[0].s,actor)*.65;
+            }
+            return outcome;
+          });
+          value=(responder===actor?Math.max(...outcomes):Math.min(...outcomes))-plan.cost;
         }
       }
       const key=JSON.stringify(plan.first);
@@ -149,7 +153,7 @@ export function chooseMasterCommand(state) {
 export function chooseNoItemCommand(state,difficulty) {
   const actor=state.active,s=structuredClone(state);
   s.rng=(0x9e3779b9+Math.imul(s.revision+1,2246822519))>>>0;s.log=[];s.events=[];
-  const depth={easy:1,advanced:2,expert:3,master:4}[difficulty]||2;
+  const depth={easy:1,advanced:2,master:4}[difficulty]||2;
   const roots=turnPlans(s,actor,{left:3500},depth===1?6:18,6).slice(0,12);
   if(!roots.length)return legalCommands(state)[0];
   function search(node,remaining,budget,alpha=-WIN,beta=WIN) {

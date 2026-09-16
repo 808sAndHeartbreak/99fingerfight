@@ -13,7 +13,7 @@ export class LocalSession {
   constructor(seed = 1, { participants = [], difficulty = "advanced", options = {} } = {}) {
     this.#participants = normalizeParticipants(participants);
     this.seed = seed;
-    this.difficulty=["easy","advanced","master"].includes(difficulty)?difficulty:"advanced";
+    this.difficulty=["easy","advanced","expert","master"].includes(difficulty)?difficulty:"advanced";
     this.#state = createGame(seed,options);
   }
   static restore(replay) {

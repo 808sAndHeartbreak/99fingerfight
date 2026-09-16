@@ -9,7 +9,7 @@ function ready() {
 const run=(s,c)=>applyCommand(s,{...c,actor:s.active,revision:s.revision});
 function finishAttack(s,c) {let n=run(s,c);if(n.winner===null&&n.players[n.active].weapon)n=run(n,{type:'attack'});return n;}
 
-for(const level of ['easy','advanced','master'])test(`${level} uses an available lethal skill instead of wasting a ready pair`,()=>{
+for(const level of ['easy','advanced','expert','master'])test(`${level} uses an available lethal skill instead of wasting a ready pair`,()=>{
  const s=ready();s.players[0].hands=[2,2];s.players[1].hp=5;
  const c=chooseCommand(s,level);assert.equal(c.type,'forge');assert.equal(finishAttack(s,c).winner,0);
 });
@@ -39,7 +39,7 @@ test('master does not spend healing or damage items with no effect',()=>{
  const s=ready();s.calculated=s.acted=true;s.players[0].props=['grace','ruin'];
  assert.equal(chooseCommand(s,'master').type,'end');
 });
-for(const itemsEnabled of [true,false])for(const level of ['easy','advanced','master'])test(`${level} lowers scissors preparation except for lethal, items=${itemsEnabled}`,()=>{
+for(const itemsEnabled of [true,false])for(const level of ['easy','advanced','expert','master'])test(`${level} lowers scissors preparation except for lethal, items=${itemsEnabled}`,()=>{
  const s=createGame(1,{itemsEnabled,turnSeconds:30});s.phase='action';s.players.forEach(p=>p.props=[]);
  s.players[0].hands=[1,2];s.players[1].hands=[1,3];
  const c=chooseCommand(s,level),next=run(s,c);

@@ -1,0 +1,740 @@
+{
+  "easy-advanced-items": {
+    "lower": "easy",
+    "higher": "advanced",
+    "mode": "items",
+    "games": [
+      {
+        "seed": 801,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 93
+      },
+      {
+        "seed": 801,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 162
+      },
+      {
+        "seed": 802,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 116
+      },
+      {
+        "seed": 802,
+        "seat": 1,
+        "winner": 0,
+        "win": false,
+        "steps": 263
+      },
+      {
+        "seed": 803,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 86
+      },
+      {
+        "seed": 803,
+        "seat": 1,
+        "winner": 0,
+        "win": false,
+        "steps": 133
+      },
+      {
+        "seed": 804,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 83
+      },
+      {
+        "seed": 804,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 184
+      },
+      {
+        "seed": 805,
+        "seat": 0,
+        "winner": 1,
+        "win": false,
+        "steps": 97
+      },
+      {
+        "seed": 805,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 141
+      },
+      {
+        "seed": 806,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 78
+      },
+      {
+        "seed": 806,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 76
+      },
+      {
+        "seed": 807,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 68
+      },
+      {
+        "seed": 807,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 115
+      },
+      {
+        "seed": 808,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 218
+      },
+      {
+        "seed": 808,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 118
+      },
+      {
+        "seed": 809,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 155
+      },
+      {
+        "seed": 809,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 127
+      },
+      {
+        "seed": 810,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 104
+      },
+      {
+        "seed": 810,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 92
+      },
+      {
+        "seed": 811,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 69
+      },
+      {
+        "seed": 811,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 65
+      },
+      {
+        "seed": 812,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 161
+      },
+      {
+        "seed": 812,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 164
+      }
+    ],
+    "wins": 21,
+    "losses": 3,
+    "unresolved": 0,
+    "maxMs": 24.18470000000002
+  },
+  "advanced-expert-items": {
+    "lower": "advanced",
+    "higher": "expert",
+    "mode": "items",
+    "games": [
+      {
+        "seed": 801,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 132
+      },
+      {
+        "seed": 801,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 177
+      },
+      {
+        "seed": 802,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 112
+      },
+      {
+        "seed": 802,
+        "seat": 1,
+        "winner": 0,
+        "win": false,
+        "steps": 152
+      },
+      {
+        "seed": 803,
+        "seat": 0,
+        "winner": 1,
+        "win": false,
+        "steps": 55
+      },
+      {
+        "seed": 803,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 291
+      },
+      {
+        "seed": 804,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 150
+      },
+      {
+        "seed": 804,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 217
+      },
+      {
+        "seed": 805,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 170
+      },
+      {
+        "seed": 805,
+        "seat": 1,
+        "winner": 0,
+        "win": false,
+        "steps": 273
+      },
+      {
+        "seed": 806,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 169
+      },
+      {
+        "seed": 806,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 269
+      },
+      {
+        "seed": 807,
+        "seat": 0,
+        "winner": 1,
+        "win": false,
+        "steps": 140
+      },
+      {
+        "seed": 807,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 119
+      },
+      {
+        "seed": 808,
+        "seat": 0,
+        "winner": 1,
+        "win": false,
+        "steps": 204
+      },
+      {
+        "seed": 808,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 93
+      },
+      {
+        "seed": 809,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 93
+      },
+      {
+        "seed": 809,
+        "seat": 1,
+        "winner": 0,
+        "win": false,
+        "steps": 215
+      },
+      {
+        "seed": 810,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 200
+      },
+      {
+        "seed": 810,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 212
+      },
+      {
+        "seed": 811,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 91
+      },
+      {
+        "seed": 811,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 201
+      },
+      {
+        "seed": 812,
+        "seat": 0,
+        "winner": 1,
+        "win": false,
+        "steps": 258
+      },
+      {
+        "seed": 812,
+        "seat": 1,
+        "winner": 0,
+        "win": false,
+        "steps": 175
+      }
+    ],
+    "wins": 16,
+    "losses": 8,
+    "unresolved": 0,
+    "maxMs": 67.9326000000001
+  },
+  "expert-master-items": {
+    "lower": "expert",
+    "higher": "master",
+    "mode": "items",
+    "games": [
+      {
+        "seed": 801,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 46
+      },
+      {
+        "seed": 801,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 120
+      },
+      {
+        "seed": 802,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 55
+      },
+      {
+        "seed": 802,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 93
+      },
+      {
+        "seed": 803,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 96
+      },
+      {
+        "seed": 803,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 74
+      },
+      {
+        "seed": 804,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 110
+      },
+      {
+        "seed": 804,
+        "seat": 1,
+        "winner": 0,
+        "win": false,
+        "steps": 97
+      },
+      {
+        "seed": 805,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 73
+      },
+      {
+        "seed": 805,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 99
+      },
+      {
+        "seed": 806,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 249
+      },
+      {
+        "seed": 806,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 218
+      },
+      {
+        "seed": 807,
+        "seat": 0,
+        "winner": 1,
+        "win": false,
+        "steps": 82
+      },
+      {
+        "seed": 807,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 119
+      },
+      {
+        "seed": 808,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 75
+      },
+      {
+        "seed": 808,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 145
+      },
+      {
+        "seed": 809,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 66
+      },
+      {
+        "seed": 809,
+        "seat": 1,
+        "winner": 0,
+        "win": false,
+        "steps": 173
+      },
+      {
+        "seed": 810,
+        "seat": 0,
+        "winner": 1,
+        "win": false,
+        "steps": 143
+      },
+      {
+        "seed": 810,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 91
+      },
+      {
+        "seed": 811,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 201
+      },
+      {
+        "seed": 811,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 68
+      },
+      {
+        "seed": 812,
+        "seat": 0,
+        "winner": 1,
+        "win": false,
+        "steps": 203
+      },
+      {
+        "seed": 812,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 49
+      }
+    ],
+    "wins": 19,
+    "losses": 5,
+    "unresolved": 0,
+    "maxMs": 221.03900000000067
+  },
+  "easy-advanced-noitems": {
+    "lower": "easy",
+    "higher": "advanced",
+    "mode": "noitems",
+    "games": [
+      {
+        "seed": 51,
+        "seat": 0,
+        "winner": 0,
+        "win": true,
+        "steps": 128
+      },
+      {
+        "seed": 51,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 307
+      },
+      {
+        "seed": 52,
+        "seat": 0,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 52,
+        "seat": 1,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 53,
+        "seat": 0,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 53,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 191
+      },
+      {
+        "seed": 54,
+        "seat": 0,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 54,
+        "seat": 1,
+        "winner": 1,
+        "win": true,
+        "steps": 174
+      }
+    ],
+    "wins": 4,
+    "losses": 0,
+    "unresolved": 4,
+    "maxMs": 8.182399999999994
+  },
+  "advanced-expert-noitems": {
+    "lower": "advanced",
+    "higher": "expert",
+    "mode": "noitems",
+    "games": [
+      {
+        "seed": 51,
+        "seat": 0,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 51,
+        "seat": 1,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 52,
+        "seat": 0,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 52,
+        "seat": 1,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 53,
+        "seat": 0,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 53,
+        "seat": 1,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 54,
+        "seat": 0,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 54,
+        "seat": 1,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      }
+    ],
+    "wins": 0,
+    "losses": 0,
+    "unresolved": 8,
+    "maxMs": 24.584899999999834
+  },
+  "expert-master-noitems": {
+    "lower": "expert",
+    "higher": "master",
+    "mode": "noitems",
+    "games": [
+      {
+        "seed": 51,
+        "seat": 0,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 51,
+        "seat": 1,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 52,
+        "seat": 0,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 52,
+        "seat": 1,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 53,
+        "seat": 0,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 53,
+        "seat": 1,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 54,
+        "seat": 0,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      },
+      {
+        "seed": 54,
+        "seat": 1,
+        "winner": null,
+        "win": false,
+        "steps": 400
+      }
+    ],
+    "wins": 0,
+    "losses": 0,
+    "unresolved": 8,
+    "maxMs": 67.25950000000012
+  }
+}
